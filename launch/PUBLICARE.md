@@ -1,40 +1,40 @@
 # Publicare: pas cu pas
 
-Fișierul de urcat pe toate platformele: `launch/gradina-de-stele-web.zip` (conține `index.html` și folderul `music/`).
-Textele de copiat sunt în `launch/store-texts.md`. Imaginile: `cover-630x500.png` și `screenshot-*.png`.
+Build-urile se fac cu `node tools/build.js` → `dist/<platformă>.zip`. Copii gata de urcat: `launch/builds/` din folderul proiectului.
+Textele de copiat: `launch/store-texts.md`. Imagini: `launch/cover-630x500.png`, `launch/screenshot-*.png`.
 
-## 1. itch.io (gratuit, donații)
-1. Cont: https://itch.io/register, apoi Dashboard → **Create new project**.
-2. Câmpuri:
-   - Title: `Star Garden`
-   - Project URL: `star-garden`
-   - Short description: din store-texts.md (EN)
-   - Classification: **Games** · Kind of project: **HTML**
-   - Release status: **Released**
-   - Pricing: **No payments** sau **Donate** (recomandat: Donate, suggested 2 USD)
-   - Uploads: urcă zip-ul și bifează **This file will be played in the browser**
-   - Embed options: Viewport **540 × 960**, bifează **Mobile friendly** (Orientation: Portrait), **Fullscreen button**
-   - Description: descrierea lungă din store-texts.md
-   - Genre: **Simulation** · Tags: idle, clicker, incremental, casual, relaxing, space
-   - Cover image: `cover-630x500.png` · Screenshots: `screenshot-*.png`
-   - Visibility: **Public** → Save
-3. Plățile (pentru donații) se setează în Settings → Payouts, cu datele tale.
+| Platformă | Fișier | Reclame | Ce face Dragos |
+| --- | --- | --- | --- |
+| GitHub Pages | automat din CI | nu | nimic |
+| itch.io | `itch.zip` | nu (donații) | urcă zip + copertă, Save |
+| CrazyGames | `crazygames.zip` | SDK v3 (rewarded + midgame) | cont dezvoltator, urcă zip |
+| GameDistribution | `gamedistribution.zip` | SDK GD | cont, creează jocul, îmi dă Game ID |
+| Poki | `poki.zip` | SDK Poki v2 | aplică pe Poki for Developers |
+| Microsoft Store | PWA de pe GitHub Pages → MSIX (PWABuilder) | nu | cont Partner Center + verificare identitate |
 
-## 2. CrazyGames (venit din reclame)
-1. Cont de dezvoltator: https://developer.crazygames.com → **Submit game**.
-2. Câmpuri:
-   - Name: `Star Garden` · Engine: **HTML5** · upload: zip-ul
-   - Orientation: **Both** / mobil compatibil: **Yes**
-   - Description, controls, tags: din store-texts.md
-   - Cover + screenshots: din `launch/`
-3. Jocul pornește ca **Basic Launch** (fără reclame). Dacă CrazyGames îl selectează pentru **Full Launch**,
-   reclamele sunt deja integrate: pe domeniul CrazyGames jocul folosește automat SDK-ul v3
-   (reclamă recompensată la „Lumină x2”, reclamă scurtă după Renaștere, maxim una la 3 minute).
-4. Datele de plată se completează în portal, cu datele tale.
+## 1. itch.io
+1. Dashboard → Create new project (formularul l-a completat Claude).
+2. Uploads → `itch.zip` → bifează „This file will be played in the browser”.
+3. Upload Cover Image → `cover-630x500.png`. Save. Apoi Visibility: Public.
 
-## 3. Poki (opțional, mai târziu)
-Poki selectează jocurile. Se aplică pe https://developers.poki.com după ce avem date de joc
-de pe itch.io și CrazyGames. Necesită SDK-ul Poki (îl integrez când e cazul).
+## 2. CrazyGames
+1. https://developer.crazygames.com → Submit game → `crazygames.zip`.
+2. Basic Launch fără reclame; la Full Launch reclamele sunt deja integrate.
 
-## 4. GitHub Pages (deja activ)
-https://catalonec1.github.io/Gr-dina-de-stele/ — se actualizează singur la fiecare push pe `main`, după ce trec testele.
+## 3. GameDistribution
+1. Cont de dezvoltator: https://gamedistribution.com/ (Developers → Sign up).
+2. Upload game → completează titlul, descrierea, imaginile (din launch/).
+3. După creare, copiază **Game ID** și trimite-l lui Claude: el reface build-ul (`GD_GAME_ID=... node tools/build.js`)
+   și îți dă `gamedistribution.zip` final de urcat.
+
+## 4. Poki
+1. Aplicare: https://developers.poki.com (Poki for Developers) cu link-ul jocului de pe GitHub Pages.
+2. Poki selectează jocurile. Dacă e acceptat, se urcă `poki.zip` (SDK-ul Poki e deja integrat).
+
+## 5. Microsoft Store (aplicație Windows din PWA)
+1. Cont Partner Center: https://partner.microsoft.com/dashboard/registration (cont individual; verifică taxa curentă la înregistrare). Verificarea identității o face doar Dragos.
+2. În Partner Center: Apps and games → New product → MSIX or PWA app → rezervă numele „Star Garden”.
+3. Product identity: copiază Package ID, Publisher ID, Publisher display name.
+4. https://www.pwabuilder.com → URL: https://catalonec1.github.io/Gr-dina-de-stele/ → Package for stores → Windows → introdu datele de la pasul 3 → descarcă pachetul.
+5. Partner Center → submission → Packages: urcă `.msixbundle`; Store listing: texte din store-texts.md; Age rating: questionnaire (fără violență, fără chat, fără cumpărături).
+Pașii 2–5 îi poate completa Claude în browserul tău, după ce contul e verificat.

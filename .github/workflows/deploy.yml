@@ -35,15 +35,11 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Pregătește site-ul
-        run: |
-          mkdir _site
-          cp index.html _site/
-          cp -r music _site/
-          cp launch/cover-630x500.png _site/cover.png
+      - name: Construiește versiunea web (PWA)
+        run: node tools/build.js
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: dist/web
       - id: deployment
         uses: actions/deploy-pages@v4

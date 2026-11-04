@@ -584,40 +584,88 @@ $("sound").onclick = () => { S.sound = !S.sound; applyLang(); save(); };
 $("music").onclick = () => { S.music = !S.music; if (S.music) Music.start(); else Music.stop(); applyLang(); save(); };
 
 // ---------- Reclame (stub; în Full Launch se înlocuiește cu SDK-ul CrazyGames) ----------
-// Pe CrazyGames se folosește SDK-ul lor. Oriunde altundeva (GitHub Pages, itch.io)
-// sau cu ad blocker, bonusul e gratuit și jocul merge normal.
+// Reclame: fiecare portal are SDK-ul lui. Build-ul pe platformă setează window.GAME_PLATFORM
+// (crazygames, poki, gamedistribution). Pe web/itch.io sau cu ad blocker, bonusul e gratuit.
+const PLATFORM = window.GAME_PLATFORM || "web";
+function loadScript(src) {
+  return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); });
+}
 const Ads = {
-  sdk: null, enabled: false, busy: false, lastMidgame: 0,
-  onCrazyGames() { return /(^|\.)crazygames\./.test(location.hostname) || /[?&]useLocalSdk=true/.test(location.search); },
+  adapter: null, enabled: false, busy: false, lastMidgame: 0,
+  onCrazyGames() { return PLATFORM === "crazygames" || /(^|\.)crazygames\./.test(location.hostname) || /[?&]useLocalSdk=true/.test(location.search); },
   async init() {
-    if (!this.onCrazyGames()) return;
     try {
-      await new Promise((res, rej) => {
-        const sc = document.createElement("script");
-        sc.src = "https://sdk.crazygames.com/crazygames-sdk-v3.js";
-        sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
-      });
-      await window.CrazyGames.SDK.init();
-      this.useSdk(window.CrazyGames.SDK);
-    } catch (e) { this.sdk = null; this.enabled = false; }
+      if (this.onCrazyGames()) {
+        await loadScript("https://sdk.crazygames.com/crazygames-sdk-v3.js");
+        await window.CrazyGames.SDK.init();
+        this.useSdk(window.CrazyGames.SDK);
+      } else if (PLATFORM === "poki") {
+        await loadScript("https://game-cdn.poki.com/scripts/v2/poki-sdk.js");
+        await window.PokiSDK.init().catch(() => {});
+        this.usePoki(window.PokiSDK);
+      } else if (PLATFORM === "gamedistribution") {
+        this.useGD();
+      }
+    } catch (e) { this.adapter = null; this.enabled = false; }
   },
+  enable(adapter) { this.adapter = adapter; this.enabled = true; renderList(); },
+  // CrazyGames SDK v3
   useSdk(sdk) {
     if (!sdk || (sdk.environment !== "crazygames" && sdk.environment !== "local")) return;
-    this.sdk = sdk; this.enabled = true;
     try { sdk.game.loadingStop(); sdk.game.gameplayStart(); } catch (e) {}
-    renderList();
+    this.enable({
+      gameplay(on) { try { on ? sdk.game.gameplayStart() : sdk.game.gameplayStop(); } catch (e) {} },
+      show(type, onStart) {
+        return new Promise(res => sdk.ad.requestAd(type, { adStarted: onStart, adFinished: () => res(true), adError: () => res(false) }));
+      },
+    });
+  },
+  // Poki SDK v2
+  usePoki(sdk) {
+    if (!sdk) return;
+    try { sdk.gameLoadingFinished(); sdk.gameplayStart(); } catch (e) {}
+    addEventListener("keydown", e => { if ([" ", "ArrowUp", "ArrowDown"].includes(e.key)) e.preventDefault(); });
+    addEventListener("wheel", e => e.preventDefault(), { passive: false });
+    this.enable({
+      gameplay(on) { try { on ? sdk.gameplayStart() : sdk.gameplayStop(); } catch (e) {} },
+      show(type, onStart) {
+        return type === "rewarded" ? sdk.rewardedBreak({ size: "medium", onStart }).then(Boolean) : sdk.commercialBreak(onStart).then(() => true);
+      },
+    });
+  },
+  // GameDistribution HTML5 SDK (gameId vine din build: window.GD_GAME_ID)
+  useGD() {
+    if (!window.GD_GAME_ID) return;
+    const self = this; let onStart = null, rewardOk = false;
+    window.GD_OPTIONS = {
+      gameId: window.GD_GAME_ID,
+      onEvent(ev) {
+        if (ev.name === "SDK_GAME_PAUSE" && onStart) onStart();
+        if (ev.name === "SDK_REWARDED_WATCH_COMPLETE") rewardOk = true;
+      },
+    };
+    loadScript("https://html5.api.gamedistribution.com/main.min.js").then(() => {
+      self.enable({
+        gameplay() {},
+        show(type, start) {
+          onStart = start; rewardOk = false;
+          const p = type === "rewarded" ? window.gdsdk.showAd("rewarded") : window.gdsdk.showAd();
+          return Promise.resolve(p).then(() => type === "rewarded" ? rewardOk : true).catch(() => false);
+        },
+      });
+    }).catch(() => {});
   },
   request(type, onDone, onFail) {
     if (!this.enabled || this.busy) { onFail && onFail(); return; }
     this.busy = true;
-    const wasSound = S.sound;
-    const end = ok => { this.busy = false; S.sound = wasSound; Music.resume(); try { this.sdk.game.gameplayStart(); } catch (e) {} (ok ? onDone : onFail) && (ok ? onDone : onFail)(); };
+    const wasSound = S.sound, a = this.adapter;
+    const end = ok => {
+      this.busy = false; S.sound = wasSound; Music.resume(); a.gameplay(true);
+      const cb = ok ? onDone : onFail; if (cb) cb();
+    };
+    a.gameplay(false);
     try {
-      this.sdk.ad.requestAd(type, {
-        adStarted: () => { S.sound = false; Music.pause(); try { this.sdk.game.gameplayStop(); } catch (e) {} },
-        adFinished: () => end(true),
-        adError: () => end(false),
-      });
+      Promise.resolve(a.show(type, () => { S.sound = false; Music.pause(); })).then(ok => end(!!ok), () => end(false));
     } catch (e) { end(false); }
   },
   rewarded(onReward) {
@@ -630,6 +678,11 @@ const Ads = {
     this.request("midgame");
   },
 };
+
+// Versiunea web (GitHub Pages) se poate instala ca aplicație (PWA)
+if (PLATFORM === "web" && (location.protocol === "https:" || location.hostname === "localhost") && "serviceWorker" in navigator && document.querySelector('link[rel="manifest"]')) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
 
 // ---------- Câștig offline ----------
 (function offline() {

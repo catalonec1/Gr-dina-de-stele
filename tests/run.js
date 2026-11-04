@@ -87,6 +87,22 @@ async function fresh(b, locale = 'ro-RO', init) {
   await p.click('.row:nth-child(1) .buy'); await p.waitForTimeout(150);
   ok(await p.evaluate(() => S.boostUntil === 0 && S.sound === true && !Ads.busy), 'fără reclamă: fără bonus, sunet revenit');
   ok(await p.evaluate(() => !Ads.onCrazyGames()), 'pe alte site-uri SDK-ul nu se încarcă');
+  // Poki simulat
+  p = await fresh(b, 'ro-RO');
+  await p.evaluate(() => { window.__c = [];
+    Ads.usePoki({ gameLoadingFinished(){ __c.push('loaded'); }, gameplayStart(){ __c.push('start'); }, gameplayStop(){ __c.push('stop'); },
+      rewardedBreak(o){ o.onStart(); return new Promise(r => setTimeout(() => r(true), 30)); }, commercialBreak(cb){ cb(); return Promise.resolve(); } }); });
+  await p.click('.row:nth-child(1) .buy'); await p.waitForTimeout(120);
+  ok(await p.evaluate(() => S.boostUntil > Date.now() && __c.includes('loaded') && __c.includes('stop')), 'Poki: reclamă recompensată dă bonusul');
+  // GameDistribution simulat
+  p = await fresh(b, 'ro-RO');
+  await p.evaluate(() => { window.GD_GAME_ID = 'test';
+    window.loadScript = () => { window.gdsdk = { showAd(t) { GD_OPTIONS.onEvent({ name: 'SDK_GAME_PAUSE' });
+      if (t === 'rewarded') GD_OPTIONS.onEvent({ name: 'SDK_REWARDED_WATCH_COMPLETE' }); return Promise.resolve(); } }; return Promise.resolve(); };
+    Ads.useGD(); });
+  await p.waitForFunction(() => Ads.enabled);
+  await p.click('.row:nth-child(1) .buy'); await p.waitForTimeout(120);
+  ok(await p.evaluate(() => S.boostUntil > Date.now() && !Ads.busy), 'GameDistribution: reclamă recompensată dă bonusul');
   // muzică: se încarcă prin HTTP și se poate opri
   const http = require('http'), fsx = require('fs');
   const root = path.resolve(__dirname, '..');
@@ -102,6 +118,25 @@ async function fresh(b, locale = 'ro-RO', init) {
   ok(await pm.evaluate(() => Music.src === null && S.music === false), 'butonul de muzică oprește muzica');
   ok(em.length === 0, 'fără erori cu muzica ' + em.join('|'));
   srv.close();
+  // build-urile pe platformă: se încarcă fără erori, PWA are service worker
+  require('child_process').execFileSync('node', [path.join(root, 'tools/build.js')], { stdio: 'ignore' });
+  const srv2 = http.createServer((q, r) => { let u = decodeURIComponent(q.url.split('?')[0]); if (u.endsWith('/')) u += 'index.html';
+    fsx.readFile(path.join(root, 'dist', u), (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200, u.endsWith('.js') ? { 'Content-Type': 'text/javascript' } : {}); r.end(d); } }); }).listen(0);
+  const p2 = srv2.address().port;
+  for (const plat of ['web', 'itch', 'crazygames', 'poki', 'gamedistribution']) {
+    const c2 = await b.newContext({ viewport: { width: 390, height: 844 } }); const pg = await c2.newPage(); const er = [];
+    pg.on('pageerror', e => er.push(e.message));
+    await pg.goto(`http://localhost:${p2}/${plat}/`); await pg.mouse.click(200, 300); await pg.waitForTimeout(300);
+    ok(er.length === 0 && await pg.evaluate(p => PLATFORM === (p === 'web' || p === 'itch' ? 'web' : p) && S.light > 0, plat), `build ${plat}: pornește corect`);
+    if (plat === 'web') {
+      await pg.waitForFunction(() => navigator.serviceWorker.getRegistration().then(r => !!r), null, { timeout: 8000 }).catch(() => {});
+      ok(await pg.evaluate(() => navigator.serviceWorker.getRegistration().then(r => !!r)), 'PWA: service worker înregistrat');
+      const man = await pg.evaluate(() => fetch('manifest.webmanifest').then(r => r.json()));
+      ok(man.icons.length >= 2 && man.display === 'standalone', 'PWA: manifest valid');
+    }
+    await c2.close();
+  }
+  srv2.close();
   await b.close();
   console.log(fails ? `\n${fails} TESTE PICATE` : '\nTOATE TESTELE AU TRECUT');
   process.exit(fails ? 1 : 0);
