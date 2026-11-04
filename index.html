@@ -185,6 +185,8 @@ function freshState() {
     boostUntil: 0, lang: detectLang(), sound: true, music: true, last: Date.now(), daily: null };
 }
 function detectLang() {
+  // Portalurile (CrazyGames, Poki, GameDistribution) cer engleza ca limbă implicită
+  if (window.GAME_PLATFORM) return "en";
   const n = (navigator.language || "en").slice(0, 2).toLowerCase();
   return LANGS.includes(n) ? n : "en";
 }

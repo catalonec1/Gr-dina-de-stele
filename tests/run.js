@@ -127,6 +127,7 @@ async function fresh(b, locale = 'ro-RO', init) {
     const c2 = await b.newContext({ viewport: { width: 390, height: 844 } }); const pg = await c2.newPage(); const er = [];
     pg.on('pageerror', e => er.push(e.message));
     await pg.goto(`http://localhost:${p2}/${plat}/`); await pg.mouse.click(200, 300); await pg.waitForTimeout(300);
+    if (plat !== 'web' && plat !== 'itch') ok(await pg.evaluate(() => S.lang) === 'en', `build ${plat}: limba implicită engleza`);
     ok(er.length === 0 && await pg.evaluate(p => PLATFORM === (p === 'web' || p === 'itch' ? 'web' : p) && S.light > 0, plat), `build ${plat}: pornește corect`);
     if (plat === 'web') {
       await pg.waitForFunction(() => navigator.serviceWorker.getRegistration().then(r => !!r), null, { timeout: 8000 }).catch(() => {});
