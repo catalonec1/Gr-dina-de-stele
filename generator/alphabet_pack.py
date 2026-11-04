@@ -143,7 +143,7 @@ def render(lang, size_name, path):
     t = T[lang]
     W, H = C.PAGE_SIZES[size_name]
     pages = pages_for(lang)
-    c = canvas.Canvas(path, pagesize=(W, H), pageCompression=1)
+    c = canvas.Canvas(path, pagesize=(W, H), pageCompression=1, initialFontName=FONT)
     c.setTitle("%s - %s" % (t["alpha_title"], t["alpha_sub"]))
     c.setAuthor(C.BRAND)
     c.setSubject(t["alpha_sub"])
