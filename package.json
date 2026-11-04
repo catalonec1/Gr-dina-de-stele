@@ -1,0 +1,6 @@
+{
+  "name": "gradina-de-stele",
+  "private": true,
+  "scripts": { "test": "node tests/run.js" },
+  "devDependencies": { "playwright": "1.47.2" }
+}
