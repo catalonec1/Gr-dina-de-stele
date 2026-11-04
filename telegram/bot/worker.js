@@ -2,8 +2,9 @@
  * - POST /webhook/<WEBHOOK_SECRET> : update-uri de la Telegram (/start, /terms, /paysupport, plăți Stars)
  * - POST /api/invoice   {initData, item} -> {link}   (factură în Stars, valută XTR)
  * - POST /api/purchases {initData}       -> {items:[{item, charge}]}
- * - GET  /setup?key=<WEBHOOK_SECRET>     : setează webhook-ul, comenzile și butonul de meniu
- * Variabile: BOT_TOKEN (secret), WEBHOOK_SECRET (secret), GAME_URL, ALLOWED_ORIGIN; KV: PURCHASES
+ * - GET  /setup                         : setează webhook-ul, comenzile și butonul de meniu (idempotent)
+ * Variabile: BOT_TOKEN (singurul secret), GAME_URL, ALLOWED_ORIGIN, OWNER_CHAT_ID (opțional); KV: PURCHASES
+ * Secretul webhook-ului se derivă din token (SHA-256), deci nu trebuie configurat separat.
  */
 
 export const ITEMS = {
@@ -46,6 +47,12 @@ async function hmac(key, data) {
   const k = await crypto.subtle.importKey('raw', typeof key === 'string' ? enc.encode(key) : key,
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   return new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(data)));
+}
+// Secretul webhook-ului: primii 48 de caractere hex din SHA-256("webhook:" + token).
+export async function webhookSecret(env) {
+  if (env.WEBHOOK_SECRET) return env.WEBHOOK_SECRET;
+  const d = await crypto.subtle.digest('SHA-256', enc.encode('webhook:' + env.BOT_TOKEN));
+  return hex(new Uint8Array(d)).slice(0, 48);
 }
 function hex(buf) { return Array.from(buf, b => b.toString(16).padStart(2, '0')).join(''); }
 function safeEqual(a, b) {
@@ -145,8 +152,9 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
 
   if (request.method === 'OPTIONS') return cors(env, new Response(null, { status: 204 }));
 
-  if (request.method === 'POST' && url.pathname === '/webhook/' + env.WEBHOOK_SECRET) {
-    if (request.headers.get('X-Telegram-Bot-Api-Secret-Token') !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });
+  const secret = await webhookSecret(env);
+  if (request.method === 'POST' && url.pathname === '/webhook/' + secret) {
+    if (request.headers.get('X-Telegram-Bot-Api-Secret-Token') !== secret) return new Response('forbidden', { status: 403 });
     const update = await request.json();
     await handleUpdate(update, env, fetchImpl);
     return new Response('ok');
@@ -180,11 +188,11 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   }
 
   if (request.method === 'GET' && url.pathname === '/setup') {
-    if (url.searchParams.get('key') !== env.WEBHOOK_SECRET) return new Response('forbidden', { status: 403 });
-    const hook = `${url.origin}/webhook/${env.WEBHOOK_SECRET}`;
+    if (!env.BOT_TOKEN) return json({ error: 'BOT_TOKEN lipsește' }, 500);
+    const hook = `${url.origin}/webhook/${secret}`;
     const out = {};
     out.webhook = await tgApi(env, 'setWebhook', {
-      url: hook, secret_token: env.WEBHOOK_SECRET, allowed_updates: ['message', 'pre_checkout_query']
+      url: hook, secret_token: secret, allowed_updates: ['message', 'pre_checkout_query']
     }, fetchImpl);
     const cmds = [
       { command: 'play', description: 'Play / Joacă / Играть' },

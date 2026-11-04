@@ -25,8 +25,8 @@ Fără bot sau fără Adsgram configurate, jocul merge, iar butoanele plătite s
 
 ## Ce fac eu după ce am tokenul
 
-1. Creez Worker-ul `orbita-bot` cu `bot/worker.js`, KV-ul `PURCHASES`, secretele `BOT_TOKEN` și `WEBHOOK_SECRET`.
-2. Deschid `https://<worker>/setup?key=<WEBHOOK_SECRET>`: setează webhook-ul, comenzile și butonul „Play” din meniul botului.
+1. Creez Worker-ul `orbita-bot` cu `bot/worker.js`, KV-ul `PURCHASES`, secretul `BOT_TOKEN` (îl lipește Dragos; secretul webhook-ului se derivă din el).
+2. Deschid `https://<worker>/setup`: setează webhook-ul, comenzile și butonul „Play” din meniul botului.
 3. Completez `config.js` (`API_BASE`, `ADSGRAM_BLOCK_ID`), rulez testele, fac commit și PR.
 4. La BotFather: `/newapp` pentru linkul direct `t.me/<bot>/play`, cu descriere și imagine.
 

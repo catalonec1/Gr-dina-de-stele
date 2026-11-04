@@ -188,12 +188,17 @@ await test('/terms și /paysupport răspund (cerință Telegram pentru Stars)', 
   for (const t of ['/terms', '/paysupport']) await W.handleUpdate({ message: { message_id: 1, chat: { id: 2 }, from: { id: 2, language_code: 'ro' }, text: t } }, env, f);
   assert(f.calls[0].body.text.startsWith('Termeni')); assert(f.calls[1].body.text.startsWith('Suport plăți'));
 });
-await test('/setup cere cheia și setează webhook, comenzi, buton meniu', async () => {
-  const env = makeEnv(), f = fakeTelegram();
-  eq((await W.handleRequest(new Request('https://w.dev/setup?key=no'), env, f)).status, 403);
-  const r = await W.handleRequest(new Request('https://w.dev/setup?key=sec_abc'), env, f);
+await test('/setup setează webhook cu secret derivat din token, comenzi, buton meniu', async () => {
+  const env = makeEnv(); delete env.WEBHOOK_SECRET; const f = fakeTelegram();
+  const r = await W.handleRequest(new Request('https://w.dev/setup'), env, f);
   eq(r.status, 200); eq(f.calls.map(c => c.method).join(), 'setWebhook,setMyCommands,setChatMenuButton');
-  eq(f.calls[0].body.url, 'https://w.dev/webhook/sec_abc'); eq(f.calls[0].body.secret_token, 'sec_abc');
+  const sec = await W.webhookSecret(env);
+  eq(sec.length, 48); eq(f.calls[0].body.url, 'https://w.dev/webhook/' + sec); eq(f.calls[0].body.secret_token, sec);
+  const other = await W.webhookSecret({ BOT_TOKEN: '1:OTHER' }); assert(other !== sec);
+  const body = JSON.stringify({ message: { message_id: 1, chat: { id: 1 }, from: { id: 1 }, text: '/terms' } });
+  eq((await W.handleRequest(new Request('https://w.dev/webhook/' + sec, { method: 'POST', body, headers: { 'X-Telegram-Bot-Api-Secret-Token': sec } }), env, f)).status, 200);
+  eq((await W.handleRequest(new Request('https://w.dev/webhook/gresit', { method: 'POST', body, headers: { 'X-Telegram-Bot-Api-Secret-Token': 'gresit' } }), env, f)).status, 200, 'cale greșită = pagina implicită');
+  eq(f.calls.length, 4, 'calea greșită nu trebuie să trimită mesaje');
 });
 
 // ---------------- browser ----------------
