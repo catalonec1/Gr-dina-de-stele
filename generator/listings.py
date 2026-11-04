@@ -107,6 +107,55 @@ listings = {
         "images": ["products/free-sample/images/01-cover.png"],
         "seo_keywords": ["free worksheets", "free printable", "bilingual kids"],
     },
+    "budget-planner": {
+        "title": "Monthly Budget Planner Spreadsheet | Excel & Google Sheets | EN, RO, RU",
+        "price_usd": 4.99,
+        "description": "\n".join([
+            "A simple yearly budget spreadsheet that does the maths for you. Available in English, Romanian (română) "
+            "and Russian (русский): three files, same features.",
+            "",
+            "How it works:",
+            "• Setup: choose the year, your currency and your own income and expense categories",
+            "• Transactions: add one line per payment (date, category from a drop-down, amount)",
+            "• 12 month sheets: write your planned amounts; actual totals fill in automatically",
+            "• Left to spend per category, highlighted in red when you go over",
+            "• Year summary with balance, savings rate and an income vs. expenses chart",
+            "• Savings goals with progress bars and the amount needed per month",
+            "",
+            "Works in Microsoft Excel, LibreOffice and Google Sheets (upload to Google Drive, then open with Google Sheets). "
+            "No macros, no add-ons, no subscription.",
+            "",
+            "Instant download: one ZIP with three .xlsx files. This is a template; it does not give financial advice.",
+            "Licence: personal use. Please do not resell or share the files.",
+        ]),
+        "files": ["products/budget-planner/budget-planner.zip"],
+        "images": ["products/budget-planner/images/01-cover.png", "products/budget-planner/images/02-month.png",
+                   "products/budget-planner/images/03-goals.png"],
+        "seo_keywords": ["budget spreadsheet", "google sheets budget", "excel budget template", "savings tracker",
+                         "romanian budget", "russian budget planner"],
+    },
+    "habit-tracker": {
+        "title": "Habit Tracker Spreadsheet | Excel & Google Sheets | 12 Months | EN, RO, RU",
+        "price_usd": 2.99,
+        "description": "\n".join([
+            "Track up to 15 daily habits for a whole year. One sheet per month, in English, Romanian and Russian.",
+            "",
+            "• Choose ✓ from a drop-down for every day you keep a habit; the cell turns green",
+            "• Weekdays and the number of days in each month are set automatically from the year",
+            "• Done count, success rate and a progress bar for every habit",
+            "• Habits written in January are copied to every month (and you can change them)",
+            "• Prints on one landscape page per month",
+            "",
+            "Works in Microsoft Excel, LibreOffice and Google Sheets (upload to Google Drive, then open with Google Sheets). "
+            "No macros.",
+            "",
+            "Instant download: one ZIP with three .xlsx files.",
+            "Licence: personal use. Please do not resell or share the files.",
+        ]),
+        "files": ["products/habit-tracker/habit-tracker.zip"],
+        "images": ["products/habit-tracker/images/01-cover.png"],
+        "seo_keywords": ["habit tracker", "google sheets habit tracker", "excel habit tracker", "daily habits"],
+    },
 }
 
 for slug, L in listings.items():

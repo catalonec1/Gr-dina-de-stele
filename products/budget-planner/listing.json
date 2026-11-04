@@ -1,0 +1,21 @@
+{
+ "title": "Monthly Budget Planner Spreadsheet | Excel & Google Sheets | EN, RO, RU",
+ "price_usd": 4.99,
+ "description": "A simple yearly budget spreadsheet that does the maths for you. Available in English, Romanian (română) and Russian (русский): three files, same features.\n\nHow it works:\n• Setup: choose the year, your currency and your own income and expense categories\n• Transactions: add one line per payment (date, category from a drop-down, amount)\n• 12 month sheets: write your planned amounts; actual totals fill in automatically\n• Left to spend per category, highlighted in red when you go over\n• Year summary with balance, savings rate and an income vs. expenses chart\n• Savings goals with progress bars and the amount needed per month\n\nWorks in Microsoft Excel, LibreOffice and Google Sheets (upload to Google Drive, then open with Google Sheets). No macros, no add-ons, no subscription.\n\nInstant download: one ZIP with three .xlsx files. This is a template; it does not give financial advice.\nLicence: personal use. Please do not resell or share the files.",
+ "files": [
+  "products/budget-planner/budget-planner.zip"
+ ],
+ "images": [
+  "products/budget-planner/images/01-cover.png",
+  "products/budget-planner/images/02-month.png",
+  "products/budget-planner/images/03-goals.png"
+ ],
+ "seo_keywords": [
+  "budget spreadsheet",
+  "google sheets budget",
+  "excel budget template",
+  "savings tracker",
+  "romanian budget",
+  "russian budget planner"
+ ]
+}

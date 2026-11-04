@@ -1,0 +1,14 @@
+Habit Tracker Spreadsheet | Excel & Google Sheets | 12 Months | EN, RO, RU
+
+Track up to 15 daily habits for a whole year. One sheet per month, in English, Romanian and Russian.
+
+• Choose ✓ from a drop-down for every day you keep a habit; the cell turns green
+• Weekdays and the number of days in each month are set automatically from the year
+• Done count, success rate and a progress bar for every habit
+• Habits written in January are copied to every month (and you can change them)
+• Prints on one landscape page per month
+
+Works in Microsoft Excel, LibreOffice and Google Sheets (upload to Google Drive, then open with Google Sheets). No macros.
+
+Instant download: one ZIP with three .xlsx files.
+Licence: personal use. Please do not resell or share the files.
