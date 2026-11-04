@@ -75,6 +75,18 @@ async function fresh(b, locale = 'ro-RO', init) {
   p = await fresh(b, 'ro-RO', () => { Object.defineProperty(window, 'localStorage', { get() { throw new Error('blocked'); } }); });
   await p.mouse.click(200, 300);
   ok(p.errs.length === 0 && await p.evaluate(() => S.light) > 0, 'merge fără localStorage');
+  // SDK reclame simulat: recompensă doar după reclamă, eroare fără recompensă
+  p = await fresh(b, 'ro-RO');
+  await p.evaluate(() => { window.__mode = 'ok'; window.__calls = [];
+    Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){ __calls.push('start'); }, gameplayStop(){ __calls.push('stop'); } },
+      ad: { requestAd(type, cb) { __calls.push(type); cb.adStarted(); setTimeout(() => __mode === 'ok' ? cb.adFinished() : cb.adError('x'), 50); } } }); });
+  ok(await p.evaluate(() => Ads.enabled), 'SDK detectat');
+  await p.click('.row:nth-child(1) .buy'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => S.boostUntil > Date.now() && __calls.includes('rewarded') && __calls.includes('stop')), 'reclamă recompensată dă bonusul');
+  await p.evaluate(() => { S.boostUntil = 0; __mode = 'fail'; renderList(); });
+  await p.click('.row:nth-child(1) .buy'); await p.waitForTimeout(150);
+  ok(await p.evaluate(() => S.boostUntil === 0 && S.sound === true && !Ads.busy), 'fără reclamă: fără bonus, sunet revenit');
+  ok(await p.evaluate(() => !Ads.onCrazyGames()), 'pe alte site-uri SDK-ul nu se încarcă');
   await b.close();
   console.log(fails ? `\n${fails} TESTE PICATE` : '\nTOATE TESTELE AU TRECUT');
   process.exit(fails ? 1 : 0);

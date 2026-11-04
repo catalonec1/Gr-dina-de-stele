@@ -76,7 +76,7 @@ const T = {
     tabStars: "Stele", tabUp: "Îmbunătățiri", tabReb: "Renaștere",
     perSec: "lumină / sec", perTap: "pe atingere", owned: "deții", buy: "Cumpără",
     bought: "Cumpărat", tapHint: "Atinge cerul ca să strângi lumină",
-    boostOn: "Lumină dublă încă", boostBtn: "Lumină x2 timp de 10 min", boostDesc: "Bonus gratuit (în versiunea publicată: reclamă opțională)",
+    boostOn: "Lumină dublă încă", boostBtn: "Lumină x2 timp de 10 min", boostDesc: "Bonus gratuit", boostDescAd: "Urmărește o reclamă scurtă", noAd: "Nicio reclamă disponibilă acum, încearcă mai târziu",
     rebTitle: "Renaștere cosmică", rebDesc: "Resetează stelele și îmbunătățirile. Primești praf cosmic: fiecare grăunte dă +10% lumină pentru totdeauna.",
     rebNeed: "Ai nevoie de", rebTotal: "lumină strânsă în această viață", rebGain: "Primești", dust: "praf cosmic", rebBtn: "Renaște",
     dustHave: "Praf cosmic deținut", welcome: "Cât ai lipsit, stelele au strâns", constel: "Constelație completă",
@@ -102,7 +102,7 @@ const T = {
     tabStars: "Stars", tabUp: "Upgrades", tabReb: "Rebirth",
     perSec: "light / sec", perTap: "per tap", owned: "owned", buy: "Buy",
     bought: "Bought", tapHint: "Tap the sky to gather light",
-    boostOn: "Double light for", boostBtn: "Light x2 for 10 min", boostDesc: "Free bonus (published version: optional ad)",
+    boostOn: "Double light for", boostBtn: "Light x2 for 10 min", boostDesc: "Free bonus", boostDescAd: "Watch a short ad", noAd: "No ad available right now, try again later",
     rebTitle: "Cosmic rebirth", rebDesc: "Resets stars and upgrades. You get stardust: each grain gives +10% light forever.",
     rebNeed: "You need", rebTotal: "light gathered in this life", rebGain: "You get", dust: "stardust", rebBtn: "Rebirth",
     dustHave: "Stardust owned", welcome: "While you were away, your stars gathered", constel: "Constellation complete",
@@ -128,7 +128,7 @@ const T = {
     tabStars: "Звёзды", tabUp: "Улучшения", tabReb: "Возрождение", tabDaily: "Ежедневно",
     perSec: "света / сек", perTap: "за касание", owned: "есть", buy: "Купить",
     bought: "Куплено", tapHint: "Касайся неба, чтобы собирать свет",
-    boostOn: "Двойной свет ещё", boostBtn: "Свет x2 на 10 мин", boostDesc: "Бесплатный бонус (в опубликованной версии: реклама по желанию)",
+    boostOn: "Двойной свет ещё", boostBtn: "Свет x2 на 10 мин", boostDesc: "Бесплатный бонус", boostDescAd: "Посмотри короткую рекламу", noAd: "Сейчас нет рекламы, попробуй позже",
     rebTitle: "Космическое возрождение", rebDesc: "Сбрасывает звёзды и улучшения. Ты получаешь звёздную пыль: каждая крупица даёт +10% света навсегда.",
     rebNeed: "Нужно", rebTotal: "света, собранного в этой жизни", rebGain: "Ты получишь", dust: "звёздной пыли", rebBtn: "Возродиться",
     dustHave: "Звёздной пыли", welcome: "Пока тебя не было, звёзды собрали", constel: "Созвездие собрано",
@@ -456,7 +456,7 @@ function renderList() {
   if (tab === "stars") {
     // bonusul x2 (în versiunea publicată se leagă de reclama recompensată din SDK)
     const boosting = Date.now() < S.boostUntil;
-    list.appendChild(row("#8ff0c8", l.boostBtn, l.boostDesc, boosting ? "✓" : "▶", null, () => {
+    list.appendChild(row("#8ff0c8", l.boostBtn, Ads.enabled ? l.boostDescAd : l.boostDesc, boosting ? "✓" : "▶", null, () => {
       Ads.rewarded(() => { S.boostUntil = Date.now() + 10 * 60000; blip(880, .2); renderList(); renderHud(); save(); });
     }, boosting));
     STAR_TYPES.forEach((st, t) => {
@@ -533,6 +533,7 @@ function rebirth() {
   S = Object.assign(freshState(), keep);
   burst(W / 2, H / 3, "#e59bff", 60); blip(300, .5, .08);
   toast(`+${g} ${L().dust}`); save(); renderList(); renderHud();
+  setTimeout(() => Ads.midgame(), 1500);
 }
 
 function applyLang() {
@@ -549,8 +550,51 @@ $("lang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % LANGS.l
 $("sound").onclick = () => { S.sound = !S.sound; applyLang(); save(); };
 
 // ---------- Reclame (stub; în Full Launch se înlocuiește cu SDK-ul CrazyGames) ----------
+// Pe CrazyGames se folosește SDK-ul lor. Oriunde altundeva (GitHub Pages, itch.io)
+// sau cu ad blocker, bonusul e gratuit și jocul merge normal.
 const Ads = {
-  rewarded(onReward) { onReward(); },
+  sdk: null, enabled: false, busy: false, lastMidgame: 0,
+  onCrazyGames() { return /(^|\.)crazygames\./.test(location.hostname) || /[?&]useLocalSdk=true/.test(location.search); },
+  async init() {
+    if (!this.onCrazyGames()) return;
+    try {
+      await new Promise((res, rej) => {
+        const sc = document.createElement("script");
+        sc.src = "https://sdk.crazygames.com/crazygames-sdk-v3.js";
+        sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
+      });
+      await window.CrazyGames.SDK.init();
+      this.useSdk(window.CrazyGames.SDK);
+    } catch (e) { this.sdk = null; this.enabled = false; }
+  },
+  useSdk(sdk) {
+    if (!sdk || (sdk.environment !== "crazygames" && sdk.environment !== "local")) return;
+    this.sdk = sdk; this.enabled = true;
+    try { sdk.game.loadingStop(); sdk.game.gameplayStart(); } catch (e) {}
+    renderList();
+  },
+  request(type, onDone, onFail) {
+    if (!this.enabled || this.busy) { onFail && onFail(); return; }
+    this.busy = true;
+    const wasSound = S.sound;
+    const end = ok => { this.busy = false; S.sound = wasSound; try { this.sdk.game.gameplayStart(); } catch (e) {} (ok ? onDone : onFail) && (ok ? onDone : onFail)(); };
+    try {
+      this.sdk.ad.requestAd(type, {
+        adStarted: () => { S.sound = false; try { this.sdk.game.gameplayStop(); } catch (e) {} },
+        adFinished: () => end(true),
+        adError: () => end(false),
+      });
+    } catch (e) { end(false); }
+  },
+  rewarded(onReward) {
+    if (!this.enabled) { onReward(); return; }
+    this.request("rewarded", onReward, () => toast(L().noAd));
+  },
+  midgame() {
+    if (!this.enabled || Date.now() - this.lastMidgame < 180000) return;
+    this.lastMidgame = Date.now();
+    this.request("midgame");
+  },
 };
 
 // ---------- Câștig offline ----------
@@ -579,6 +623,7 @@ addEventListener("visibilitychange", () => { if (document.hidden) save(); });
 addEventListener("pagehide", save);
 applyLang();
 requestAnimationFrame(loop);
+Ads.init();
 </script>
 </body>
 </html>
