@@ -81,7 +81,7 @@ async function buy(p, row) { const b = await p.$(`.row:nth-child(${row}) .buy:no
 
 async function record(browser, scene, lang) {
   const dir = fs.mkdtempSync(path.join(OUT, '.rec-'));
-  const ctx = await browser.newContext({ viewport: { width: 540, height: 960 }, locale: lang, recordVideo: { dir, size: { width: 1080, height: 1920 } } });
+  const ctx = await browser.newContext({ viewport: { width: 540, height: 960 }, locale: lang, recordVideo: { dir, size: { width: 540, height: 960 } } });
   const p = await ctx.newPage();
   await p.addInitScript(() => { try { localStorage.clear(); } catch (e) {} });
   await p.goto(GAME);
@@ -98,7 +98,7 @@ async function record(browser, scene, lang) {
   const vid = p.video(); await ctx.close();
   const webm = await vid.path();
   const mp4 = path.join(OUT, `${scene}-${lang}.mp4`);
-  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', '0.6', '-i', webm, '-r', '30', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-movflags', '+faststart', mp4]);
+  execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', '0.6', '-i', webm, '-r', '30', '-vf', 'scale=1080:1920:flags=lanczos', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-movflags', '+faststart', mp4]);
   fs.rmSync(dir, { recursive: true, force: true });
   return mp4;
 }
