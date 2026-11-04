@@ -54,6 +54,7 @@
   <div id="boost"></div>
 </div>
 <div id="topbtns">
+  <button id="music" aria-label="music">🎵</button>
   <button id="sound" aria-label="sound">🔊</button>
   <button id="lang">EN</button>
 </div>
@@ -181,7 +182,7 @@ const UPGRADES = buildUpgrades();
 
 function freshState() {
   return { light: 0, lifeLight: 0, owned: STAR_TYPES.map(() => 0), ups: {}, dust: 0,
-    boostUntil: 0, lang: detectLang(), sound: true, last: Date.now(), daily: null };
+    boostUntil: 0, lang: detectLang(), sound: true, music: true, last: Date.now(), daily: null };
 }
 function detectLang() {
   const n = (navigator.language || "en").slice(0, 2).toLowerCase();
@@ -335,6 +336,37 @@ function blip(freq = 660, dur = 0.08, vol = 0.05) {
     o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + dur);
   } catch (e) {}
 }
+
+// ---------- Muzică de fundal (buclă fără pauză prin Web Audio) ----------
+const Music = {
+  gain: null, src: null, buffer: null, loading: false, paused: false,
+  async start() {
+    if (!S.music || this.src || this.loading || this.paused || this.failed || location.protocol === "file:") return;
+    this.loading = true;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state === "suspended") await actx.resume();
+      if (!this.buffer) {
+        for (const f of ["music/gradina-loop.ogg", "music/gradina-loop.mp3"]) {
+          try { const r = await fetch(f); if (!r.ok) continue; this.buffer = await actx.decodeAudioData(await r.arrayBuffer()); break; } catch (e) {}
+        }
+      }
+      if (this.buffer && S.music && !this.paused && !this.src) {
+        this.gain = this.gain || actx.createGain();
+        this.gain.gain.value = 0.35; this.gain.connect(actx.destination);
+        this.src = actx.createBufferSource(); this.src.buffer = this.buffer; this.src.loop = true;
+        this.src.connect(this.gain); this.src.start();
+      }
+      if (!this.buffer) this.failed = true; // nu reîncercăm la fiecare atingere
+    } catch (e) {}
+    this.loading = false;
+  },
+  stop() { try { this.src && this.src.stop(); } catch (e) {} this.src = null; },
+  pause() { this.paused = true; this.stop(); },
+  resume() { this.paused = false; this.start(); },
+};
+addEventListener("pointerdown", () => Music.start(), { passive: true });
+addEventListener("visibilitychange", () => { if (document.hidden) Music.pause(); else Music.resume(); });
 
 // ---------- Cer (canvas) ----------
 const cv = document.getElementById("sky"), cx = cv.getContext("2d");
@@ -529,7 +561,7 @@ function buyUp(u) {
 }
 function rebirth() {
   const g = rebirthGain(); if (!g) return;
-  const keep = { dust: S.dust + g, lang: S.lang, sound: S.sound, daily: S.daily };
+  const keep = { dust: S.dust + g, lang: S.lang, sound: S.sound, music: S.music, daily: S.daily };
   S = Object.assign(freshState(), keep);
   burst(W / 2, H / 3, "#e59bff", 60); blip(300, .5, .08);
   toast(`+${g} ${L().dust}`); save(); renderList(); renderHud();
@@ -543,11 +575,13 @@ function applyLang() {
   const [a, b, , c] = document.querySelectorAll("#tabs button");
   a.textContent = l.tabStars; b.textContent = l.tabUp; c.textContent = l.tabReb; updateBadge();
   $("sound").textContent = S.sound ? "🔊" : "🔇";
+  $("music").style.opacity = S.music ? "1" : "0.4";
   renderList(); renderHud();
 }
 document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { tab = b.dataset.tab; renderList(); });
 $("lang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % LANGS.length]; applyLang(); save(); };
 $("sound").onclick = () => { S.sound = !S.sound; applyLang(); save(); };
+$("music").onclick = () => { S.music = !S.music; if (S.music) Music.start(); else Music.stop(); applyLang(); save(); };
 
 // ---------- Reclame (stub; în Full Launch se înlocuiește cu SDK-ul CrazyGames) ----------
 // Pe CrazyGames se folosește SDK-ul lor. Oriunde altundeva (GitHub Pages, itch.io)
@@ -577,10 +611,10 @@ const Ads = {
     if (!this.enabled || this.busy) { onFail && onFail(); return; }
     this.busy = true;
     const wasSound = S.sound;
-    const end = ok => { this.busy = false; S.sound = wasSound; try { this.sdk.game.gameplayStart(); } catch (e) {} (ok ? onDone : onFail) && (ok ? onDone : onFail)(); };
+    const end = ok => { this.busy = false; S.sound = wasSound; Music.resume(); try { this.sdk.game.gameplayStart(); } catch (e) {} (ok ? onDone : onFail) && (ok ? onDone : onFail)(); };
     try {
       this.sdk.ad.requestAd(type, {
-        adStarted: () => { S.sound = false; try { this.sdk.game.gameplayStop(); } catch (e) {} },
+        adStarted: () => { S.sound = false; Music.pause(); try { this.sdk.game.gameplayStop(); } catch (e) {} },
         adFinished: () => end(true),
         adError: () => end(false),
       });

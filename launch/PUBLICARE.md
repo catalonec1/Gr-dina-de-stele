@@ -1,6 +1,6 @@
 # Publicare: pas cu pas
 
-Fișierul de urcat pe toate platformele: `launch/gradina-de-stele-web.zip` (conține doar `index.html`).
+Fișierul de urcat pe toate platformele: `launch/gradina-de-stele-web.zip` (conține `index.html` și folderul `music/`).
 Textele de copiat sunt în `launch/store-texts.md`. Imaginile: `cover-630x500.png` și `screenshot-*.png`.
 
 ## 1. itch.io (gratuit, donații)

@@ -87,6 +87,21 @@ async function fresh(b, locale = 'ro-RO', init) {
   await p.click('.row:nth-child(1) .buy'); await p.waitForTimeout(150);
   ok(await p.evaluate(() => S.boostUntil === 0 && S.sound === true && !Ads.busy), 'fără reclamă: fără bonus, sunet revenit');
   ok(await p.evaluate(() => !Ads.onCrazyGames()), 'pe alte site-uri SDK-ul nu se încarcă');
+  // muzică: se încarcă prin HTTP și se poate opri
+  const http = require('http'), fsx = require('fs');
+  const root = path.resolve(__dirname, '..');
+  const srv = http.createServer((q, r) => { const f = path.join(root, decodeURIComponent(q.url.split('?')[0]).replace(/^\/$/, '/index.html'));
+    fsx.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); } else { r.writeHead(200); r.end(d); } }); }).listen(0);
+  const port = srv.address().port;
+  const ctxm = await b.newContext({ viewport: { width: 390, height: 844 } }); const pm = await ctxm.newPage(); const em = [];
+  pm.on('pageerror', e => em.push(e.message));
+  await pm.goto(`http://127.0.0.1:${port}/`); await pm.mouse.click(200, 300);
+  await pm.waitForFunction(() => Music.src !== null, null, { timeout: 8000 }).catch(() => {});
+  ok(await pm.evaluate(() => Music.src !== null && Music.buffer.duration > 40), 'muzica pornește după prima atingere și se buclează');
+  await pm.click('#music');
+  ok(await pm.evaluate(() => Music.src === null && S.music === false), 'butonul de muzică oprește muzica');
+  ok(em.length === 0, 'fără erori cu muzica ' + em.join('|'));
+  srv.close();
   await b.close();
   console.log(fails ? `\n${fails} TESTE PICATE` : '\nTOATE TESTELE AU TRECUT');
   process.exit(fails ? 1 : 0);

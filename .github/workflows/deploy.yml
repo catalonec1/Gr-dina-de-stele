@@ -39,6 +39,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html _site/
+          cp -r music _site/
           cp launch/cover-630x500.png _site/cover.png
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
