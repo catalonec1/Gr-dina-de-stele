@@ -1,0 +1,329 @@
+/* Orbita licuriciului / Firefly Orbit / Орбита светлячка
+ * Logica pură a jocului (fără DOM), folosită în browser și în testele Node.
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.FO = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  var TAU = Math.PI * 2;
+  var RINGS = [0.36, 0.58, 0.8];          // raze relative (fracție din jumătatea ecranului)
+  var HIT_ANGLE = 0.2;                     // rad: distanța unghiulară pentru coliziune
+  var PICK_ANGLE = 0.26;                   // rad: distanța pentru a culege o picătură
+  var BASE_SPEED = 1.5;                    // rad/s
+  var MAX_SPEED = 3.6;
+  var SAVE_VERSION = 1;
+
+  // Magazin: prețuri în scântei (monedă de joc) sau în Telegram Stars (XTR).
+  var SKINS = [
+    { id: 'amber',  color: '#ffd166', glow: '#ffb703', price: 0 },
+    { id: 'mint',   color: '#7cf5c4', glow: '#2ec4b6', price: 150 },
+    { id: 'rose',   color: '#ff8fab', glow: '#fb6f92', price: 300 },
+    { id: 'violet', color: '#c8a2ff', glow: '#9d4edd', price: 600 },
+    { id: 'aurora', color: '#9bf6ff', glow: '#4cc9f0', stars: true },
+    { id: 'ember',  color: '#ff9e6d', glow: '#f3722c', stars: true }
+  ];
+  var STAR_ITEMS = {
+    aurora_pack: { stars: 50,  grants: ['skin:aurora', 'skin:ember'] },
+    double_sparks: { stars: 100, grants: ['perk:double'] },
+    shield_pack: { stars: 25,  grants: ['shields:10'] }
+  };
+
+  function mulberry32(seed) {
+    var a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      var t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function normAngle(a) { a %= TAU; return a < 0 ? a + TAU : a; }
+  function angDist(a, b) {
+    var d = Math.abs(normAngle(a) - normAngle(b));
+    return d > Math.PI ? TAU - d : d;
+  }
+
+  function newRun(opts) {
+    opts = opts || {};
+    return {
+      t: 0,
+      ring: 1,
+      angle: 0,
+      dir: 1,
+      speed: BASE_SPEED,
+      score: 0,
+      sparks: 0,
+      combo: 0,
+      bestCombo: 0,
+      items: [],             // {kind:'drop'|'moth', ring, angle, drift, ttl}
+      spawnIn: 0.6,
+      shield: !!opts.shield,
+      continued: false,
+      over: false,
+      jumpFx: 0,
+      events: []             // evenimente pentru UI/sunet: 'pick','hit','shield','jump'
+    };
+  }
+
+  function speedAt(t) { return Math.min(MAX_SPEED, BASE_SPEED + t * 0.03); }
+
+  // Locurile sigure: nu punem o molie direct în fața licuriciului pe inelul lui.
+  function spawn(run, rng) {
+    var mothChance = Math.min(0.55, 0.28 + run.t * 0.006);
+    var kind = rng() < mothChance ? 'moth' : 'drop';
+    var ring = Math.floor(rng() * RINGS.length);
+    var ahead = 1.4 + rng() * (TAU - 2.5);   // ≥80° în față și ≥63° în spate
+    var angle = normAngle(run.angle + run.dir * ahead);
+    var drift = kind === 'moth' ? (rng() - 0.5) * 0.6 * Math.min(1, run.t / 40) : 0;
+    run.items.push({ kind: kind, ring: ring, angle: angle, drift: drift, ttl: 9 + rng() * 4 });
+  }
+
+  function step(run, dt, rng) {
+    if (run.over) return run;
+    run.events.length = 0;
+    run.t += dt;
+    run.speed = speedAt(run.t);
+    run.angle = normAngle(run.angle + run.dir * run.speed * dt);
+    run.score += dt * 2;
+    if (run.jumpFx > 0) run.jumpFx = Math.max(0, run.jumpFx - dt * 4);
+
+    run.spawnIn -= dt;
+    if (run.spawnIn <= 0) {
+      spawn(run, rng);
+      run.spawnIn = Math.max(0.35, 0.9 - run.t * 0.008) * (0.7 + rng() * 0.6);
+    }
+
+    for (var i = run.items.length - 1; i >= 0; i--) {
+      var it = run.items[i];
+      it.ttl -= dt;
+      it.angle = normAngle(it.angle + it.drift * dt);
+      if (it.ttl <= 0) { run.items.splice(i, 1); continue; }
+      if (it.ring !== run.ring) continue;
+      var d = angDist(it.angle, run.angle);
+      if (it.kind === 'drop' && d < PICK_ANGLE) {
+        run.items.splice(i, 1);
+        run.combo += 1;
+        run.bestCombo = Math.max(run.bestCombo, run.combo);
+        var gain = 1 + Math.floor(run.combo / 5);
+        run.sparks += gain;
+        run.score += 10 * gain;
+        run.events.push('pick');
+      } else if (it.kind === 'moth' && d < HIT_ANGLE) {
+        run.items.splice(i, 1);
+        if (run.shield) {
+          run.shield = false;
+          run.combo = 0;
+          run.events.push('shield');
+        } else {
+          run.over = true;
+          run.events.push('hit');
+          return run;
+        }
+      }
+    }
+    return run;
+  }
+
+  // Atingere: licuriciul sare pe inelul următor (spre exterior, apoi revine în centru).
+  function tap(run) {
+    if (run.over) return run;
+    run.ring = (run.ring + 1) % RINGS.length;
+    run.jumpFx = 1;
+    run.events.push('jump');
+    return run;
+  }
+
+  // Reclamă vizionată: continuăm o singură dată pe tură, cu molii curățate în jur.
+  function revive(run) {
+    if (!run.over || run.continued) return false;
+    run.over = false;
+    run.continued = true;
+    run.items = run.items.filter(function (it) { return it.kind !== 'moth'; });
+    run.shield = true;
+    return true;
+  }
+
+  // ---------- Profil și economie ----------
+  function defaultProfile() {
+    return {
+      v: SAVE_VERSION,
+      best: 0,
+      sparks: 0,
+      runs: 0,
+      skin: 'amber',
+      owned: ['skin:amber'],
+      shields: 0,
+      lastDaily: '',
+      lang: ''
+    };
+  }
+
+  function sanitizeProfile(raw) {
+    var p = defaultProfile();
+    if (!raw || typeof raw !== 'object') return p;
+    function num(x) { x = Number(x); return isFinite(x) && x >= 0 ? Math.floor(x) : 0; }
+    p.best = num(raw.best);
+    p.sparks = num(raw.sparks);
+    p.runs = num(raw.runs);
+    p.shields = Math.min(999, num(raw.shields));
+    if (Array.isArray(raw.owned)) {
+      raw.owned.forEach(function (o) {
+        if (typeof o === 'string' && o.length < 40 && p.owned.indexOf(o) < 0) p.owned.push(o);
+      });
+    }
+    if (typeof raw.skin === 'string' && p.owned.indexOf('skin:' + raw.skin) >= 0) p.skin = raw.skin;
+    if (typeof raw.lastDaily === 'string') p.lastDaily = raw.lastDaily.slice(0, 10);
+    if (raw.lang === 'ro' || raw.lang === 'en' || raw.lang === 'ru') p.lang = raw.lang;
+    return p;
+  }
+
+  function parseProfile(str) {
+    try { return sanitizeProfile(JSON.parse(str)); } catch (e) { return defaultProfile(); }
+  }
+
+  function owns(p, key) { return p.owned.indexOf(key) >= 0; }
+
+  function finishRun(p, run) {
+    var mult = owns(p, 'perk:double') ? 2 : 1;
+    var earned = run.sparks * mult;
+    var score = Math.floor(run.score);
+    p.sparks += earned;
+    p.runs += 1;
+    var record = score > p.best;
+    if (record) p.best = score;
+    return { earned: earned, score: score, record: record };
+  }
+
+  function skinById(id) {
+    for (var i = 0; i < SKINS.length; i++) if (SKINS[i].id === id) return SKINS[i];
+    return null;
+  }
+
+  // Cumpărare cu scântei. Întoarce un cod: 'ok' | 'owned' | 'poor' | 'stars' | 'unknown'.
+  function buySkin(p, id) {
+    var s = skinById(id);
+    if (!s) return 'unknown';
+    if (owns(p, 'skin:' + id)) return 'owned';
+    if (s.stars) return 'stars';
+    if (p.sparks < s.price) return 'poor';
+    p.sparks -= s.price;
+    p.owned.push('skin:' + id);
+    return 'ok';
+  }
+
+  function equipSkin(p, id) {
+    if (!owns(p, 'skin:' + id)) return false;
+    p.skin = id;
+    return true;
+  }
+
+  // Aplică un produs plătit în Stars (după confirmarea plății).
+  function grantStarItem(p, itemId) {
+    var item = STAR_ITEMS[itemId];
+    if (!item) return false;
+    item.grants.forEach(function (g) {
+      if (g.indexOf('shields:') === 0) {
+        p.shields = Math.min(999, p.shields + Number(g.split(':')[1]));
+      } else if (!owns(p, g)) {
+        p.owned.push(g);
+      }
+    });
+    return true;
+  }
+
+  function todayKey(date) {
+    var d = date || new Date();
+    return d.getUTCFullYear() + '-' + String(d.getUTCMonth() + 1).padStart(2, '0') + '-' + String(d.getUTCDate()).padStart(2, '0');
+  }
+
+  function canClaimDaily(p, date) { return p.lastDaily !== todayKey(date); }
+  function claimDaily(p, date) {
+    if (!canClaimDaily(p, date)) return 0;
+    p.lastDaily = todayKey(date);
+    p.sparks += 50;
+    return 50;
+  }
+
+  // ---------- Texte ----------
+  var I18N = {
+    ro: {
+      title: 'Orbita licuriciului',
+      tagline: 'Atinge ca să sari între inele. Culege lumina, ocolește moliile.',
+      play: 'Joacă', best: 'Record', sparks: 'Scântei', shop: 'Magazin', back: 'Înapoi',
+      score: 'Scor', gameOver: 'Lumina s-a stins', newRecord: 'Record nou!',
+      earned: 'Ai strâns {n} scântei', again: 'Din nou', revive: 'Continuă (reclamă)',
+      daily: 'Cadou zilnic +50 (reclamă)', dailyDone: 'Cadoul zilnic a fost luat',
+      useShield: 'Pornește cu scut ({n})', equip: 'Alege', equipped: 'Ales', buy: 'Cumpără',
+      price: '{n} scântei', stars: '{n} ⭐', poor: 'Nu ai destule scântei',
+      starsTitle: 'Cu Telegram Stars', packAurora: 'Pachet Aurora + Jar (2 culori)',
+      packDouble: 'Scântei ×2 pentru totdeauna', packShield: '10 scuturi',
+      thanks: 'Mulțumim! Produsul a fost adăugat.', payFail: 'Plata nu s-a finalizat.',
+      noAd: 'Reclama nu e disponibilă acum.', terms: 'Termeni', support: 'Suport',
+      termsText: 'Produsele cumpărate cu Stars sunt digitale și se folosesc doar în acest joc. Probleme cu plata: scrie /paysupport botului. Suportul Telegram nu poate ajuta la cumpărăturile din boți.',
+      agree: 'Prin cumpărare ești de acord cu Termenii.', owned: 'Deținut', combo: 'Serie ×{n}',
+      hint: 'Atinge oriunde'
+    },
+    en: {
+      title: 'Firefly Orbit',
+      tagline: 'Tap to hop between rings. Catch the light, dodge the moths.',
+      play: 'Play', best: 'Best', sparks: 'Sparks', shop: 'Shop', back: 'Back',
+      score: 'Score', gameOver: 'Your light went out', newRecord: 'New record!',
+      earned: 'You gathered {n} sparks', again: 'Again', revive: 'Continue (ad)',
+      daily: 'Daily gift +50 (ad)', dailyDone: 'Daily gift already claimed',
+      useShield: 'Start with shield ({n})', equip: 'Select', equipped: 'Selected', buy: 'Buy',
+      price: '{n} sparks', stars: '{n} ⭐', poor: 'Not enough sparks',
+      starsTitle: 'With Telegram Stars', packAurora: 'Aurora + Ember pack (2 colors)',
+      packDouble: 'Double sparks forever', packShield: '10 shields',
+      thanks: 'Thank you! Your item was added.', payFail: 'Payment was not completed.',
+      noAd: 'No ad available right now.', terms: 'Terms', support: 'Support',
+      termsText: 'Items bought with Stars are digital and only usable in this game. Payment issues: send /paysupport to the bot. Telegram support cannot help with purchases made in bots.',
+      agree: 'By purchasing you agree to the Terms.', owned: 'Owned', combo: 'Streak ×{n}',
+      hint: 'Tap anywhere'
+    },
+    ru: {
+      title: 'Орбита светлячка',
+      tagline: 'Нажимай, чтобы прыгать между кольцами. Лови свет, избегай мотыльков.',
+      play: 'Играть', best: 'Рекорд', sparks: 'Искры', shop: 'Магазин', back: 'Назад',
+      score: 'Счёт', gameOver: 'Свет погас', newRecord: 'Новый рекорд!',
+      earned: 'Ты собрал {n} искр', again: 'Ещё раз', revive: 'Продолжить (реклама)',
+      daily: 'Ежедневный подарок +50 (реклама)', dailyDone: 'Подарок уже получен',
+      useShield: 'Начать со щитом ({n})', equip: 'Выбрать', equipped: 'Выбрано', buy: 'Купить',
+      price: '{n} искр', stars: '{n} ⭐', poor: 'Не хватает искр',
+      starsTitle: 'За Telegram Stars', packAurora: 'Набор Аврора + Уголёк (2 цвета)',
+      packDouble: 'Двойные искры навсегда', packShield: '10 щитов',
+      thanks: 'Спасибо! Покупка добавлена.', payFail: 'Оплата не завершена.',
+      noAd: 'Реклама сейчас недоступна.', terms: 'Условия', support: 'Поддержка',
+      termsText: 'Товары за Stars цифровые и используются только в этой игре. Проблемы с оплатой: отправь боту /paysupport. Поддержка Telegram не помогает с покупками в ботах.',
+      agree: 'Покупая, ты соглашаешься с Условиями.', owned: 'Есть', combo: 'Серия ×{n}',
+      hint: 'Нажми где угодно'
+    }
+  };
+
+  function pickLang(code) {
+    code = String(code || '').toLowerCase();
+    if (code.indexOf('ro') === 0 || code.indexOf('mo') === 0) return 'ro';
+    if (code.indexOf('ru') === 0 || code.indexOf('uk') === 0 || code.indexOf('be') === 0) return 'ru';
+    return 'en';
+  }
+
+  function tr(lang, key, n) {
+    var dict = I18N[lang] || I18N.en;
+    var s = dict[key] != null ? dict[key] : (I18N.en[key] != null ? I18N.en[key] : key);
+    return n != null ? s.replace('{n}', n) : s;
+  }
+
+  return {
+    TAU: TAU, RINGS: RINGS, SKINS: SKINS, STAR_ITEMS: STAR_ITEMS, I18N: I18N,
+    HIT_ANGLE: HIT_ANGLE, PICK_ANGLE: PICK_ANGLE,
+    mulberry32: mulberry32, normAngle: normAngle, angDist: angDist,
+    newRun: newRun, step: step, tap: tap, revive: revive, speedAt: speedAt,
+    defaultProfile: defaultProfile, sanitizeProfile: sanitizeProfile, parseProfile: parseProfile,
+    owns: owns, finishRun: finishRun, buySkin: buySkin, equipSkin: equipSkin, skinById: skinById,
+    grantStarItem: grantStarItem, todayKey: todayKey, canClaimDaily: canClaimDaily, claimDaily: claimDaily,
+    pickLang: pickLang, tr: tr
+  };
+});

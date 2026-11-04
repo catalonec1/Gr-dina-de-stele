@@ -1,0 +1,509 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Firefly Orbit</title>
+<meta name="description" content="Firefly Orbit: a one-tap Telegram mini game. Hop between rings, catch the light, dodge the moths.">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="config.js"></script>
+<script src="core.js"></script>
+<style>
+  :root {
+    --bg: #0b1026; --bg2: #18204a; --ink: #f4f1ff; --muted: #a7a9cf;
+    --accent: #ffd166; --accent-ink: #2a1d00; --danger: #ff6b8b; --card: rgba(255,255,255,.07);
+    --line: rgba(255,255,255,.14);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink);
+    font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; overflow: hidden;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .screen { position: fixed; inset: 0; display: none; flex-direction: column; align-items: center;
+    justify-content: center; gap: 14px; padding: 24px 16px calc(24px + env(safe-area-inset-bottom));
+    text-align: center; background: radial-gradient(ellipse at 50% 40%, rgba(24,32,74,.55), rgba(11,16,38,.92)); }
+  .screen.on { display: flex; }
+  h1 { font-size: 30px; margin: 0; letter-spacing: .5px; }
+  h2 { font-size: 24px; margin: 0; }
+  p { margin: 0; color: var(--muted); max-width: 340px; }
+  .stats { display: flex; gap: 10px; }
+  .pill { background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px; font-size: 14px; }
+  .pill b { color: var(--accent); }
+  button { font: inherit; border: 0; border-radius: 14px; padding: 13px 22px; min-width: 220px; cursor: pointer;
+    background: var(--card); color: var(--ink); border: 1px solid var(--line); }
+  button.primary { background: var(--accent); color: var(--accent-ink); font-weight: 700; font-size: 18px; border: 0; }
+  button:disabled { opacity: .45; cursor: default; }
+  button.small { min-width: 0; padding: 8px 14px; font-size: 14px; border-radius: 10px; }
+  .links { display: flex; gap: 8px; margin-top: 6px; }
+  .links button { min-width: 0; padding: 6px 12px; font-size: 13px; background: none; border: 0; color: var(--muted); text-decoration: underline; }
+  #hud { position: fixed; top: calc(10px + env(safe-area-inset-top)); left: 0; right: 0; display: none;
+    justify-content: space-between; padding: 0 16px; pointer-events: none; font-weight: 700; }
+  #hud.on { display: flex; }
+  #combo { position: fixed; top: 46px; left: 0; right: 0; text-align: center; color: var(--accent); font-weight: 700;
+    opacity: 0; transition: opacity .2s; pointer-events: none; }
+  #hint { position: fixed; bottom: calc(60px + env(safe-area-inset-bottom)); left: 0; right: 0; text-align: center;
+    color: var(--muted); pointer-events: none; display: none; }
+  #shop { justify-content: flex-start; overflow-y: auto; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; width: 100%; max-width: 380px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex;
+    flex-direction: column; align-items: center; gap: 8px; }
+  .dot { width: 34px; height: 34px; border-radius: 50%; }
+  .rows { display: flex; flex-direction: column; gap: 8px; width: 100%; max-width: 380px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card);
+    border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; text-align: left; }
+  .note { font-size: 12px; }
+  #toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); transform: translateX(-50%);
+    background: #000c; color: #fff; padding: 10px 16px; border-radius: 12px; font-size: 14px; opacity: 0;
+    transition: opacity .25s; pointer-events: none; max-width: calc(100% - 32px); }
+  #toast.on { opacity: 1; }
+  #modal { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: #0009; padding: 16px; }
+  #modal.on { display: flex; }
+  #modal .box { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 18px; max-width: 380px; text-align: left; }
+  #modal .box p { max-width: none; margin-bottom: 14px; }
+  .lang { display: flex; gap: 6px; }
+  .lang button { min-width: 0; padding: 6px 10px; font-size: 13px; border-radius: 8px; }
+  .lang button.sel { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="hud"><span id="hudScore">0</span><span id="hudSparks">✦ 0</span></div>
+<div id="combo"></div>
+<div id="hint" data-t="hint"></div>
+
+<section id="menu" class="screen on">
+  <h1 data-t="title"></h1>
+  <p data-t="tagline"></p>
+  <div class="stats">
+    <span class="pill"><span data-t="best"></span>: <b id="mBest">0</b></span>
+    <span class="pill">✦ <b id="mSparks">0</b></span>
+  </div>
+  <button id="btnPlay" class="primary" data-t="play"></button>
+  <button id="btnShield"></button>
+  <button id="btnDaily"></button>
+  <button id="btnShop" data-t="shop"></button>
+  <div class="lang" id="langs">
+    <button data-lang="ro">RO</button><button data-lang="en">EN</button><button data-lang="ru">RU</button>
+  </div>
+  <div class="links"><button id="lnkTerms" data-t="terms"></button><button id="lnkSupport" data-t="support"></button></div>
+</section>
+
+<section id="over" class="screen">
+  <h2 data-t="gameOver"></h2>
+  <p id="oRecord" style="color:var(--accent);font-weight:700"></p>
+  <div class="stats">
+    <span class="pill"><span data-t="score"></span>: <b id="oScore">0</b></span>
+    <span class="pill"><span data-t="best"></span>: <b id="oBest">0</b></span>
+  </div>
+  <p id="oEarned"></p>
+  <button id="btnRevive"></button>
+  <button id="btnAgain" class="primary" data-t="again"></button>
+  <button id="btnOverMenu" data-t="back"></button>
+</section>
+
+<section id="shop" class="screen">
+  <h2 data-t="shop"></h2>
+  <span class="pill">✦ <b id="sSparks">0</b></span>
+  <div class="grid" id="skinGrid"></div>
+  <h2 id="starsHead" data-t="starsTitle" style="font-size:18px;margin-top:6px"></h2>
+  <div class="rows" id="starRows"></div>
+  <p class="note" id="starsNote" data-t="agree"></p>
+  <button id="btnShopBack" data-t="back"></button>
+</section>
+
+<div id="modal"><div class="box"><p id="modalText"></p><button class="small" id="modalOk">OK</button></div></div>
+<div id="toast"></div>
+
+<script>
+(function () {
+  'use strict';
+  var FO = window.FO, CFG = window.FO_CONFIG || {};
+  var tg = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData !== undefined ? window.Telegram.WebApp : null;
+  var STORE_KEY = 'fo_profile';
+  var profile = FO.defaultProfile();
+  var lang = 'en';
+  var run = null, rng = FO.mulberry32(Date.now() & 0xffffffff), lastTs = 0, raf = 0;
+  var particles = [], bgStars = [];
+  var ads = null;
+
+  function $(id) { return document.getElementById(id); }
+  function t(k, n) { return FO.tr(lang, k, n); }
+  function haptic(kind) {
+    try {
+      if (!tg || !tg.HapticFeedback) return;
+      if (kind === 'hit') tg.HapticFeedback.notificationOccurred('error');
+      else if (kind === 'ok') tg.HapticFeedback.notificationOccurred('success');
+      else tg.HapticFeedback.impactOccurred(kind || 'light');
+    } catch (e) {}
+  }
+  var toastTimer = 0;
+  function toast(msg) {
+    var el = $('toast'); el.textContent = msg; el.classList.add('on');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { el.classList.remove('on'); }, 2200);
+  }
+  function modal(text) { $('modalText').textContent = text; $('modal').classList.add('on'); }
+  $('modalOk').onclick = function () { $('modal').classList.remove('on'); };
+
+  // ---------- Salvare: Telegram CloudStorage + localStorage ----------
+  function save() {
+    var s = JSON.stringify(profile);
+    try { localStorage.setItem(STORE_KEY, s); } catch (e) {}
+    try { if (tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9')) tg.CloudStorage.setItem(STORE_KEY, s, function () {}); } catch (e) {}
+  }
+  function mergeProfiles(a, b) {
+    var p = FO.sanitizeProfile(a.runs >= b.runs ? a : b);
+    var other = a.runs >= b.runs ? b : a;
+    p.best = Math.max(a.best, b.best);
+    other.owned.forEach(function (o) { if (p.owned.indexOf(o) < 0) p.owned.push(o); });
+    return p;
+  }
+  function load(done) {
+    var local = FO.defaultProfile();
+    try { local = FO.parseProfile(localStorage.getItem(STORE_KEY)); } catch (e) {}
+    if (tg && tg.CloudStorage && tg.isVersionAtLeast && tg.isVersionAtLeast('6.9')) {
+      var finished = false;
+      var timer = setTimeout(function () { if (!finished) { finished = true; done(local); } }, 1500);
+      try {
+        tg.CloudStorage.getItem(STORE_KEY, function (err, val) {
+          if (finished) return; finished = true; clearTimeout(timer);
+          done(err || !val ? local : mergeProfiles(local, FO.parseProfile(val)));
+        });
+      } catch (e) { finished = true; clearTimeout(timer); done(local); }
+    } else done(local);
+  }
+
+  // ---------- Texte ----------
+  function applyLang() {
+    document.documentElement.lang = lang;
+    document.title = t('title');
+    document.querySelectorAll('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
+    document.querySelectorAll('#langs button').forEach(function (b) { b.classList.toggle('sel', b.getAttribute('data-lang') === lang); });
+    refreshMenu();
+  }
+  document.querySelectorAll('#langs button').forEach(function (b) {
+    b.onclick = function () { lang = b.getAttribute('data-lang'); profile.lang = lang; save(); applyLang(); };
+  });
+
+  // ---------- Ecrane ----------
+  function show(id) {
+    ['menu', 'over', 'shop'].forEach(function (s) { $(s).classList.toggle('on', s === id); });
+    $('hud').classList.toggle('on', id === null);
+    $('hint').style.display = 'none';
+    if (tg && tg.BackButton) { try { id === 'shop' ? tg.BackButton.show() : tg.BackButton.hide(); } catch (e) {} }
+  }
+  function refreshMenu() {
+    $('mBest').textContent = profile.best;
+    $('mSparks').textContent = profile.sparks;
+    var bs = $('btnShield');
+    bs.textContent = t('useShield', profile.shields);
+    bs.style.display = profile.shields > 0 ? '' : 'none';
+    var bd = $('btnDaily');
+    bd.style.display = ads ? '' : 'none';
+    var canDaily = FO.canClaimDaily(profile);
+    bd.disabled = !canDaily;
+    bd.textContent = canDaily ? t('daily') : t('dailyDone');
+  }
+
+  // ---------- Reclame Adsgram (doar recompensate) ----------
+  function initAds() {
+    if (!CFG.ADSGRAM_BLOCK_ID || !tg) return;
+    var s = document.createElement('script');
+    s.src = 'https://sad.adsgram.ai/js/sad.min.js';
+    s.onload = function () {
+      try { ads = window.Adsgram.init({ blockId: String(CFG.ADSGRAM_BLOCK_ID) }); } catch (e) { ads = null; }
+      refreshMenu();
+    };
+    document.head.appendChild(s);
+  }
+  // Întoarce Promise<boolean>: true doar dacă reclama a fost vizionată până la capăt.
+  function showRewarded() {
+    if (!ads) return Promise.resolve(false);
+    return ads.show().then(function (r) { return !r || r.done !== false; }, function () { return false; });
+  }
+
+  // ---------- Joc ----------
+  function startRun(withShield) {
+    if (withShield && profile.shields > 0) { profile.shields -= 1; save(); }
+    run = FO.newRun({ shield: !!withShield });
+    particles = [];
+    show(null);
+    $('hint').style.display = '';
+    lastTs = 0;
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(loop);
+  }
+  function endRun() {
+    var res = FO.finishRun(profile, run);
+    save();
+    $('oScore').textContent = res.score;
+    $('oBest').textContent = profile.best;
+    $('oRecord').textContent = res.record ? t('newRecord') : '';
+    $('oEarned').textContent = t('earned', res.earned);
+    var br = $('btnRevive');
+    br.textContent = t('revive');
+    br.style.display = ads && !run.continued ? '' : 'none';
+    br.disabled = false;
+    show('over');
+    run._result = res;
+  }
+  function onTap(e) {
+    if (!run || run.over || !$('hud').classList.contains('on')) return;
+    if (e) e.preventDefault();
+    FO.tap(run);
+    $('hint').style.display = 'none';
+    haptic('light');
+  }
+  window.addEventListener('pointerdown', function (e) { if (e.target === $('cv')) onTap(e); }, { passive: false });
+  window.addEventListener('keydown', function (e) { if (e.code === 'Space' || e.code === 'ArrowUp') onTap(e); });
+
+  $('btnPlay').onclick = function () { startRun(false); };
+  $('btnShield').onclick = function () { startRun(true); };
+  $('btnAgain').onclick = function () { startRun(false); };
+  $('btnOverMenu').onclick = function () { refreshMenu(); show('menu'); };
+  $('btnShop').onclick = function () { renderShop(); show('shop'); };
+  $('btnShopBack').onclick = function () { refreshMenu(); show('menu'); };
+  if (tg && tg.BackButton) { try { tg.BackButton.onClick(function () { refreshMenu(); show('menu'); }); } catch (e) {} }
+  $('lnkTerms').onclick = function () { modal(t('termsText')); };
+  $('lnkSupport').onclick = function () { modal(t('termsText')); };
+
+  $('btnRevive').onclick = function () {
+    var b = this; b.disabled = true;
+    showRewarded().then(function (ok) {
+      if (!ok) { toast(t('noAd')); b.disabled = false; return; }
+      // Anulăm câștigul înregistrat și continuăm aceeași tură.
+      var r = run._result;
+      profile.sparks -= r.earned; profile.runs -= 1;
+      save();
+      FO.revive(run);
+      show(null);
+      lastTs = 0;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(loop);
+    });
+  };
+  $('btnDaily').onclick = function () {
+    var b = this; b.disabled = true;
+    showRewarded().then(function (ok) {
+      if (ok) { FO.claimDaily(profile); save(); haptic('ok'); toast('+50 ✦'); }
+      else toast(t('noAd'));
+      refreshMenu();
+    });
+  };
+
+  // ---------- Magazin ----------
+  function renderShop() {
+    $('sSparks').textContent = profile.sparks;
+    var g = $('skinGrid'); g.innerHTML = '';
+    FO.SKINS.forEach(function (s) {
+      var c = document.createElement('div'); c.className = 'card';
+      var d = document.createElement('div'); d.className = 'dot';
+      d.style.background = s.color; d.style.boxShadow = '0 0 16px ' + s.glow;
+      c.appendChild(d);
+      var b = document.createElement('button'); b.className = 'small';
+      var owned = FO.owns(profile, 'skin:' + s.id);
+      if (owned) {
+        b.textContent = profile.skin === s.id ? t('equipped') : t('equip');
+        b.disabled = profile.skin === s.id;
+        b.onclick = function () { FO.equipSkin(profile, s.id); save(); renderShop(); };
+      } else if (s.stars) {
+        b.textContent = '⭐'; b.disabled = !starsEnabled();
+        b.onclick = function () { buyStars('aurora_pack'); };
+      } else {
+        b.textContent = t('price', s.price);
+        b.onclick = function () {
+          var r = FO.buySkin(profile, s.id);
+          if (r === 'ok') { FO.equipSkin(profile, s.id); save(); haptic('ok'); renderShop(); }
+          else if (r === 'poor') toast(t('poor'));
+        };
+      }
+      c.appendChild(b); g.appendChild(c);
+    });
+    var rows = $('starRows'); rows.innerHTML = '';
+    var labels = { aurora_pack: 'packAurora', double_sparks: 'packDouble', shield_pack: 'packShield' };
+    var on = starsEnabled();
+    ['aurora_pack', 'double_sparks', 'shield_pack'].forEach(function (id) {
+      var item = FO.STAR_ITEMS[id];
+      var r = document.createElement('div'); r.className = 'row';
+      var l = document.createElement('span'); l.textContent = t(labels[id]);
+      var b = document.createElement('button'); b.className = 'small';
+      var permanentOwned = id !== 'shield_pack' && item.grants.every(function (gk) { return FO.owns(profile, gk); });
+      b.textContent = permanentOwned ? t('owned') : t('stars', item.stars);
+      b.disabled = permanentOwned || !on;
+      b.onclick = function () { buyStars(id); };
+      r.appendChild(l); r.appendChild(b); rows.appendChild(r);
+    });
+    $('starsHead').style.display = $('starRows').style.display = $('starsNote').style.display = on ? '' : 'none';
+  }
+
+  // ---------- Telegram Stars ----------
+  function starsEnabled() { return !!(CFG.API_BASE && tg && tg.initData && tg.openInvoice); }
+  function api(path, body) {
+    return fetch(CFG.API_BASE + path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ initData: tg.initData }, body || {}))
+    }).then(function (r) { if (!r.ok) throw new Error('http ' + r.status); return r.json(); });
+  }
+  // Serverul ține evidența plăților; aplicăm local doar ce confirmă serverul.
+  function syncPurchases() {
+    if (!starsEnabled()) return Promise.resolve();
+    return api('/api/purchases').then(function (res) {
+      var changed = false;
+      (res.items || []).forEach(function (p) {
+        var key = 'paid:' + p.charge;
+        if (FO.owns(profile, key)) return;
+        if (FO.grantStarItem(profile, p.item)) { profile.owned.push(key); changed = true; }
+      });
+      if (changed) { save(); refreshMenu(); if ($('shop').classList.contains('on')) renderShop(); }
+      return changed;
+    }).catch(function () {});
+  }
+  function buyStars(itemId) {
+    if (!starsEnabled()) return;
+    api('/api/invoice', { item: itemId }).then(function (res) {
+      tg.openInvoice(res.link, function (status) {
+        if (status === 'paid') {
+          // Webhook-ul poate întârzia puțin; reîncercăm câteva secunde.
+          var tries = 0;
+          (function again() {
+            syncPurchases().then(function (changed) {
+              if (changed) { haptic('ok'); toast(t('thanks')); }
+              else if (++tries < 6) setTimeout(again, 1000);
+            });
+          })();
+        } else if (status === 'failed') toast(t('payFail'));
+      });
+    }).catch(function () { toast(t('payFail')); });
+  }
+
+  // ---------- Desen ----------
+  var cv = $('cv'), ctx = cv.getContext('2d'), W = 0, H = 0, DPR = 1;
+  function resize() {
+    DPR = Math.min(2, window.devicePixelRatio || 1);
+    W = window.innerWidth; H = window.innerHeight;
+    cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    bgStars = [];
+    var r = FO.mulberry32(7);
+    for (var i = 0; i < 90; i++) bgStars.push({ x: r() * W, y: r() * H, s: r() * 1.4 + .3, p: r() * 6 });
+  }
+  window.addEventListener('resize', resize);
+  if (tg && tg.onEvent) { try { tg.onEvent('viewportChanged', resize); } catch (e) {} }
+  resize();
+
+  function geom() {
+    var R = Math.min(W, H * 0.9) / 2;
+    return { cx: W / 2, cy: H * 0.52, R: R };
+  }
+  function pos(g, ring, angle) {
+    var r = FO.RINGS[ring] * g.R;
+    return { x: g.cx + Math.cos(angle) * r, y: g.cy + Math.sin(angle) * r };
+  }
+  function burst(x, y, color, n) {
+    for (var i = 0; i < n; i++) {
+      var a = Math.random() * FO.TAU, v = 40 + Math.random() * 90;
+      particles.push({ x: x, y: y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: .6, color: color });
+    }
+  }
+
+  function draw(now) {
+    var g = geom(), time = now / 1000;
+    var grad = ctx.createRadialGradient(g.cx, g.cy, 10, g.cx, g.cy, Math.max(W, H));
+    grad.addColorStop(0, '#1d2660'); grad.addColorStop(1, '#070a1a');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    bgStars.forEach(function (s) {
+      ctx.globalAlpha = .35 + .35 * Math.sin(time * 1.3 + s.p);
+      ctx.fillStyle = '#fff'; ctx.fillRect(s.x, s.y, s.s, s.s);
+    });
+    ctx.globalAlpha = 1;
+    // felinarul central
+    var lg = ctx.createRadialGradient(g.cx, g.cy, 0, g.cx, g.cy, g.R * .26);
+    lg.addColorStop(0, 'rgba(255,220,140,.95)'); lg.addColorStop(.35, 'rgba(255,190,90,.35)'); lg.addColorStop(1, 'rgba(255,190,90,0)');
+    ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(g.cx, g.cy, g.R * .26, 0, FO.TAU); ctx.fill();
+    // inele
+    FO.RINGS.forEach(function (rr, i) {
+      ctx.strokeStyle = run && run.ring === i ? 'rgba(255,209,102,.45)' : 'rgba(255,255,255,.12)';
+      ctx.lineWidth = run && run.ring === i ? 2 : 1.2;
+      ctx.beginPath(); ctx.arc(g.cx, g.cy, rr * g.R, 0, FO.TAU); ctx.stroke();
+    });
+    if (!run) return;
+    // obiecte
+    run.items.forEach(function (it) {
+      var p = pos(g, it.ring, it.angle);
+      var fade = Math.min(1, it.ttl / 1.2);
+      ctx.globalAlpha = fade;
+      if (it.kind === 'drop') {
+        var dg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 14);
+        dg.addColorStop(0, '#fff7d6'); dg.addColorStop(.4, 'rgba(255,209,102,.8)'); dg.addColorStop(1, 'rgba(255,209,102,0)');
+        ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, FO.TAU); ctx.fill();
+      } else {
+        var flap = Math.sin(time * 14 + it.angle * 9) * 4;
+        ctx.fillStyle = '#3a2f5a'; ctx.strokeStyle = '#ff6b8b'; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(p.x - 6, p.y, 8, 5 + flap * .4, -.5, 0, FO.TAU); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(p.x + 6, p.y, 8, 5 - flap * .4, .5, 0, FO.TAU); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = '#ff6b8b'; ctx.beginPath(); ctx.arc(p.x, p.y, 2.5, 0, FO.TAU); ctx.fill();
+      }
+    });
+    ctx.globalAlpha = 1;
+    // licuriciul
+    var skin = FO.skinById(profile.skin) || FO.SKINS[0];
+    var fp = pos(g, run.ring, run.angle);
+    var rad = 9 + run.jumpFx * 4;
+    var fg = ctx.createRadialGradient(fp.x, fp.y, 0, fp.x, fp.y, rad * 3);
+    fg.addColorStop(0, skin.color); fg.addColorStop(.35, skin.glow); fg.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = fg; ctx.beginPath(); ctx.arc(fp.x, fp.y, rad * 3, 0, FO.TAU); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(fp.x, fp.y, rad * .45, 0, FO.TAU); ctx.fill();
+    if (run.shield) {
+      ctx.strokeStyle = 'rgba(155,246,255,.8)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(fp.x, fp.y, rad * 1.9, 0, FO.TAU); ctx.stroke();
+    }
+    // particule
+    particles.forEach(function (p) {
+      ctx.globalAlpha = Math.max(0, p.life / .6); ctx.fillStyle = p.color;
+      ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
+    });
+    ctx.globalAlpha = 1;
+  }
+
+  function loop(now) {
+    if (!lastTs) lastTs = now;
+    var dt = Math.min(0.05, (now - lastTs) / 1000); lastTs = now;
+    if (run && !run.over) {
+      FO.step(run, dt, rng);
+      var g = geom(), fp = pos(g, run.ring, run.angle), skin = FO.skinById(profile.skin) || FO.SKINS[0];
+      run.events.forEach(function (ev) {
+        if (ev === 'pick') { burst(fp.x, fp.y, '#ffd166', 8); haptic('soft'); }
+        if (ev === 'shield') { burst(fp.x, fp.y, '#9bf6ff', 16); haptic('heavy'); }
+        if (ev === 'hit') { burst(fp.x, fp.y, skin.glow, 26); haptic('hit'); }
+      });
+      $('hudScore').textContent = Math.floor(run.score);
+      $('hudSparks').textContent = '✦ ' + run.sparks;
+      var ce = $('combo');
+      if (run.combo >= 5) { ce.textContent = t('combo', run.combo); ce.style.opacity = 1; } else ce.style.opacity = 0;
+    }
+    particles.forEach(function (p) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; });
+    particles = particles.filter(function (p) { return p.life > 0; });
+    draw(now);
+    if (run && run.over && particles.length === 0 && $('hud').classList.contains('on')) { $('combo').style.opacity = 0; endRun(); }
+    raf = requestAnimationFrame(loop);
+  }
+
+  // ---------- Pornire ----------
+  if (tg) {
+    try { tg.ready(); tg.expand(); } catch (e) {}
+    try { if (tg.setHeaderColor) tg.setHeaderColor('#0b1026'); if (tg.setBackgroundColor) tg.setBackgroundColor('#0b1026'); } catch (e) {}
+    try { if (tg.disableVerticalSwipes) tg.disableVerticalSwipes(); } catch (e) {}
+  }
+  load(function (p) {
+    profile = p;
+    var userLang = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code;
+    lang = profile.lang || FO.pickLang(userLang || navigator.language);
+    applyLang();
+    initAds();
+    syncPurchases();
+    raf = requestAnimationFrame(loop);
+    window.__fo = { get run() { return run; }, get profile() { return profile; }, get lang() { return lang; }, ads: function () { return ads; } };
+  });
+})();
+</script>
+</body>
+</html>
