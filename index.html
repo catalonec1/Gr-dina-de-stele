@@ -27,7 +27,7 @@
     max-height: 46vh; background: var(--panel); border-top: 1px solid var(--line); border-radius: 18px 18px 0 0;
     display: flex; flex-direction: column; backdrop-filter: blur(6px); }
   #tabs { display: flex; border-bottom: 1px solid var(--line); }
-  #tabs button { flex: 1; background: none; border: 0; color: var(--muted); padding: 11px 4px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #tabs button { flex: 1; min-width: 0; background: none; border: 0; color: var(--muted); padding: 11px 2px; font-size: clamp(11px, 3.3vw, 14px); font-weight: 600; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   #tabs button.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--gold); }
   #list { overflow-y: auto; padding: 8px 10px calc(14px + env(safe-area-inset-bottom, 0px)); }
   .row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; margin-bottom: 6px;
@@ -61,6 +61,7 @@
   <div id="tabs">
     <button data-tab="stars" class="on"></button>
     <button data-tab="upgrades"></button>
+    <button data-tab="daily"></button>
     <button data-tab="rebirth"></button>
   </div>
   <div id="list"></div>
@@ -79,6 +80,10 @@ const T = {
     rebTitle: "Renaștere cosmică", rebDesc: "Resetează stelele și îmbunătățirile. Primești praf cosmic: fiecare grăunte dă +10% lumină pentru totdeauna.",
     rebNeed: "Ai nevoie de", rebTotal: "lumină strânsă în această viață", rebGain: "Primești", dust: "praf cosmic", rebBtn: "Renaște",
     dustHave: "Praf cosmic deținut", welcome: "Cât ai lipsit, stelele au strâns", constel: "Constelație completă",
+    tabDaily: "Zilnic", giftTitle: "Cadoul zilei", giftDesc: "Revino în fiecare zi: seria crește cadoul până în ziua 7.",
+    giftBtn: "Ia cadoul", giftTaken: "Revino mâine", streak: "Serie", day: "ziua",
+    questsTitle: "Misiunile zilei", claim: "Ia", comet: "Cometă prinsă!",
+    q: { taps: "Atinge cerul de {n} ori", comets: "Prinde {n} comete", stars: "Plantează {n} stele", ups: "Cumpără {n} îmbunătățire" },
     stars: [
       ["Scânteie", "Prima lumină a grădinii"],
       ["Licurici ceresc", "Zboară și strălucește"],
@@ -101,6 +106,10 @@ const T = {
     rebTitle: "Cosmic rebirth", rebDesc: "Resets stars and upgrades. You get stardust: each grain gives +10% light forever.",
     rebNeed: "You need", rebTotal: "light gathered in this life", rebGain: "You get", dust: "stardust", rebBtn: "Rebirth",
     dustHave: "Stardust owned", welcome: "While you were away, your stars gathered", constel: "Constellation complete",
+    tabDaily: "Daily", giftTitle: "Daily gift", giftDesc: "Come back every day: your streak grows the gift up to day 7.",
+    giftBtn: "Claim gift", giftTaken: "Come back tomorrow", streak: "Streak", day: "day",
+    questsTitle: "Today's quests", claim: "Claim", comet: "Comet caught!",
+    q: { taps: "Tap the sky {n} times", comets: "Catch {n} comets", stars: "Plant {n} stars", ups: "Buy {n} upgrade" },
     stars: [
       ["Spark", "The garden's first light"],
       ["Sky firefly", "Flies and glows"],
@@ -115,7 +124,34 @@ const T = {
       global: ["Clear sky", "All light x1.5"],
     },
   },
+  ru: {
+    tabStars: "Звёзды", tabUp: "Улучшения", tabReb: "Возрождение", tabDaily: "Ежедневно",
+    perSec: "света / сек", perTap: "за касание", owned: "есть", buy: "Купить",
+    bought: "Куплено", tapHint: "Касайся неба, чтобы собирать свет",
+    boostOn: "Двойной свет ещё", boostBtn: "Свет x2 на 10 мин", boostDesc: "Бесплатный бонус (в опубликованной версии: реклама по желанию)",
+    rebTitle: "Космическое возрождение", rebDesc: "Сбрасывает звёзды и улучшения. Ты получаешь звёздную пыль: каждая крупица даёт +10% света навсегда.",
+    rebNeed: "Нужно", rebTotal: "света, собранного в этой жизни", rebGain: "Ты получишь", dust: "звёздной пыли", rebBtn: "Возродиться",
+    dustHave: "Звёздной пыли", welcome: "Пока тебя не было, звёзды собрали", constel: "Созвездие собрано",
+    giftTitle: "Подарок дня", giftDesc: "Возвращайся каждый день: серия увеличивает подарок до 7-го дня.",
+    giftBtn: "Забрать", giftTaken: "Возвращайся завтра", streak: "Серия", day: "день",
+    questsTitle: "Задания дня", claim: "Забрать", comet: "Комета поймана!",
+    q: { taps: "Коснись неба {n} раз", comets: "Поймай {n} кометы", stars: "Посади {n} звёзд", ups: "Купи {n} улучшение" },
+    stars: [
+      ["Искорка", "Первый свет сада"],
+      ["Небесный светлячок", "Летает и светится"],
+      ["Белый карлик", "Маленький, но упрямый"],
+      ["Голубой гигант", "Горит жарко и быстро"],
+      ["Туманность", "Колыбель новых звёзд"],
+      ["Сверхновая", "Сияет как галактика"],
+    ],
+    ups: {
+      tap: ["Ладонь света", "Касания собирают x2"],
+      type: ["Звёздная пыльца", "{s} производит x2"],
+      global: ["Ясное небо", "Весь свет x1.5"],
+    },
+  },
 };
+const LANGS = ["ro", "en", "ru"];
 
 // ---------- Date de joc ----------
 const STAR_TYPES = [
@@ -145,7 +181,11 @@ const UPGRADES = buildUpgrades();
 
 function freshState() {
   return { light: 0, lifeLight: 0, owned: STAR_TYPES.map(() => 0), ups: {}, dust: 0,
-    boostUntil: 0, lang: (navigator.language || "ro").startsWith("ro") ? "ro" : "en", sound: true, last: Date.now() };
+    boostUntil: 0, lang: detectLang(), sound: true, last: Date.now(), daily: null };
+}
+function detectLang() {
+  const n = (navigator.language || "en").slice(0, 2).toLowerCase();
+  return LANGS.includes(n) ? n : "en";
 }
 let S = load() || freshState();
 let tab = "stars";
@@ -180,6 +220,83 @@ function tapValue() {
 function rebirthGain() { return S.lifeLight < REBIRTH_MIN ? 0 : Math.floor(Math.sqrt(S.lifeLight / REBIRTH_MIN)); }
 function gain(x) { S.light += x; S.lifeLight += x; }
 
+// ---------- Zilnic: cadou cu serie și misiuni ----------
+const QUEST_POOL = [
+  { k: "taps", n: 150 }, { k: "taps", n: 300 }, { k: "comets", n: 3 }, { k: "comets", n: 5 },
+  { k: "stars", n: 10 }, { k: "stars", n: 25 }, { k: "ups", n: 1 },
+];
+function dayKey(d = new Date()) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function yesterdayKey() { const d = new Date(); d.setDate(d.getDate() - 1); return dayKey(d); }
+function ensureDaily() {
+  const today = dayKey();
+  if (S.daily && S.daily.day === today) return;
+  const prev = S.daily || { streak: 0, lastGift: "" };
+  // alegere determinată de dată: aceleași misiuni toată ziua
+  let h = 0; for (const c of today) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  const kinds = new Set(), quests = [];
+  for (let i = 0; quests.length < 3 && i < 50; i++) {
+    const q = QUEST_POOL[(h + i * 3) % QUEST_POOL.length];
+    if (kinds.has(q.k)) continue; kinds.add(q.k);
+    quests.push({ k: q.k, n: q.n, prog: 0, claimed: false });
+  }
+  S.daily = { day: today, streak: prev.streak, lastGift: prev.lastGift, quests };
+}
+function giftAvailable() { ensureDaily(); return S.daily.lastGift !== S.daily.day; }
+function nextStreak() { return S.daily.lastGift === yesterdayKey() ? Math.min(S.daily.streak + 1, 7) : 1; }
+function rewardBase() { return Math.max(ratePerSec(), tapValue() * 2, 1); }
+function giftValue() { return Math.max(100 * nextStreak(), rewardBase() * 300 * nextStreak()); } // 5 min de producție x ziua seriei
+function questValue() { return Math.max(200, rewardBase() * 600); } // 10 min de producție
+function track(k, amount = 1) {
+  ensureDaily();
+  let changed = false;
+  for (const q of S.daily.quests) if (q.k === k && q.prog < q.n) { q.prog = Math.min(q.n, q.prog + amount); changed = true; }
+  if (changed) { updateBadge(); if (tab === "daily") renderList(); }
+}
+function claimableCount() {
+  ensureDaily();
+  return (giftAvailable() ? 1 : 0) + S.daily.quests.filter(q => q.prog >= q.n && !q.claimed).length;
+}
+function updateBadge() {
+  const b = document.querySelector('#tabs button[data-tab="daily"]');
+  if (b) b.textContent = L().tabDaily + (claimableCount() ? " •" : "");
+}
+
+// ---------- Comete ----------
+let comet = null, nextComet = performance.now() + 15000;
+function spawnComet() {
+  const fromLeft = Math.random() < 0.5;
+  comet = { x: fromLeft ? -40 : W + 40, y: 110 + Math.random() * H * 0.3,
+    vx: (fromLeft ? 1 : -1) * (2.2 + Math.random() * 1.2), vy: 0.5 + Math.random() * 0.6, trail: [] };
+}
+function updateComet(now) {
+  if (!comet && now > nextComet && !document.hidden) spawnComet();
+  if (!comet) return;
+  comet.trail.push({ x: comet.x, y: comet.y }); if (comet.trail.length > 22) comet.trail.shift();
+  comet.x += comet.vx; comet.y += comet.vy;
+  if (comet.x < -80 || comet.x > W + 80 || comet.y > H) { comet = null; nextComet = now + 40000 + Math.random() * 50000; }
+}
+function drawComet() {
+  if (!comet) return;
+  comet.trail.forEach((t, i) => {
+    cx.globalAlpha = i / comet.trail.length * 0.6; cx.fillStyle = "#9fe8ff";
+    cx.beginPath(); cx.arc(t.x, t.y, 1 + i / 6, 0, 6.283); cx.fill();
+  });
+  cx.globalAlpha = 1;
+  const g = cx.createRadialGradient(comet.x, comet.y, 0, comet.x, comet.y, 22);
+  g.addColorStop(0, "#ffffff"); g.addColorStop(0.3, "#9fe8ff"); g.addColorStop(1, "rgba(0,0,0,0)");
+  cx.fillStyle = g; cx.beginPath(); cx.arc(comet.x, comet.y, 22, 0, 6.283); cx.fill();
+}
+function tryCatchComet(x, y) {
+  if (!comet || Math.hypot(comet.x - x, comet.y - y) > 48) return false;
+  const v = rewardBase() * 90; gain(v);
+  burst(comet.x, comet.y, "#9fe8ff", 40);
+  floats.push({ x: comet.x, y: comet.y - 10, txt: "+" + fmt(v), life: 1 });
+  toast(`☄ ${L().comet} +${fmt(v)}`); blip(1200, .25, .07); blip(900, .35, .05);
+  comet = null; nextComet = performance.now() + 40000 + Math.random() * 50000;
+  track("comets");
+  return true;
+}
+
 // ---------- Format numere ----------
 const SUFFIX = ["", "K", "M", "B", "T", "Qa", "Qi"];
 function fmt(n) {
@@ -200,6 +317,7 @@ function load() {
     if (!raw) return null;
     const s = Object.assign(freshState(), JSON.parse(raw));
     while (s.owned.length < STAR_TYPES.length) s.owned.push(0);
+    if (!LANGS.includes(s.lang)) s.lang = "en";
     return s;
   } catch (e) { return null; }
 }
@@ -269,6 +387,7 @@ function draw(now) {
       cx.stroke(); cx.globalAlpha = 1;
     }
   });
+  drawComet();
   // particule
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life -= 0.02;
@@ -298,7 +417,8 @@ function burst(x, y, color, n = 12) {
 }
 
 cv.addEventListener("pointerdown", e => {
-  const v = tapValue(); gain(v);
+  if (tryCatchComet(e.clientX, e.clientY)) { renderHud(); return; }
+  const v = tapValue(); gain(v); track("taps");
   burst(e.clientX, e.clientY, "#ffd76a", 10);
   floats.push({ x: e.clientX, y: e.clientY - 10, txt: "+" + fmt(v), life: 1 });
   blip(520 + Math.random() * 300);
@@ -356,6 +476,19 @@ function renderList() {
       list.appendChild(row(color, n, desc, `${l.buy} ${fmt(u.cost)}`, u.cost, () => buyUp(u)));
       if (++shown >= 8) break;
     }
+  } else if (tab === "daily") {
+    ensureDaily();
+    const d = S.daily, gAvail = giftAvailable();
+    const streakNow = gAvail ? nextStreak() : d.streak;
+    const dots = Array.from({ length: 7 }, (_, i) => i < streakNow ? "★" : "☆").join(" ");
+    list.appendChild(row("#ffd76a", `${l.giftTitle} · ${l.streak}: ${l.day} ${streakNow}/7`, `${dots} · ${l.giftDesc}`,
+      gAvail ? `${l.giftBtn} +${fmt(giftValue())}` : l.giftTaken, null, claimGift, !gAvail));
+    const h = document.createElement("div"); h.className = "note"; h.textContent = l.questsTitle; list.appendChild(h);
+    d.quests.forEach((q, i) => {
+      const done = q.prog >= q.n;
+      list.appendChild(row(done ? "#8ff0c8" : "#7fb6ff", l.q[q.k].replace("{n}", q.n), `${fmt(q.prog)} / ${q.n}`,
+        q.claimed ? "✓" : `${l.claim} +${fmt(questValue())}`, null, () => claimQuest(i), q.claimed || !done));
+    });
   } else {
     const g = rebirthGain();
     const note = document.createElement("div"); note.className = "note";
@@ -370,20 +503,33 @@ function renderList() {
 function buyStar(t) {
   const c = starCost(t); if (S.light < c) return;
   const before = constellations(t);
-  S.light -= c; S.owned[t]++;
+  S.light -= c; S.owned[t]++; track("stars");
   const p = plantedPos(t, Math.min(S.owned[t] - 1, 39));
   burst(p.x, p.y, STAR_TYPES[t].color, 16); blip(440 + t * 90, .12);
   if (constellations(t) > before) { toast(`✦ ${L().constel}: ${L().stars[t][0]} x2`); blip(990, .3, .06); }
   renderList(); renderHud();
 }
+function claimGift() {
+  if (!giftAvailable()) return;
+  const v = giftValue(); gain(v);
+  S.daily.streak = nextStreak(); S.daily.lastGift = S.daily.day;
+  burst(W / 2, H / 3, "#ffd76a", 50); blip(880, .3, .07);
+  toast(`🎁 +${fmt(v)}`); save(); updateBadge(); renderList(); renderHud();
+}
+function claimQuest(i) {
+  const q = S.daily.quests[i]; if (!q || q.claimed || q.prog < q.n) return;
+  const v = questValue(); gain(v); q.claimed = true;
+  burst(W / 2, H / 3, "#8ff0c8", 30); blip(990, .2, .06);
+  toast(`✓ +${fmt(v)}`); save(); updateBadge(); renderList(); renderHud();
+}
 function buyUp(u) {
   if (S.light < u.cost || S.ups[u.id]) return;
-  S.light -= u.cost; S.ups[u.id] = true; blip(760, .15);
+  S.light -= u.cost; S.ups[u.id] = true; blip(760, .15); track("ups");
   renderList(); renderHud();
 }
 function rebirth() {
   const g = rebirthGain(); if (!g) return;
-  const keep = { dust: S.dust + g, lang: S.lang, sound: S.sound };
+  const keep = { dust: S.dust + g, lang: S.lang, sound: S.sound, daily: S.daily };
   S = Object.assign(freshState(), keep);
   burst(W / 2, H / 3, "#e59bff", 60); blip(300, .5, .08);
   toast(`+${g} ${L().dust}`); save(); renderList(); renderHud();
@@ -392,14 +538,14 @@ function rebirth() {
 function applyLang() {
   const l = L();
   document.documentElement.lang = S.lang;
-  $("lang").textContent = S.lang === "ro" ? "EN" : "RO";
-  const [a, b, c] = document.querySelectorAll("#tabs button");
-  a.textContent = l.tabStars; b.textContent = l.tabUp; c.textContent = l.tabReb;
+  $("lang").textContent = LANGS[(LANGS.indexOf(S.lang) + 1) % LANGS.length].toUpperCase();
+  const [a, b, , c] = document.querySelectorAll("#tabs button");
+  a.textContent = l.tabStars; b.textContent = l.tabUp; c.textContent = l.tabReb; updateBadge();
   $("sound").textContent = S.sound ? "🔊" : "🔇";
   renderList(); renderHud();
 }
 document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { tab = b.dataset.tab; renderList(); });
-$("lang").onclick = () => { S.lang = S.lang === "ro" ? "en" : "ro"; applyLang(); save(); };
+$("lang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % LANGS.length]; applyLang(); save(); };
 $("sound").onclick = () => { S.sound = !S.sound; applyLang(); save(); };
 
 // ---------- Reclame (stub; în Full Launch se înlocuiește cu SDK-ul CrazyGames) ----------
@@ -425,6 +571,7 @@ function loop(now) {
   uiTick += dt; saveTick += dt;
   if (uiTick > 0.2) { uiTick = 0; renderHud(); }
   if (saveTick > 5) { saveTick = 0; save(); }
+  updateComet(now);
   draw(now);
   requestAnimationFrame(loop);
 }
