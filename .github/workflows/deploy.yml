@@ -43,6 +43,8 @@ jobs:
         run: |
           mkdir -p dist/web/telegram
           cp telegram/index.html telegram/config.js telegram/core.js dist/web/telegram/
+      - name: Pagini SQL Pocket (politică de confidențialitate)
+        run: cp -r sql-pocket dist/web/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
