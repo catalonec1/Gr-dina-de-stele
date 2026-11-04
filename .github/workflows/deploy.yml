@@ -37,6 +37,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Construiește versiunea web (PWA)
         run: node tools/build.js
+      - name: Pagini SQL Pocket (politică de confidențialitate)
+        run: cp -r sql-pocket dist/web/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
