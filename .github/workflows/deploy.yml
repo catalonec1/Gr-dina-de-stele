@@ -22,6 +22,8 @@ jobs:
       - run: npm install
       - run: npx playwright install --with-deps chromium
       - run: npm test
+      - name: Teste joc Telegram
+        run: node telegram/tests/run.mjs
 
   deploy:
     needs: test
@@ -37,6 +39,10 @@ jobs:
       - uses: actions/checkout@v4
       - name: Construiește versiunea web (PWA)
         run: node tools/build.js
+      - name: Adaugă jocul Telegram în /telegram/
+        run: |
+          mkdir -p dist/web/telegram
+          cp telegram/index.html telegram/config.js telegram/core.js dist/web/telegram/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - uses: actions/configure-pages@v5
