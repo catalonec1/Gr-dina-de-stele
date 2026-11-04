@@ -183,6 +183,14 @@ def main():
     inner = [raster(files["ro"], n_ro - 1, 110, os.path.join(tmp, "a4.png")), raster(files["ru"], counts["ru-A4"], 110, os.path.join(tmp, "a5.png"))]
     pages_image("Alphabet chart + certificate", inner, os.path.join(folder, "images", "03-inside.png"))
 
+    # ---- bundle image (Payhip bundle = existing products, no own files)
+    os.makedirs(os.path.join(OUT, "bundle", "images"), exist_ok=True)
+    mf = lambda l: os.path.join(OUT, "math-practice", "files", "Math-Practice-%s-A4.pdf" % l)
+    ims = [raster(mf("EN"), 1, 110, os.path.join(tmp, "b1.png")), raster(files["ro"], 1, 110, os.path.join(tmp, "b2.png")),
+           raster(mf("RU"), 1, 110, os.path.join(tmp, "b3.png")), raster(files["en"], 1, 110, os.path.join(tmp, "b4.png"))]
+    product_image("Math + Alphabet Bundle", "Both packs · English, Romanian, Russian · A4 + US Letter", ims,
+                  ["BUNDLE", "6 math files", "6 alphabet files"], os.path.join(OUT, "bundle", "images", "01-cover.png"))
+
     # ---- free sample (lead magnet): 4 pages taken from the paid files
     folder = os.path.join(OUT, "free-sample")
     os.makedirs(os.path.join(folder, "files"), exist_ok=True)
