@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Grădina de stele</title>
+<meta name="description" content="Plantează stele, strânge lumină și construiește constelații. Joc idle gratuit în browser.">
+<style>
+  :root {
+    --bg1: #070a1f; --bg2: #1a1050; --ink: #f4f1ff; --muted: #a9a3d6;
+    --panel: rgba(16, 14, 48, 0.86); --line: rgba(170, 160, 255, 0.18);
+    --gold: #ffd76a; --btn: #2d2580; --btn-hi: #4a3dc4; --off: #3a3660;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg1); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; user-select: none; }
+  #sky { position: fixed; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; }
+  #hud { position: fixed; top: 0; left: 0; right: 0; padding: 12px 16px; text-align: center; pointer-events: none; }
+  #light { font-size: clamp(28px, 7vw, 44px); font-weight: 800; color: var(--gold); text-shadow: 0 0 18px rgba(255,215,106,.55); }
+  #rate { font-size: 14px; color: var(--muted); margin-top: 2px; }
+  #boost { font-size: 13px; color: #8ff0c8; margin-top: 4px; min-height: 16px; }
+  #topbtns { position: fixed; top: 10px; right: 10px; display: flex; gap: 6px; }
+  #topbtns button { background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+    padding: 6px 10px; font-size: 13px; cursor: pointer; }
+  #panel { position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(560px, 100%);
+    max-height: 46vh; background: var(--panel); border-top: 1px solid var(--line); border-radius: 18px 18px 0 0;
+    display: flex; flex-direction: column; backdrop-filter: blur(6px); }
+  #tabs { display: flex; border-bottom: 1px solid var(--line); }
+  #tabs button { flex: 1; background: none; border: 0; color: var(--muted); padding: 11px 4px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  #tabs button.on { color: var(--ink); box-shadow: inset 0 -2px 0 var(--gold); }
+  #list { overflow-y: auto; padding: 8px 10px 14px; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 12px; margin-bottom: 6px;
+    background: rgba(255,255,255,0.03); border: 1px solid var(--line); }
+  .ico { width: 34px; height: 34px; border-radius: 50%; flex: none; }
+  .info { flex: 1; min-width: 0; }
+  .name { font-weight: 700; font-size: 15px; }
+  .desc { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .buy { flex: none; min-width: 92px; padding: 9px 10px; border-radius: 10px; border: 0; font-weight: 700; font-size: 13px;
+    color: var(--ink); background: var(--btn); cursor: pointer; }
+  .buy:not(:disabled):hover { background: var(--btn-hi); }
+  .buy:disabled { background: var(--off); color: #8b86b3; cursor: default; }
+  .note { font-size: 13px; color: var(--muted); padding: 6px 4px 10px; line-height: 1.45; }
+  #toast { position: fixed; left: 50%; top: 110px; transform: translateX(-50%); background: var(--panel); border: 1px solid var(--line);
+    padding: 10px 14px; border-radius: 12px; font-size: 14px; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 90%; text-align: center; }
+  #toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div id="hud">
+  <div id="light">0</div>
+  <div id="rate"></div>
+  <div id="boost"></div>
+</div>
+<div id="topbtns">
+  <button id="sound" aria-label="sound">🔊</button>
+  <button id="lang">EN</button>
+</div>
+<div id="panel">
+  <div id="tabs">
+    <button data-tab="stars" class="on"></button>
+    <button data-tab="upgrades"></button>
+    <button data-tab="rebirth"></button>
+  </div>
+  <div id="list"></div>
+</div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+// ---------- Texte (RO / EN) ----------
+const T = {
+  ro: {
+    tabStars: "Stele", tabUp: "Îmbunătățiri", tabReb: "Renaștere",
+    perSec: "lumină / sec", perTap: "pe atingere", owned: "deții", buy: "Cumpără",
+    bought: "Cumpărat", tapHint: "Atinge cerul ca să strângi lumină",
+    boostOn: "Lumină dublă încă", boostBtn: "Lumină x2 timp de 10 min", boostDesc: "Bonus gratuit (în versiunea publicată: reclamă opțională)",
+    rebTitle: "Renaștere cosmică", rebDesc: "Resetează stelele și îmbunătățirile. Primești praf cosmic: fiecare grăunte dă +10% lumină pentru totdeauna.",
+    rebNeed: "Ai nevoie de", rebTotal: "lumină strânsă în această viață", rebGain: "Primești", dust: "praf cosmic", rebBtn: "Renaște",
+    dustHave: "Praf cosmic deținut", welcome: "Cât ai lipsit, stelele au strâns", constel: "Constelație completă",
+    stars: [
+      ["Scânteie", "Prima lumină a grădinii"],
+      ["Licurici ceresc", "Zboară și strălucește"],
+      ["Pitică albă", "Mică, dar încăpățânată"],
+      ["Gigantă albastră", "Arde fierbinte și repede"],
+      ["Nebuloasă", "Leagăn de stele noi"],
+      ["Supernovă", "Strălucește cât o galaxie"],
+    ],
+    ups: {
+      tap: ["Palmă de lumină", "Atingerile strâng x2"],
+      type: ["Polen stelar", "{s} produce x2"],
+      global: ["Cer senin", "Toată lumina x1.5"],
+    },
+  },
+  en: {
+    tabStars: "Stars", tabUp: "Upgrades", tabReb: "Rebirth",
+    perSec: "light / sec", perTap: "per tap", owned: "owned", buy: "Buy",
+    bought: "Bought", tapHint: "Tap the sky to gather light",
+    boostOn: "Double light for", boostBtn: "Light x2 for 10 min", boostDesc: "Free bonus (published version: optional ad)",
+    rebTitle: "Cosmic rebirth", rebDesc: "Resets stars and upgrades. You get stardust: each grain gives +10% light forever.",
+    rebNeed: "You need", rebTotal: "light gathered in this life", rebGain: "You get", dust: "stardust", rebBtn: "Rebirth",
+    dustHave: "Stardust owned", welcome: "While you were away, your stars gathered", constel: "Constellation complete",
+    stars: [
+      ["Spark", "The garden's first light"],
+      ["Sky firefly", "Flies and glows"],
+      ["White dwarf", "Small but stubborn"],
+      ["Blue giant", "Burns hot and fast"],
+      ["Nebula", "Cradle of new stars"],
+      ["Supernova", "Shines like a galaxy"],
+    ],
+    ups: {
+      tap: ["Palm of light", "Taps gather x2"],
+      type: ["Star pollen", "{s} produces x2"],
+      global: ["Clear sky", "All light x1.5"],
+    },
+  },
+};
+
+// ---------- Date de joc ----------
+const STAR_TYPES = [
+  { cost: 15,      rate: 0.1,     color: "#ffe9a8" },
+  { cost: 120,     rate: 1,       color: "#b8ff8a" },
+  { cost: 1300,    rate: 8,       color: "#e8f0ff" },
+  { cost: 14000,   rate: 47,      color: "#7fb6ff" },
+  { cost: 160000,  rate: 260,     color: "#e59bff" },
+  { cost: 2000000, rate: 1400,    color: "#ff9a6b" },
+];
+const COST_GROWTH = 1.15;
+const CONSTELLATION_STEPS = [10, 25, 50, 100, 200]; // fiecare prag dublează tipul
+const REBIRTH_MIN = 1e6;
+const OFFLINE_CAP_SEC = 8 * 3600;
+const OFFLINE_FACTOR = 0.5;
+const SAVE_KEY = "gradina-de-stele-v1";
+
+function buildUpgrades() {
+  const list = [];
+  [100, 2500, 60000, 1.5e6, 4e7].forEach((c, i) => list.push({ id: "tap" + i, kind: "tap", cost: c }));
+  STAR_TYPES.forEach((s, t) => [s.cost * 12, s.cost * 120, s.cost * 2500].forEach((c, i) =>
+    list.push({ id: `type${t}_${i}`, kind: "type", type: t, cost: c, needOwned: [1, 10, 25][i] })));
+  [5e4, 5e6, 5e8].forEach((c, i) => list.push({ id: "global" + i, kind: "global", cost: c }));
+  return list.sort((a, b) => a.cost - b.cost);
+}
+const UPGRADES = buildUpgrades();
+
+function freshState() {
+  return { light: 0, lifeLight: 0, owned: STAR_TYPES.map(() => 0), ups: {}, dust: 0,
+    boostUntil: 0, lang: (navigator.language || "ro").startsWith("ro") ? "ro" : "en", sound: true, last: Date.now() };
+}
+let S = load() || freshState();
+let tab = "stars";
+const L = () => T[S.lang];
+
+// ---------- Calcule ----------
+function starCost(t) { return Math.ceil(STAR_TYPES[t].cost * Math.pow(COST_GROWTH, S.owned[t])); }
+function constellations(t) { return CONSTELLATION_STEPS.filter(n => S.owned[t] >= n).length; }
+function typeMult(t) {
+  let m = Math.pow(2, constellations(t));
+  UPGRADES.forEach(u => { if (u.kind === "type" && u.type === t && S.ups[u.id]) m *= 2; });
+  return m;
+}
+function globalMult() {
+  let m = 1 + S.dust * 0.1;
+  UPGRADES.forEach(u => { if (u.kind === "global" && S.ups[u.id]) m *= 1.5; });
+  if (Date.now() < S.boostUntil) m *= 2;
+  return m;
+}
+function ratePerSec() {
+  let r = 0;
+  STAR_TYPES.forEach((s, t) => r += s.rate * S.owned[t] * typeMult(t));
+  return r * globalMult();
+}
+function tapValue() {
+  let v = 1;
+  UPGRADES.forEach(u => { if (u.kind === "tap" && S.ups[u.id]) v *= 2; });
+  // de la a treia îmbunătățire, o atingere adaugă și 5% din producția pe secundă
+  const boost = Date.now() < S.boostUntil ? 2 : 1;
+  return v * boost + (S.ups.tap2 ? ratePerSec() * 0.05 : 0);
+}
+function rebirthGain() { return S.lifeLight < REBIRTH_MIN ? 0 : Math.floor(Math.sqrt(S.lifeLight / REBIRTH_MIN)); }
+function gain(x) { S.light += x; S.lifeLight += x; }
+
+// ---------- Format numere ----------
+const SUFFIX = ["", "K", "M", "B", "T", "Qa", "Qi"];
+function fmt(n) {
+  if (n < 1000) return n < 10 && n % 1 ? n.toFixed(1) : Math.floor(n).toString();
+  const e = Math.floor(Math.log10(n) / 3);
+  if (e < SUFFIX.length) return (n / Math.pow(1000, e)).toFixed(2).replace(/\.?0+$/, "") + SUFFIX[e];
+  return n.toExponential(2).replace("+", "");
+}
+
+// ---------- Salvare ----------
+function save() {
+  S.last = Date.now();
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* fără stocare: jocul merge oricum */ }
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return null;
+    const s = Object.assign(freshState(), JSON.parse(raw));
+    while (s.owned.length < STAR_TYPES.length) s.owned.push(0);
+    return s;
+  } catch (e) { return null; }
+}
+
+// ---------- Sunet ----------
+let actx = null;
+function blip(freq = 660, dur = 0.08, vol = 0.05) {
+  if (!S.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = "sine"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, actx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001, actx.currentTime + dur);
+    o.connect(g).connect(actx.destination); o.start(); o.stop(actx.currentTime + dur);
+  } catch (e) {}
+}
+
+// ---------- Cer (canvas) ----------
+const cv = document.getElementById("sky"), cx = cv.getContext("2d");
+let W = 0, H = 0, DPR = 1;
+const bgStars = [], particles = [], floats = [];
+function resize() {
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight;
+  cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  bgStars.length = 0;
+  for (let i = 0; i < Math.round(W * H / 3500); i++)
+    bgStars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.2 + 0.2, p: Math.random() * 6.28 });
+}
+addEventListener("resize", resize); resize();
+
+// poziții stabile pentru stelele plantate (pseudo-aleator după index)
+function seeded(i) { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function plantedPos(t, i) {
+  const k = t * 1000 + i, top = 120, bottom = H * 0.54;
+  return { x: 24 + seeded(k) * (W - 48), y: top + seeded(k + 0.5) * Math.max(40, bottom - top) };
+}
+
+function draw(now) {
+  const g = cx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, "#070a1f"); g.addColorStop(1, "#1a1050");
+  cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+  const tt = now / 1000;
+  for (const s of bgStars) {
+    cx.globalAlpha = 0.35 + 0.35 * Math.sin(tt * 1.3 + s.p);
+    cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.283); cx.fill();
+  }
+  cx.globalAlpha = 1;
+  // stele plantate (max 40 vizibile pe tip)
+  STAR_TYPES.forEach((st, t) => {
+    const n = Math.min(S.owned[t], 40);
+    const pts = [];
+    for (let i = 0; i < n; i++) {
+      const p = plantedPos(t, i); pts.push(p);
+      const r = 2 + t * 0.9 + Math.sin(tt * 2 + i) * 0.6;
+      const glow = cx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 5);
+      glow.addColorStop(0, st.color); glow.addColorStop(1, "rgba(0,0,0,0)");
+      cx.fillStyle = glow; cx.beginPath(); cx.arc(p.x, p.y, r * 5, 0, 6.283); cx.fill();
+      cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(p.x, p.y, r * 0.6, 0, 6.283); cx.fill();
+    }
+    // linii de constelație
+    if (constellations(t) > 0 && pts.length > 1) {
+      cx.strokeStyle = st.color; cx.globalAlpha = 0.25; cx.lineWidth = 1;
+      cx.beginPath(); cx.moveTo(pts[0].x, pts[0].y);
+      for (let i = 1; i < Math.min(pts.length, 10); i++) cx.lineTo(pts[i].x, pts[i].y);
+      cx.stroke(); cx.globalAlpha = 1;
+    }
+  });
+  // particule
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life -= 0.02;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+    cx.globalAlpha = p.life; cx.fillStyle = p.c; cx.beginPath(); cx.arc(p.x, p.y, 2.2, 0, 6.283); cx.fill();
+  }
+  cx.globalAlpha = 1;
+  // texte plutitoare
+  cx.font = "bold 18px system-ui, sans-serif"; cx.textAlign = "center";
+  for (let i = floats.length - 1; i >= 0; i--) {
+    const f = floats[i]; f.y -= 0.8; f.life -= 0.015;
+    if (f.life <= 0) { floats.splice(i, 1); continue; }
+    cx.globalAlpha = f.life; cx.fillStyle = "#ffd76a"; cx.fillText(f.txt, f.x, f.y);
+  }
+  cx.globalAlpha = 1;
+  if (S.lifeLight < 30 && S.dust === 0) {
+    cx.font = "15px system-ui, sans-serif"; cx.fillStyle = "rgba(244,241,255,.75)";
+    cx.fillText(L().tapHint, W / 2, H * 0.36);
+  }
+}
+
+function burst(x, y, color, n = 12) {
+  for (let i = 0; i < n; i++) {
+    const a = Math.random() * 6.283, v = Math.random() * 3 + 1;
+    particles.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: 1, c: color });
+  }
+}
+
+cv.addEventListener("pointerdown", e => {
+  const v = tapValue(); gain(v);
+  burst(e.clientX, e.clientY, "#ffd76a", 10);
+  floats.push({ x: e.clientX, y: e.clientY - 10, txt: "+" + fmt(v), life: 1 });
+  blip(520 + Math.random() * 300);
+  renderHud();
+});
+
+// ---------- UI ----------
+const $ = id => document.getElementById(id);
+function toast(msg) { const el = $("toast"); el.textContent = msg; el.classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2600); }
+
+function renderHud() {
+  $("light").textContent = fmt(S.light);
+  $("rate").textContent = `${fmt(ratePerSec())} ${L().perSec} · ${fmt(tapValue())} ${L().perTap}`;
+  const left = S.boostUntil - Date.now();
+  $("boost").textContent = left > 0 ? `${L().boostOn} ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}` : "";
+  document.querySelectorAll(".buy[data-cost]").forEach(b => { if (!b.dataset.done) b.disabled = S.light < +b.dataset.cost; });
+}
+
+function row(color, name, desc, btnText, cost, onClick, done) {
+  const r = document.createElement("div"); r.className = "row";
+  r.innerHTML = `<div class="ico" style="background:radial-gradient(circle, #fff 0 18%, ${color} 40%, transparent 72%)"></div>
+    <div class="info"><div class="name"></div><div class="desc"></div></div><button class="buy"></button>`;
+  r.querySelector(".name").textContent = name;
+  r.querySelector(".desc").textContent = desc;
+  const b = r.querySelector(".buy"); b.textContent = btnText;
+  if (done) { b.disabled = true; b.dataset.done = "1"; }
+  else if (cost != null) { b.dataset.cost = cost; b.disabled = S.light < cost; }
+  b.onclick = onClick;
+  return r;
+}
+
+function renderList() {
+  const l = L(), list = $("list"); list.innerHTML = "";
+  document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
+  if (tab === "stars") {
+    // bonusul x2 (în versiunea publicată se leagă de reclama recompensată din SDK)
+    const boosting = Date.now() < S.boostUntil;
+    list.appendChild(row("#8ff0c8", l.boostBtn, l.boostDesc, boosting ? "✓" : "▶", null, () => {
+      Ads.rewarded(() => { S.boostUntil = Date.now() + 10 * 60000; blip(880, .2); renderList(); renderHud(); save(); });
+    }, boosting));
+    STAR_TYPES.forEach((st, t) => {
+      if (t > 0 && S.owned[t - 1] === 0 && S.owned[t] === 0) return; // deblocare progresivă
+      const c = starCost(t), [name, flavor] = l.stars[t];
+      const each = st.rate * typeMult(t) * globalMult();
+      list.appendChild(row(st.color, `${name} · ${S.owned[t]}`, `${flavor} · +${fmt(each)}/s`, `${l.buy} ${fmt(c)}`, c, () => buyStar(t)));
+    });
+  } else if (tab === "upgrades") {
+    let shown = 0;
+    for (const u of UPGRADES) {
+      if (S.ups[u.id]) continue;
+      if (u.kind === "type" && S.owned[u.type] < u.needOwned) continue;
+      const [n, d] = l.ups[u.kind];
+      const desc = u.kind === "type" ? d.replace("{s}", l.stars[u.type][0]) : d;
+      const color = u.kind === "type" ? STAR_TYPES[u.type].color : "#ffd76a";
+      list.appendChild(row(color, n, desc, `${l.buy} ${fmt(u.cost)}`, u.cost, () => buyUp(u)));
+      if (++shown >= 8) break;
+    }
+  } else {
+    const g = rebirthGain();
+    const note = document.createElement("div"); note.className = "note";
+    note.textContent = `${l.rebDesc} ${l.dustHave}: ${S.dust}.`;
+    list.appendChild(note);
+    const desc = g > 0 ? `${l.rebGain} ${g} ${l.dust}` : `${l.rebNeed} ${fmt(REBIRTH_MIN)} ${l.rebTotal} (${fmt(S.lifeLight)})`;
+    const r = row("#e59bff", l.rebTitle, desc, l.rebBtn, null, rebirth, g === 0);
+    list.appendChild(r);
+  }
+}
+
+function buyStar(t) {
+  const c = starCost(t); if (S.light < c) return;
+  const before = constellations(t);
+  S.light -= c; S.owned[t]++;
+  const p = plantedPos(t, Math.min(S.owned[t] - 1, 39));
+  burst(p.x, p.y, STAR_TYPES[t].color, 16); blip(440 + t * 90, .12);
+  if (constellations(t) > before) { toast(`✦ ${L().constel}: ${L().stars[t][0]} x2`); blip(990, .3, .06); }
+  renderList(); renderHud();
+}
+function buyUp(u) {
+  if (S.light < u.cost || S.ups[u.id]) return;
+  S.light -= u.cost; S.ups[u.id] = true; blip(760, .15);
+  renderList(); renderHud();
+}
+function rebirth() {
+  const g = rebirthGain(); if (!g) return;
+  const keep = { dust: S.dust + g, lang: S.lang, sound: S.sound };
+  S = Object.assign(freshState(), keep);
+  burst(W / 2, H / 3, "#e59bff", 60); blip(300, .5, .08);
+  toast(`+${g} ${L().dust}`); save(); renderList(); renderHud();
+}
+
+function applyLang() {
+  const l = L();
+  document.documentElement.lang = S.lang;
+  $("lang").textContent = S.lang === "ro" ? "EN" : "RO";
+  const [a, b, c] = document.querySelectorAll("#tabs button");
+  a.textContent = l.tabStars; b.textContent = l.tabUp; c.textContent = l.tabReb;
+  $("sound").textContent = S.sound ? "🔊" : "🔇";
+  renderList(); renderHud();
+}
+document.querySelectorAll("#tabs button").forEach(b => b.onclick = () => { tab = b.dataset.tab; renderList(); });
+$("lang").onclick = () => { S.lang = S.lang === "ro" ? "en" : "ro"; applyLang(); save(); };
+$("sound").onclick = () => { S.sound = !S.sound; applyLang(); save(); };
+
+// ---------- Reclame (stub; în Full Launch se înlocuiește cu SDK-ul CrazyGames) ----------
+const Ads = {
+  rewarded(onReward) { onReward(); },
+};
+
+// ---------- Câștig offline ----------
+(function offline() {
+  const secs = Math.min((Date.now() - (S.last || Date.now())) / 1000, OFFLINE_CAP_SEC);
+  if (secs > 30) {
+    const saved = S.boostUntil; S.boostUntil = 0;
+    const g = ratePerSec() * secs * OFFLINE_FACTOR; S.boostUntil = saved;
+    if (g >= 1) { gain(g); setTimeout(() => toast(`${L().welcome} ${fmt(g)} ✦`), 400); }
+  }
+})();
+
+// ---------- Bucla principală ----------
+let lastT = performance.now(), uiTick = 0, saveTick = 0;
+function loop(now) {
+  const dt = Math.min((now - lastT) / 1000, 1); lastT = now;
+  gain(ratePerSec() * dt);
+  uiTick += dt; saveTick += dt;
+  if (uiTick > 0.2) { uiTick = 0; renderHud(); }
+  if (saveTick > 5) { saveTick = 0; save(); }
+  draw(now);
+  requestAnimationFrame(loop);
+}
+addEventListener("visibilitychange", () => { if (document.hidden) save(); });
+addEventListener("pagehide", save);
+applyLang();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
