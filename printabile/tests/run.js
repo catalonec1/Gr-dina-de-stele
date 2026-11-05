@@ -77,8 +77,28 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   await p.click('.langs button[data-l=ru]');
   ok(await p.$eval('#tab-maze', e => e.textContent) === 'Лабиринт', 'comutare în rusă');
 
+  // Ceasul: ore valide, minute pe nivel, fără duplicate, mod citire/desen
+  for (const lang of ['ro', 'en', 'ru']) {
+    const c = await open(`?lang=${lang}&k=clock`);
+    let good = true;
+    const MIN = { easy: [0, 30], medium: [0, 15, 30, 45], hard: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55] };
+    for (const level of ['easy', 'medium', 'hard']) for (const mode of ['read', 'draw']) {
+      await c.selectOption('#level', level); await c.selectOption('#mode', mode);
+      for (let i = 0; i < 5; i++) {
+        await c.click('#new');
+        const r = await c.evaluate(() => ({ cs: window.__last.clocks, hands: document.querySelectorAll('#out > .clocks svg line[stroke-width="4"]').length, n: document.querySelectorAll('#out > .clocks figure').length }));
+        const keys = new Set(r.cs.map(x => x.h + ':' + x.m));
+        good = good && r.n === 9 && r.cs.length === 9 && keys.size === 9 &&
+          r.cs.every(x => x.h >= 1 && x.h <= 12 && MIN[level].includes(x.m)) && r.hands === (mode === 'read' ? 9 : 0);
+      }
+    }
+    ok(good, `ceas ${lang}: 9 ceasuri valide, minute pe nivel, fără duplicate, ace doar la citire`);
+    ok(await c.$$eval('.key .clocks svg line[stroke-width="4"]', l => l.length) === 9, `ceas ${lang}: răspunsurile au acele desenate`);
+    ok(c.errs.length === 0, `ceas: fără erori în consolă (${lang})`);
+  }
+
   // Mobil: fără scroll orizontal
-  for (const k of ['maze', 'words', 'math']) {
+  for (const k of ['maze', 'words', 'math', 'clock']) {
     const m = await open(`?k=${k}&lang=ru`, { width: 360, height: 740 });
     if (k === 'words') await m.selectOption('#level', 'hard');
     ok(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `mobil 360px fără scroll orizontal (${k})`);
