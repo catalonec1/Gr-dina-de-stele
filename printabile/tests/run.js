@@ -112,7 +112,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
 
   // Linkuri către produsele proprii
   const links = await p.$$eval('.cards a', as => as.map(a => a.href));
-  ok(links.length === 5 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
+  ok(links.length === 6 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
 
   await b.close();
   console.log(fails ? `\n${fails} teste au eșuat` : '\nToate testele au trecut');
