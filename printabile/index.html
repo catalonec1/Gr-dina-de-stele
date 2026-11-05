@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fișe gratuite de printat: labirinturi, cuvinte ascunse, matematică</title>
+<meta name="description" content="Generator gratuit de fișe pentru copii: labirinturi, cuvinte ascunse și exerciții de matematică, în română, engleză și rusă. Printezi sau salvezi PDF, fără cont.">
+<link rel="canonical" href="https://catalonec1.github.io/Gr-dina-de-stele/printabile/">
+<meta property="og:title" content="Fișe gratuite de printat pentru copii">
+<meta property="og:description" content="Labirinturi, cuvinte ascunse și matematică. RO / EN / RU. Gratuit, fără cont.">
+<meta property="og:type" content="website">
+<style>
+:root{--ink:#1d2433;--muted:#5d6678;--line:#d9dee8;--bg:#f6f7fb;--card:#fff;--acc:#2d5bd7;--acc2:#e8eefc}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;color:var(--ink);background:var(--bg)}
+.wrap{max-width:900px;margin:0 auto;padding:20px 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{font-size:clamp(22px,4vw,30px);margin:0}
+.sub{color:var(--muted);margin:6px 0 18px}
+.langs button,.tabs button{font:inherit;border:1px solid var(--line);background:var(--card);padding:6px 12px;border-radius:8px;cursor:pointer}
+.langs button[aria-pressed=true],.tabs button[aria-selected=true]{background:var(--acc);color:#fff;border-color:var(--acc)}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-bottom:14px}
+label{display:grid;gap:4px;font-size:14px;color:var(--muted)}
+select{font:inherit;padding:6px 8px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+.btn{font:inherit;padding:8px 14px;border-radius:8px;border:0;background:var(--acc);color:#fff;cursor:pointer}
+.btn.alt{background:var(--acc2);color:var(--acc)}
+button:focus-visible,select:focus-visible{outline:3px solid #f2b705;outline-offset:2px}
+#sheet{display:grid;gap:12px}
+.sheet-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:8px}
+.sheet-head b{font-size:20px}
+.name{color:var(--muted)}
+#out svg{width:100%;height:auto;display:block;max-width:640px;margin:0 auto}
+.ws{display:grid;gap:0;margin:0 auto;width:fit-content;max-width:100%;overflow-x:auto}
+.ws span{width:min(2em,calc((100vw - 72px) / var(--n)));height:min(2em,calc((100vw - 72px) / var(--n)));display:grid;place-items:center;font:600 clamp(13px,2.6vw,18px)/1 ui-monospace,Menlo,monospace;border:1px solid #eef0f5}
+.words{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;font-weight:600}
+.math{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px 20px;font:600 20px/1.2 ui-monospace,Menlo,monospace}
+.math div{white-space:nowrap}
+.key{font-size:13px;color:var(--muted)}
+.promo{margin-top:22px;display:grid;gap:10px}
+.promo h2{font-size:18px;margin:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+.cards a{display:block;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px;color:var(--ink);text-decoration:none}
+.cards a:hover{border-color:var(--acc)}
+.cards small{display:block;color:var(--muted)}
+footer{margin-top:24px;color:var(--muted);font-size:13px}
+.print-only{display:none}
+@media print{
+  @page{margin:12mm}
+  body{background:#fff}
+  .wrap{max-width:none;padding:0}
+  header,.sub,.tabs,.controls,.promo,footer,.noprint{display:none!important}
+  .panel{border:0;padding:0}
+  .print-only{display:block}
+  .key{page-break-before:always}
+  .ws span{border-color:#ccc}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1 id="t-title">Fișe gratuite de printat</h1>
+  <div class="langs" role="group" aria-label="Limba">
+    <button data-l="ro">RO</button><button data-l="en">EN</button><button data-l="ru">RU</button>
+  </div>
+</header>
+<p class="sub" id="t-sub"></p>
+<div class="tabs" role="tablist">
+  <button role="tab" data-k="maze" id="tab-maze"></button>
+  <button role="tab" data-k="words" id="tab-words"></button>
+  <button role="tab" data-k="math" id="tab-math"></button>
+</div>
+<div class="panel">
+  <div class="controls" id="controls"></div>
+  <div id="sheet">
+    <div class="sheet-head"><b id="sheet-title"></b><span class="name" id="t-name"></span></div>
+    <div id="out"></div>
+  </div>
+</div>
+<section class="promo">
+  <h2 id="t-more"></h2>
+  <div class="cards">
+    <a id="p-game" href="https://catalonec1.github.io/Gr-dina-de-stele/"><b>Star Garden</b><small></small></a>
+    <a id="p-books" href="https://www.amazon.com/s?k=Star+Garden+Press+activity+book"><b>Star Garden Press</b><small></small></a>
+    <a id="p-math" href="https://payhip.com/b/8nKd3"><b>Math Worksheets</b><small></small></a>
+    <a id="p-abc" href="https://payhip.com/b/YU6QZ"><b>Alphabet Tracing</b><small></small></a>
+    <a id="p-free" href="https://payhip.com/b/HfnBT"><b>Free sample pack</b><small></small></a>
+  </div>
+</section>
+<footer id="t-foot"></footer>
+</div>
+<script>
+'use strict';
+const T={
+ ro:{title:'Fișe gratuite de printat',sub:'Labirinturi, cuvinte ascunse și matematică pentru copii. Alegi nivelul, apeși „Altă fișă” și printezi sau salvezi ca PDF. Gratuit, fără cont.',
+  maze:'Labirint',words:'Cuvinte ascunse',math:'Matematică',level:'Nivel',easy:'Ușor',medium:'Mediu',hard:'Greu',theme:'Temă',op:'Operație',range:'Numere până la',
+  add:'Adunare',subt:'Scădere',mix:'Amestec',newb:'Altă fișă',print:'Printează / PDF',name:'Nume: ____________',
+  mazeT:'Ajută racheta să ajungă la stea!',wordsT:'Găsește cuvintele',mathT:'Calculează',key:'Răspunsuri',
+  more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',
+  foot:'Fișele sunt generate în browser; poți să le printezi liber pentru acasă sau pentru clasă.',
+  themes:{space:'Spațiu',animals:'Animale',fruits:'Fructe'}},
+ en:{title:'Free printable worksheets',sub:'Mazes, word searches and math for kids. Pick a level, press “New sheet” and print or save as PDF. Free, no account.',
+  maze:'Maze',words:'Word search',math:'Math',level:'Level',easy:'Easy',medium:'Medium',hard:'Hard',theme:'Theme',op:'Operation',range:'Numbers up to',
+  add:'Addition',subt:'Subtraction',mix:'Mixed',newb:'New sheet',print:'Print / PDF',name:'Name: ____________',
+  mazeT:'Help the rocket reach the star!',wordsT:'Find the words',mathT:'Solve',key:'Answer key',
+  more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',
+  foot:'Sheets are generated in your browser; print them freely for home or classroom use.',
+  themes:{space:'Space',animals:'Animals',fruits:'Fruits'}},
+ ru:{title:'Бесплатные листы для печати',sub:'Лабиринты, поиск слов и математика для детей. Выберите уровень, нажмите «Новый лист» и распечатайте или сохраните в PDF. Бесплатно, без регистрации.',
+  maze:'Лабиринт',words:'Поиск слов',math:'Математика',level:'Уровень',easy:'Лёгкий',medium:'Средний',hard:'Сложный',theme:'Тема',op:'Действие',range:'Числа до',
+  add:'Сложение',subt:'Вычитание',mix:'Смешанные',newb:'Новый лист',print:'Печать / PDF',name:'Имя: ____________',
+  mazeT:'Помоги ракете добраться до звезды!',wordsT:'Найди слова',mathT:'Реши примеры',key:'Ответы',
+  more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',
+  foot:'Листы создаются в браузере; их можно свободно печатать для дома или класса.',
+  themes:{space:'Космос',animals:'Животные',fruits:'Фрукты'}}};
+const WORDS={
+ ro:{space:['STEA','LUNA','SOARE','PLANETA','RACHETA','COMETA','GALAXIE','ORBITA','MARTE','SATELIT','ASTRONAUT','CRATER'],
+     animals:['PISICA','CAINE','LEU','URS','VULPE','IEPURE','CAL','VACA','OAIE','LUP','BUFNITA','ARICI'],
+     fruits:['MAR','PARA','PRUNA','CAISA','PIERSICA','STRUGURE','CIRESE','LAMAIE','BANANA','PEPENE','CAPSUNA','GUTUIE']},
+ en:{space:['STAR','MOON','SUN','PLANET','ROCKET','COMET','GALAXY','ORBIT','MARS','SATELLITE','ASTRONAUT','CRATER'],
+     animals:['CAT','DOG','LION','BEAR','FOX','RABBIT','HORSE','COW','SHEEP','WOLF','OWL','HEDGEHOG'],
+     fruits:['APPLE','PEAR','PLUM','APRICOT','PEACH','GRAPE','CHERRY','LEMON','BANANA','MELON','STRAWBERRY','QUINCE']},
+ ru:{space:['ЗВЕЗДА','ЛУНА','СОЛНЦЕ','ПЛАНЕТА','РАКЕТА','КОМЕТА','ГАЛАКТИКА','ОРБИТА','МАРС','СПУТНИК','КОСМОНАВТ','КРАТЕР'],
+     animals:['КОТ','СОБАКА','ЛЕВ','МЕДВЕДЬ','ЛИСА','ЗАЯЦ','ЛОШАДЬ','КОРОВА','ОВЦА','ВОЛК','СОВА','ЁЖ'],
+     fruits:['ЯБЛОКО','ГРУША','СЛИВА','АБРИКОС','ПЕРСИК','ВИНОГРАД','ВИШНЯ','ЛИМОН','БАНАН','ДЫНЯ','КЛУБНИКА','АЙВА']}};
+const ABC={ro:'ABCDEFGHIJKLMNOPRSTUVZ',en:'ABCDEFGHIJKLMNOPRSTUVWY',ru:'АБВГДЕЖЗИКЛМНОПРСТУФХЦЧШЯ'};
+
+// RNG determinist (mulberry32) — aceeași sămânță dă aceeași fișă
+function rng(seed){let a=seed>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const ri=(r,n)=>Math.floor(r()*n);
+function shuffle(r,a){for(let i=a.length-1;i>0;i--){const j=ri(r,i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+
+// Labirint: backtracking recursiv; walls[y][x] = {n,e,s,w}
+function makeMaze(w,h,r){
+  const c=[...Array(h)].map(()=>[...Array(w)].map(()=>({n:1,e:1,s:1,w:1,v:0})));
+  const st=[[0,0]];c[0][0].v=1;
+  const D=[['n',0,-1,'s'],['e',1,0,'w'],['s',0,1,'n'],['w',-1,0,'e']];
+  while(st.length){const[x,y]=st[st.length-1];
+    const nb=D.filter(([,dx,dy])=>{const X=x+dx,Y=y+dy;return X>=0&&Y>=0&&X<w&&Y<h&&!c[Y][X].v});
+    if(!nb.length){st.pop();continue}
+    const[d,dx,dy,o]=nb[ri(r,nb.length)];c[y][x][d]=0;c[y+dy][x+dx][o]=0;c[y+dy][x+dx].v=1;st.push([x+dx,y+dy]);}
+  return c;}
+function solveMaze(c){const h=c.length,w=c[0].length,prev=new Map([['0,0',null]]),q=[[0,0]];
+  const D={n:[0,-1],e:[1,0],s:[0,1],w:[-1,0]};
+  while(q.length){const[x,y]=q.shift();if(x===w-1&&y===h-1)break;
+    for(const k in D){if(c[y][x][k])continue;const X=x+D[k][0],Y=y+D[k][1],id=X+','+Y;if(!prev.has(id)){prev.set(id,[x,y]);q.push([X,Y])}}}
+  const path=[];let p=[w-1,h-1];if(!prev.has(p.join(',')))return null;
+  while(p){path.unshift(p);p=prev.get(p.join(','))}return path;}
+function mazeSVG(c,withPath){
+  const h=c.length,w=c[0].length,s=24,W=w*s+20,H=h*s+20;let d='';
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const X=10+x*s,Y=10+y*s,k=c[y][x];
+    if(k.n&&!(x===0&&y===0))d+=`M${X} ${Y}h${s}`;if(k.w)d+=`M${X} ${Y}v${s}`;
+    if(y===h-1&&k.s&&!(x===w-1))d+=`M${X} ${Y+s}h${s}`;if(x===w-1&&k.e&&!(y===h-1))d+=`M${X+s} ${Y}v${s}`;
+    if(y===h-1&&x===w-1)d+=`M${X} ${Y+s}h${s}`;}
+  let sol='';if(withPath){const p=solveMaze(c);sol=`<polyline fill="none" stroke="#e0533d" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" points="${p.map(([x,y])=>(10+x*s+s/2)+','+(10+y*s+s/2)).join(' ')}"/>`}
+  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="maze"><path d="${d}" stroke="#1d2433" stroke-width="2.5" stroke-linecap="square" fill="none"/>${sol}`+
+   `<text x="${10+s/2}" y="${10+s*0.72}" font-size="${s*0.7}" text-anchor="middle">🚀</text><text x="${10+(w-0.5)*s}" y="${10+(h-0.28)*s}" font-size="${s*0.7}" text-anchor="middle">⭐</text></svg>`;}
+
+// Cuvinte ascunse
+function makeWordSearch(words,n,dirs,alpha,r){
+  for(let attempt=0;attempt<50;attempt++){
+    const g=[...Array(n)].map(()=>Array(n).fill('')),placed=[];
+    for(const wd of shuffle(r,[...words]).sort((a,b)=>b.length-a.length)){
+      if(wd.length>n)continue;let ok=false;
+      for(let t=0;t<200&&!ok;t++){const[dx,dy]=dirs[ri(r,dirs.length)],x=ri(r,n),y=ri(r,n),ex=x+dx*(wd.length-1),ey=y+dy*(wd.length-1);
+        if(ex<0||ey<0||ex>=n||ey>=n)continue;let fit=true;
+        for(let i=0;i<wd.length;i++){const ch=g[y+dy*i][x+dx*i];if(ch&&ch!==wd[i]){fit=false;break}}
+        if(!fit)continue;for(let i=0;i<wd.length;i++)g[y+dy*i][x+dx*i]=wd[i];placed.push({w:wd,x,y,dx,dy});ok=true;}
+    }
+    if(placed.length>=Math.min(words.length,8)){for(const row of g)for(let i=0;i<n;i++)if(!row[i])row[i]=alpha[ri(r,alpha.length)];return{g,placed};}
+  }
+  return null;}
+
+// Matematică
+function makeMath(op,max,count,r){const out=[];
+  for(let i=0;i<count;i++){const o=op==='mix'?(r()<.5?'+':'−'):(op==='add'?'+':'−');
+    if(o==='+'){const a=ri(r,max+1),b=ri(r,max-a+1);out.push({a,b,o,res:a+b})}
+    else{const a=ri(r,max+1),b=ri(r,a+1);out.push({a,b,o,res:a-b})}}
+  return out;}
+
+// Stare și interfață
+const qs=new URLSearchParams(location.search);
+let lang=(qs.get('lang')||(navigator.language||'ro').slice(0,2)).toLowerCase();if(!T[lang])lang='en';
+let kind=['maze','words','math'].includes(qs.get('k'))?qs.get('k'):'maze';
+let seed=+qs.get('seed')||Math.floor(Math.random()*1e9);
+const opt={level:'medium',theme:'space',op:'add',range:'20'};
+for(const k in opt){const v=qs.get(k);if(v&&/^[a-z0-9]+$/.test(v))opt[k]=v}
+const $=id=>document.getElementById(id);
+function sel(id,label,vals){return `<label>${label}<select id="${id}">${vals.map(([v,t])=>`<option value="${v}"${opt[id]===v?' selected':''}>${t}</option>`).join('')}</select></label>`}
+function controls(){const t=T[lang];let h='';
+  if(kind!=='math')h+=sel('level',t.level,[['easy',t.easy],['medium',t.medium],['hard',t.hard]]);
+  if(kind==='words')h+=sel('theme',t.theme,Object.entries(t.themes));
+  if(kind==='math')h+=sel('op',t.op,[['add',t.add],['sub',t.subt],['mix',t.mix]])+sel('range',t.range,[['10','10'],['20','20'],['100','100']]);
+  h+=`<button class="btn alt" id="new">${t.newb}</button><button class="btn" id="print">${t.print}</button>`;
+  $('controls').innerHTML=h;
+  for(const k of ['level','theme','op','range'])$(k)&&$(k).addEventListener('change',e=>{opt[k]=e.target.value;render()});
+  $('new').onclick=()=>{seed=Math.floor(Math.random()*1e9);render()};
+  $('print').onclick=()=>window.print();}
+function render(){const t=T[lang],r=rng(seed);let html='',key='';
+  if(kind==='maze'){const z={easy:[8,10],medium:[14,18],hard:[20,26]}[opt.level],c=makeMaze(z[0],z[1],r);
+    $('sheet-title').textContent=t.mazeT;html=mazeSVG(c,false);key=mazeSVG(c,true);window.__last={kind,maze:c};}
+  else if(kind==='words'){const n={easy:9,medium:12,hard:14}[opt.level];
+    const dirs={easy:[[1,0],[0,1]],medium:[[1,0],[0,1],[1,1]],hard:[[1,0],[0,1],[1,1],[-1,0],[0,-1],[1,-1]]}[opt.level];
+    const ws=makeWordSearch(WORDS[lang][opt.theme],n,dirs,ABC[lang],r);
+    $('sheet-title').textContent=t.wordsT+' · '+t.themes[opt.theme];
+    const hit=new Set();ws.placed.forEach(p=>{for(let i=0;i<p.w.length;i++)hit.add((p.x+p.dx*i)+','+(p.y+p.dy*i))});
+    const grid=(mark)=>`<div class="ws" style="--n:${n};grid-template-columns:repeat(${n},auto)">${ws.g.flatMap((row,y)=>row.map((ch,x)=>`<span${mark&&hit.has(x+','+y)?' style="background:#ffe08a"':''}>${ch}</span>`)).join('')}</div>`;
+    html=grid(false)+`<div class="words">${ws.placed.map(p=>`<span>${p.w}</span>`).join('')}</div>`;key=grid(true);window.__last={kind,ws};}
+  else{const m=makeMath(opt.op,+opt.range,24,r);$('sheet-title').textContent=t.mathT;
+    html=`<div class="math">${m.map(p=>`<div>${p.a} ${p.o} ${p.b} = ____</div>`).join('')}</div>`;
+    key=`<div class="math">${m.map(p=>`<div>${p.a} ${p.o} ${p.b} = ${p.res}</div>`).join('')}</div>`;window.__last={kind,math:m};}
+  $('out').innerHTML=html+`<div class="key print-only"><b>${t.key}</b>${key}</div>`;
+  const u=new URL(location.href);u.searchParams.set('lang',lang);u.searchParams.set('k',kind);u.searchParams.set('seed',seed);for(const k in opt)u.searchParams.set(k,opt[k]);history.replaceState(null,'',u);}
+function applyLang(){const t=T[lang];document.documentElement.lang=lang;document.title=t.title+' · '+t.maze+', '+t.words+', '+t.math;
+  $('t-title').textContent=t.title;$('t-sub').textContent=t.sub;$('t-name').textContent=t.name;$('t-more').textContent=t.more;$('t-foot').textContent=t.foot;
+  for(const k of ['maze','words','math']){const b=$('tab-'+k);b.textContent=t[k];b.setAttribute('aria-selected',k===kind)}
+  document.querySelectorAll('.langs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
+  const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP};
+  for(const id in P){const a=$(id);a.querySelector('small').textContent=P[id];
+    try{const u=new URL(a.href);if(u.hostname.endsWith('github.io')){u.searchParams.set('utm_source','printabile');a.href=u}}catch(e){}
+    a.target='_blank';a.rel='noopener';}
+  controls();render();}
+document.querySelectorAll('.langs button').forEach(b=>b.onclick=()=>{lang=b.dataset.l;applyLang()});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{kind=b.dataset.k;applyLang()});
+applyLang();
+</script>
+</body>
+</html>
