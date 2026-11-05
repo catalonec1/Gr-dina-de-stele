@@ -66,7 +66,7 @@ async function fresh(b, locale = 'ro-RO', init) {
   ok(p.errs.length === 0, 'fără erori în consolă ' + p.errs.join('|'));
   // v1.1: stele noi, cumpărare x10 / Max, cometă de aur, trofee, statistici, tastatură
   p = await fresh(b);
-  ok(await p.evaluate(() => STAR_TYPES.length === 8 && ['ro','en','ru'].every(k => T[k].stars.length === 8)), 'v1.1: 8 tipuri de stele traduse');
+  ok(await p.evaluate(() => STAR_TYPES.length >= 8 && ['ro','en','ru'].every(k => T[k].stars.length === STAR_TYPES.length)), 'v1.1: 8 tipuri de stele traduse');
   ok(await p.evaluate(() => ['ro','en','ru'].every(k => ACHIEVEMENTS.every(a => T[k].an[a.id] && T[k].ad[a.k]))), 'v1.1: trofee traduse în toate limbile');
   await p.evaluate(() => { S.light = 1e4; S.buyMode = 10; renderList(); });
   const cost10 = await p.evaluate(() => starCostN(0, 10));
@@ -100,9 +100,9 @@ async function fresh(b, locale = 'ro-RO', init) {
   p = await fresh(b, 'ro-RO', () => { if (!sessionStorage.y) { sessionStorage.y = 1;
     localStorage.setItem('gradina-de-stele-v1', JSON.stringify({ light: 50, lifeLight: 5e5, owned: [3, 0, 0, 0, 0, 0], ups: {}, dust: 1, boostUntil: 0, lang: 'ro', sound: true, last: Date.now() })); } });
   await p.waitForTimeout(300);
-  ok(await p.evaluate(() => S.owned.length === 8 && S.stats.total >= 5e5 && S.seen === VERSION && !!S.ach.total2 === false && !!S.ach.total1), 'v1.1: migrare salvare v1.0');
-  await p.waitForFunction(() => document.getElementById('toast').textContent.includes('1.1'), null, { timeout: 5000 }).catch(() => {});
-  ok(await p.evaluate(() => document.getElementById('toast').textContent.includes('1.1')), 'v1.1: mesaj „Noutăți” pentru jucătorii vechi');
+  ok(await p.evaluate(() => S.owned.length === STAR_TYPES.length && S.stats.total >= 5e5 && S.seen === VERSION && !!S.ach.total2 === false && !!S.ach.total1), 'v1.1: migrare salvare v1.0');
+  await p.waitForFunction(() => document.getElementById('toast').textContent.includes(VERSION), null, { timeout: 5000 }).catch(() => {});
+  ok(await p.evaluate(() => document.getElementById('toast').textContent.includes(VERSION)), 'v1.1: mesaj „Noutăți” pentru jucătorii vechi');
   // reclamă în curs: sunetul jucătorului nu se salvează ca oprit
   p = await fresh(b);
   await p.evaluate(() => { Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} },
