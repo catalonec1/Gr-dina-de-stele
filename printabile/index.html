@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fișe gratuite de printat: labirinturi, cuvinte ascunse, matematică</title>
+<title>Fișe gratuite de printat: labirinturi, cuvinte ascunse, matematică, ceasul</title>
 <meta name="description" content="Generator gratuit de fișe pentru copii: labirinturi, cuvinte ascunse și exerciții de matematică, în română, engleză și rusă. Printezi sau salvezi PDF, fără cont.">
 <link rel="canonical" href="https://catalonec1.github.io/Gr-dina-de-stele/printabile/">
 <meta property="og:title" content="Fișe gratuite de printat pentru copii">
@@ -37,6 +37,11 @@ button:focus-visible,select:focus-visible{outline:3px solid #f2b705;outline-offs
 .words{display:flex;flex-wrap:wrap;gap:6px 16px;justify-content:center;font-weight:600}
 .math{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px 20px;font:600 20px/1.2 ui-monospace,Menlo,monospace}
 .math div{white-space:nowrap}
+.clocks{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px;max-width:640px;margin:0 auto}
+.clocks figure{margin:0;display:grid;justify-items:center;gap:4px}
+.clocks figure small{justify-self:start;color:var(--muted)}
+.clocks svg{width:100%;max-width:170px;height:auto}
+.clocks figcaption{font:600 20px/1.2 ui-monospace,Menlo,monospace}
 .key{font-size:13px;color:var(--muted)}
 .promo{margin-top:22px;display:grid;gap:10px}
 .promo h2{font-size:18px;margin:0}
@@ -71,6 +76,7 @@ footer{margin-top:24px;color:var(--muted);font-size:13px}
   <button role="tab" data-k="maze" id="tab-maze"></button>
   <button role="tab" data-k="words" id="tab-words"></button>
   <button role="tab" data-k="math" id="tab-math"></button>
+  <button role="tab" data-k="clock" id="tab-clock"></button>
 </div>
 <div class="panel">
   <div class="controls" id="controls"></div>
@@ -94,27 +100,30 @@ footer{margin-top:24px;color:var(--muted);font-size:13px}
 <script>
 'use strict';
 const T={
- ro:{title:'Fișe gratuite de printat',sub:'Labirinturi, cuvinte ascunse și matematică pentru copii. Alegi nivelul, apeși „Altă fișă” și printezi sau salvezi ca PDF. Gratuit, fără cont.',
+ ro:{title:'Fișe gratuite de printat',sub:'Labirinturi, cuvinte ascunse, matematică și ceasul pentru copii. Alegi nivelul, apeși „Altă fișă” și printezi sau salvezi ca PDF. Gratuit, fără cont.',
   maze:'Labirint',words:'Cuvinte ascunse',math:'Matematică',level:'Nivel',easy:'Ușor',medium:'Mediu',hard:'Greu',theme:'Temă',op:'Operație',range:'Numere până la',
   add:'Adunare',subt:'Scădere',mix:'Amestec',newb:'Altă fișă',print:'Printează / PDF',name:'Nume: ____________',
   mazeT:'Ajută racheta să ajungă la stea!',wordsT:'Găsește cuvintele',mathT:'Calculează',key:'Răspunsuri',
   more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',
   foot:'Fișele sunt generate în browser; poți să le printezi liber pentru acasă sau pentru clasă.',
-  themes:{space:'Spațiu',animals:'Animale',fruits:'Fructe'}},
- en:{title:'Free printable worksheets',sub:'Mazes, word searches and math for kids. Pick a level, press “New sheet” and print or save as PDF. Free, no account.',
+  themes:{space:'Spațiu',animals:'Animale',fruits:'Fructe'},
+  clock:'Ceasul',clockRead:'Cât este ceasul? Scrie ora.',clockDraw:'Desenează acele ceasului.',mode:'Exercițiu',readM:'Citește ceasul',drawM:'Desenează acele',lvClock:{easy:'Ore fixe și jumătăți',medium:'Sferturi',hard:'Din 5 în 5 minute'}},
+ en:{title:'Free printable worksheets',sub:'Mazes, word searches, math and telling time for kids. Pick a level, press “New sheet” and print or save as PDF. Free, no account.',
   maze:'Maze',words:'Word search',math:'Math',level:'Level',easy:'Easy',medium:'Medium',hard:'Hard',theme:'Theme',op:'Operation',range:'Numbers up to',
   add:'Addition',subt:'Subtraction',mix:'Mixed',newb:'New sheet',print:'Print / PDF',name:'Name: ____________',
   mazeT:'Help the rocket reach the star!',wordsT:'Find the words',mathT:'Solve',key:'Answer key',
   more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',
   foot:'Sheets are generated in your browser; print them freely for home or classroom use.',
-  themes:{space:'Space',animals:'Animals',fruits:'Fruits'}},
- ru:{title:'Бесплатные листы для печати',sub:'Лабиринты, поиск слов и математика для детей. Выберите уровень, нажмите «Новый лист» и распечатайте или сохраните в PDF. Бесплатно, без регистрации.',
+  themes:{space:'Space',animals:'Animals',fruits:'Fruits'},
+  clock:'Clock',clockRead:'What time is it? Write the time.',clockDraw:'Draw the clock hands.',mode:'Exercise',readM:'Read the clock',drawM:'Draw the hands',lvClock:{easy:'O’clock and half past',medium:'Quarter past / to',hard:'Every 5 minutes'}},
+ ru:{title:'Бесплатные листы для печати',sub:'Лабиринты, поиск слов, математика и часы для детей. Выберите уровень, нажмите «Новый лист» и распечатайте или сохраните в PDF. Бесплатно, без регистрации.',
   maze:'Лабиринт',words:'Поиск слов',math:'Математика',level:'Уровень',easy:'Лёгкий',medium:'Средний',hard:'Сложный',theme:'Тема',op:'Действие',range:'Числа до',
   add:'Сложение',subt:'Вычитание',mix:'Смешанные',newb:'Новый лист',print:'Печать / PDF',name:'Имя: ____________',
   mazeT:'Помоги ракете добраться до звезды!',wordsT:'Найди слова',mathT:'Реши примеры',key:'Ответы',
   more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',
   foot:'Листы создаются в браузере; их можно свободно печатать для дома или класса.',
-  themes:{space:'Космос',animals:'Животные',fruits:'Фрукты'}}};
+  themes:{space:'Космос',animals:'Животные',fruits:'Фрукты'},
+  clock:'Часы',clockRead:'Который час? Запиши время.',clockDraw:'Нарисуй стрелки часов.',mode:'Задание',readM:'Определи время',drawM:'Нарисуй стрелки',lvClock:{easy:'Ровно и половина',medium:'Четверти',hard:'Каждые 5 минут'}}};
 const WORDS={
  ro:{space:['STEA','LUNA','SOARE','PLANETA','RACHETA','COMETA','GALAXIE','ORBITA','MARTE','SATELIT','ASTRONAUT','CRATER'],
      animals:['PISICA','CAINE','LEU','URS','VULPE','IEPURE','CAL','VACA','OAIE','LUP','BUFNITA','ARICI'],
@@ -174,6 +183,18 @@ function makeWordSearch(words,n,dirs,alpha,r){
   return null;}
 
 // Matematică
+function makeClocks(level,count,r){const mins={easy:[0,30],medium:[0,15,30,45],hard:[0,5,10,15,20,25,30,35,40,45,50,55]}[level]||[0,30];
+  const out=[],seen=new Set();let guard=0;
+  while(out.length<count&&guard++<500){const h=1+ri(r,12),m=mins[ri(r,mins.length)],k=h+':'+m;if(seen.has(k)&&seen.size<12*mins.length)continue;seen.add(k);out.push({h,m})}
+  return out;}
+const fmtT=c=>c.h+':'+String(c.m).padStart(2,'0');
+function clockSVG(c,hands){const R=46,ticks=[],nums=[];
+  for(let i=0;i<60;i++){const a=i*Math.PI/30,r0=i%5?41:38;ticks.push(`<line x1="${(50+r0*Math.sin(a)).toFixed(1)}" y1="${(50-r0*Math.cos(a)).toFixed(1)}" x2="${(50+44*Math.sin(a)).toFixed(1)}" y2="${(50-44*Math.cos(a)).toFixed(1)}" stroke="#1d2433" stroke-width="${i%5?.6:1.2}"/>`)}
+  for(let h=1;h<=12;h++){const a=h*Math.PI/6;nums.push(`<text x="${(50+31*Math.sin(a)).toFixed(1)}" y="${(50-31*Math.cos(a)+3.5).toFixed(1)}" font-size="10" text-anchor="middle" font-family="system-ui,sans-serif">${h}</text>`)}
+  let hd='';if(hands){const ha=((c.h%12)+c.m/60)*Math.PI/6,ma=c.m*Math.PI/30;
+    hd=`<line x1="50" y1="50" x2="${(50+21*Math.sin(ha)).toFixed(1)}" y2="${(50-21*Math.cos(ha)).toFixed(1)}" stroke="#1d2433" stroke-width="4" stroke-linecap="round"/><line x1="50" y1="50" x2="${(50+34*Math.sin(ma)).toFixed(1)}" y2="${(50-34*Math.cos(ma)).toFixed(1)}" stroke="#1d2433" stroke-width="2.4" stroke-linecap="round"/>`}
+  return `<svg viewBox="0 0 100 100" role="img" aria-label="${hands?fmtT(c):''}"><circle cx="50" cy="50" r="${R}" fill="#fff" stroke="#1d2433" stroke-width="2"/>${ticks.join('')}${nums.join('')}${hd}<circle cx="50" cy="50" r="2.5" fill="#1d2433"/></svg>`}
+
 function makeMath(op,max,count,r){const out=[];
   for(let i=0;i<count;i++){const o=op==='mix'?(r()<.5?'+':'−'):(op==='add'?'+':'−');
     if(o==='+'){const a=ri(r,max+1),b=ri(r,max-a+1);out.push({a,b,o,res:a+b})}
@@ -183,19 +204,20 @@ function makeMath(op,max,count,r){const out=[];
 // Stare și interfață
 const qs=new URLSearchParams(location.search);
 let lang=(qs.get('lang')||(navigator.language||'ro').slice(0,2)).toLowerCase();if(!T[lang])lang='en';
-let kind=['maze','words','math'].includes(qs.get('k'))?qs.get('k'):'maze';
+let kind=['maze','words','math','clock'].includes(qs.get('k'))?qs.get('k'):'maze';
 let seed=+qs.get('seed')||Math.floor(Math.random()*1e9);
-const opt={level:'medium',theme:'space',op:'add',range:'20'};
+const opt={level:'medium',theme:'space',op:'add',range:'20',mode:'read'};
 for(const k in opt){const v=qs.get(k);if(v&&/^[a-z0-9]+$/.test(v))opt[k]=v}
 const $=id=>document.getElementById(id);
 function sel(id,label,vals){return `<label>${label}<select id="${id}">${vals.map(([v,t])=>`<option value="${v}"${opt[id]===v?' selected':''}>${t}</option>`).join('')}</select></label>`}
 function controls(){const t=T[lang];let h='';
-  if(kind!=='math')h+=sel('level',t.level,[['easy',t.easy],['medium',t.medium],['hard',t.hard]]);
+  if(kind==='clock')h+=sel('level',t.level,[['easy',t.lvClock.easy],['medium',t.lvClock.medium],['hard',t.lvClock.hard]])+sel('mode',t.mode,[['read',t.readM],['draw',t.drawM]]);
+  else if(kind!=='math')h+=sel('level',t.level,[['easy',t.easy],['medium',t.medium],['hard',t.hard]]);
   if(kind==='words')h+=sel('theme',t.theme,Object.entries(t.themes));
   if(kind==='math')h+=sel('op',t.op,[['add',t.add],['sub',t.subt],['mix',t.mix]])+sel('range',t.range,[['10','10'],['20','20'],['100','100']]);
   h+=`<button class="btn alt" id="new">${t.newb}</button><button class="btn" id="print">${t.print}</button>`;
   $('controls').innerHTML=h;
-  for(const k of ['level','theme','op','range'])$(k)&&$(k).addEventListener('change',e=>{opt[k]=e.target.value;render()});
+  for(const k of ['level','theme','op','range','mode'])$(k)&&$(k).addEventListener('change',e=>{opt[k]=e.target.value;render()});
   $('new').onclick=()=>{seed=Math.floor(Math.random()*1e9);render()};
   $('print').onclick=()=>window.print();}
 function render(){const t=T[lang],r=rng(seed);let html='',key='';
@@ -208,14 +230,18 @@ function render(){const t=T[lang],r=rng(seed);let html='',key='';
     const hit=new Set();ws.placed.forEach(p=>{for(let i=0;i<p.w.length;i++)hit.add((p.x+p.dx*i)+','+(p.y+p.dy*i))});
     const grid=(mark)=>`<div class="ws" style="--n:${n};grid-template-columns:repeat(${n},auto)">${ws.g.flatMap((row,y)=>row.map((ch,x)=>`<span${mark&&hit.has(x+','+y)?' style="background:#ffe08a"':''}>${ch}</span>`)).join('')}</div>`;
     html=grid(false)+`<div class="words">${ws.placed.map(p=>`<span>${p.w}</span>`).join('')}</div>`;key=grid(true);window.__last={kind,ws};}
+  else if(kind==='clock'){const cs=makeClocks(opt.level,9,r),rd=opt.mode!=='draw';
+    $('sheet-title').textContent=rd?t.clockRead:t.clockDraw;
+    html=`<div class="clocks">${cs.map((c,i)=>`<figure><small>${i+1})</small>${clockSVG(c,rd)}<figcaption>${rd?'____ : ____':fmtT(c)}</figcaption></figure>`).join('')}</div>`;
+    key=`<div class="clocks">${cs.map((c,i)=>`<figure><small>${i+1})</small>${clockSVG(c,true)}<figcaption>${fmtT(c)}</figcaption></figure>`).join('')}</div>`;window.__last={kind,clocks:cs,mode:opt.mode};}
   else{const m=makeMath(opt.op,+opt.range,24,r);$('sheet-title').textContent=t.mathT;
     html=`<div class="math">${m.map(p=>`<div>${p.a} ${p.o} ${p.b} = ____</div>`).join('')}</div>`;
     key=`<div class="math">${m.map(p=>`<div>${p.a} ${p.o} ${p.b} = ${p.res}</div>`).join('')}</div>`;window.__last={kind,math:m};}
   $('out').innerHTML=html+`<div class="key print-only"><b>${t.key}</b>${key}</div>`;
   const u=new URL(location.href);u.searchParams.set('lang',lang);u.searchParams.set('k',kind);u.searchParams.set('seed',seed);for(const k in opt)u.searchParams.set(k,opt[k]);history.replaceState(null,'',u);}
-function applyLang(){const t=T[lang];document.documentElement.lang=lang;document.title=t.title+' · '+t.maze+', '+t.words+', '+t.math;
+function applyLang(){const t=T[lang];document.documentElement.lang=lang;document.title=t.title+' · '+t.maze+', '+t.words+', '+t.math+', '+t.clock;
   $('t-title').textContent=t.title;$('t-sub').textContent=t.sub;$('t-name').textContent=t.name;$('t-more').textContent=t.more;$('t-foot').textContent=t.foot;
-  for(const k of ['maze','words','math']){const b=$('tab-'+k);b.textContent=t[k];b.setAttribute('aria-selected',k===kind)}
+  for(const k of ['maze','words','math','clock']){const b=$('tab-'+k);b.textContent=t[k];b.setAttribute('aria-selected',k===kind)}
   document.querySelectorAll('.langs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
   const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP};
   for(const id in P){const a=$(id);a.querySelector('small').textContent=P[id];
