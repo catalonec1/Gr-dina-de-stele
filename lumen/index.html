@@ -216,6 +216,26 @@ const Ads = {
         window.GD_OPTIONS = { gameId: window.GD_GAME_ID, onEvent(ev) { if (ev.name === "SDK_REWARDED_WATCH_COMPLETE") ok = true; } };
         await loadScript("https://html5.api.gamedistribution.com/main.min.js");
         this.a = { gameplay() {}, show(type) { ok = false; return Promise.resolve(window.gdsdk.showAd(type === "rewarded" ? "rewarded" : undefined)).then(() => type === "rewarded" ? ok : true).catch(() => false); } };
+      } else if (PLATFORM === "gamepix" && window.GamePix && window.GamePix.ads) {
+        // GamePix SDK v3: scriptul e pus în <head> de build; pauza/reluarea vin prin evenimente
+        const gp = window.GamePix;
+        gp.events.on("pause", () => { if (S.soundGp === undefined) { S.soundGp = S.sound; S.sound = false; } });
+        gp.events.on("resume", () => { if (S.soundGp !== undefined) { S.sound = S.soundGp; delete S.soundGp; } });
+        this.a = { gameplay() {}, show(type) { return (type === "rewarded" ? gp.ads.reward() : gp.ads.interstitial()).then(r => !!(r && r.success)); },
+          happy() { try { gp.happyMoment("level_complete"); } catch (e) {} } };
+      } else if (PLATFORM === "y8" && window.Y8_APP_ID && window.Y8_GAME_ID) {
+        // Y8 SDK 2.0 (appId/gameId din build)
+        const sdk = await new Promise((res, rej) => {
+          addEventListener("y8sdk.ready", () => res(window.y8.sdk()), { once: true });
+          loadScript("https://cdn.y8.com/minimal-sdk/2-0/y8.min.js").then(() => { if (window.y8 && window.y8.emitReadyEvent) window.y8.emitReadyEvent(); }, rej);
+        });
+        sdk.init({ appId: window.Y8_APP_ID, autoLogin: false }, { gameId: window.Y8_GAME_ID, preloadAdBreaks: "auto" });
+        this.a = { gameplay() {}, show(type) {
+          return new Promise(r => { let ok = false, done = false; const fin = v => { if (!done) { done = true; r(v); } };
+            const cfg = type === "rewarded"
+              ? { type: "reward", name: "hints", beforeReward: f => f(), adViewed: () => { ok = true; }, adBreakDone: () => fin(ok) }
+              : { type: "next", name: "next-level", adBreakDone: () => fin(true) };
+            Promise.resolve(sdk.showAd(cfg)).catch(() => fin(false)); }); } };
       }
     } catch (e) { this.a = null; }
     renderHud();
