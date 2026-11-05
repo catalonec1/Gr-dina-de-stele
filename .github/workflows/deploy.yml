@@ -22,6 +22,8 @@ jobs:
       - run: npm install
       - run: npx playwright install --with-deps chromium
       - run: npm test
+      - name: Teste Grădina de stele v1.2
+        run: node tests/v12.js
       - name: Teste joc Telegram
         run: node telegram/tests/run.mjs
       - name: Teste fișe gratuite (printabile)
