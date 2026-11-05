@@ -63,6 +63,54 @@ await test('simulare 120 s: deterministă, viteza crește și e plafonată', () 
   eq(JSON.stringify(a), JSON.stringify(b));
   assert(FO.speedAt(0) < FO.speedAt(30)); assert(FO.speedAt(1000) <= 3.6);
 });
+// ---------------- v1.1: picături de aur, misiuni zilnice, culori noi ----------------
+await test('v1.1: picătura de aur dă +5 scântei în plus și eveniment', () => {
+  const r = FO.newRun(); r.spawnIn = 99;
+  r.items.push({ kind: 'gold', ring: 1, angle: 0.05, drift: 0, ttl: 5 });
+  FO.step(r, 0.016, FO.mulberry32(1));
+  eq(r.sparks, 6); eq(r.golds, 1); eq(r.drops, 1); assert(r.events.includes('gold') && r.events.includes('pick'));
+});
+await test('v1.1: picăturile de aur apar doar după 10 s, ~8% din picături', () => {
+  const rng = FO.mulberry32(5); let early = 0, gold = 0, drops = 0;
+  for (let i = 0; i < 4000; i++) {
+    const r = FO.newRun(); r.t = i < 1000 ? 5 : 30; r.spawnIn = 0; FO.step(r, 0.001, rng);
+    r.items.forEach(it => { if (i < 1000 && it.kind === 'gold') early++; if (i >= 1000 && it.kind !== 'moth') { drops++; if (it.kind === 'gold') gold++; } });
+  }
+  eq(early, 0); assert(gold / drops > 0.05 && gold / drops < 0.11, 'proporție ' + gold / drops);
+});
+await test('v1.1: 3 misiuni diferite pe zi, deterministe, schimbate a doua zi', () => {
+  const a = FO.missionsFor('2026-11-06'), b = FO.missionsFor('2026-11-06');
+  eq(JSON.stringify(a), JSON.stringify(b)); eq(new Set(a.map(q => q.k)).size, 3);
+  let diff = 0; for (let d = 1; d <= 20; d++) { const x = FO.missionsFor('2026-12-' + String(d).padStart(2, '0'));
+    eq(new Set(x.map(q => q.k)).size, 3); if (JSON.stringify(x) !== JSON.stringify(a)) diff++; }
+  assert(diff >= 15, 'misiunile trebuie să varieze');
+});
+await test('v1.1: progresul misiunilor după ture și revendicare o singură dată', () => {
+  const p = FO.defaultProfile(), d = new Date('2026-11-06T10:00:00Z');
+  p.missions = { day: FO.todayKey(d), list: [{ k: 'drops', n: 15, prog: 0, claimed: false }, { k: 'score', n: 150, prog: 0, claimed: false }, { k: 'runs', n: 3, prog: 0, claimed: false }] };
+  const run = FO.newRun(); run.drops = 10; run.score = 120.7; run.bestCombo = 4;
+  eq(FO.trackMissions(p, run, d).length, 0);
+  eq(p.missions.list[0].prog, 10); eq(p.missions.list[1].prog, 120); eq(p.missions.list[2].prog, 1);
+  const run2 = FO.newRun(); run2.drops = 9; run2.score = 160;
+  eq(FO.trackMissions(p, run2, d).length, 2);
+  eq(p.missions.list[0].prog, 15); eq(p.missions.list[1].prog, 150);
+  eq(FO.claimMission(p, 0, d), FO.MISSION_REWARD); eq(FO.claimMission(p, 0, d), 0); eq(FO.claimMission(p, 2, d), 0);
+  eq(p.sparks, 25);
+  FO.ensureMissions(p, new Date('2026-11-07T10:00:00Z'));
+  eq(p.missions.day, '2026-11-07'); assert(p.missions.list.every(q => q.prog === 0 && !q.claimed));
+});
+await test('v1.1: misiunile din salvare sunt validate (fără valori inventate)', () => {
+  const ok = FO.parseProfile(JSON.stringify({ missions: { day: '2026-11-06', list: [{ k: 'drops', n: 15, prog: 99, claimed: true }, { k: 'runs', n: 3, prog: 1 }, { k: 'gold', n: 1, prog: 0 }] } }));
+  eq(ok.missions.list[0].prog, 15); eq(ok.missions.list[1].claimed, false);
+  eq(FO.parseProfile(JSON.stringify({ missions: { day: '2026-11-06', list: [{ k: 'drops', n: 1, prog: 1 }, { k: 'runs', n: 3 }, { k: 'gold', n: 1 }] } })).missions, null);
+  eq(FO.parseProfile(JSON.stringify({ missions: 'x' })).missions, null);
+});
+await test('v1.1: culori noi Ger și Soare cu scântei; cadoul fără reclamă e 25', () => {
+  eq(FO.skinById('frost').price, 1000); eq(FO.skinById('sun').price, 2000);
+  const p = FO.defaultProfile(); p.sparks = 1000; eq(FO.buySkin(p, 'frost'), 'ok'); eq(p.sparks, 0);
+  eq(FO.claimDaily(p, new Date('2026-11-06T01:00:00Z'), FO.FREE_DAILY), 25);
+  ['ro', 'en', 'ru'].forEach(l => ['m_drops', 'm_score', 'm_combo', 'm_runs', 'm_gold', 'missions', 'claim', 'dailyFree', 'gold', 'mDone'].forEach(k => assert(FO.I18N[l][k], l + ':' + k)));
+});
 await test('apariția nu pune molii direct peste licurici', () => {
   const rng = FO.mulberry32(9);
   for (let i = 0; i < 500; i++) {
@@ -353,12 +401,44 @@ if (chromium) {
   });
   await test('fără bot și fără Adsgram configurate: jocul merge, butoanele plătite sunt ascunse', async () => {
     const { page, ctx, errors } = await openPage({ config: { API_BASE: '', ADSGRAM_BLOCK_ID: '' } });
-    assert(!(await visible(page, '#btnDaily')));
+    // v1.1: fără Adsgram, cadoul zilnic e gratuit (+25)
+    assert(await visible(page, '#btnDaily')); eq(await page.textContent('#btnDaily'), 'Cadou zilnic +25');
+    const sp0 = await page.evaluate(() => window.__fo.profile.sparks);
+    await page.click('#btnDaily');
+    eq(await page.evaluate(() => window.__fo.profile.sparks), sp0 + 25); assert(await page.$eval('#btnDaily', b => b.disabled));
     await page.click('#btnShop');
     assert(!(await visible(page, '#starRows')));
     await page.click('#btnShopBack'); await page.click('#btnPlay');
     await page.waitForTimeout(200); assert(await page.evaluate(() => window.__fo.run.score > 0));
     eq(errors.length, 0, errors.join('\n')); await ctx.close();
+  });
+  await test('v1.1: misiunile apar în meniu, avansează după tură și se revendică', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'en' });
+    eq(await page.$$eval('#missions .row', r => r.length), 3);
+    eq(await page.textContent('#missions h3'), "Today's missions");
+    await page.evaluate(() => { const p = window.__fo.profile; p.missions.list = [{ k: 'drops', n: 15, prog: 14, claimed: false }, { k: 'runs', n: 3, prog: 0, claimed: false }, { k: 'gold', n: 1, prog: 0, claimed: false }]; });
+    await page.click('#btnPlay'); await page.waitForTimeout(100);
+    await page.evaluate(() => { const r = window.__fo.run; r.spawnIn = 99;
+      r.items.push({ kind: 'gold', ring: r.ring, angle: r.angle + 0.05 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { const r = window.__fo.run; r.shield = false; r.items.push({ kind: 'moth', ring: r.ring, angle: r.angle + 0.03 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForSelector('#over.on', { timeout: 4000 });
+    eq(await page.evaluate(() => window.__fo.profile.missions.list.map(q => q.prog).join()), '15,1,1');
+    // continuare după reclamă: progresul nu se numără de două ori
+    await page.click('#btnRevive'); await page.waitForTimeout(150);
+    eq(await page.evaluate(() => window.__fo.profile.missions.list.map(q => q.prog).join()), '14,0,0');
+    await page.evaluate(() => { const r = window.__fo.run; r.shield = false; r.items.push({ kind: 'moth', ring: r.ring, angle: r.angle + 0.03 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForSelector('#over.on', { timeout: 4000 });
+    eq(await page.evaluate(() => window.__fo.profile.missions.list.map(q => q.prog).join()), '15,1,1');
+    await page.click('#btnOverMenu');
+    const sp = await page.evaluate(() => window.__fo.profile.sparks);
+    const btns = await page.$$('#missions .row button');
+    assert(!(await btns[0].isDisabled()) && await btns[1].isDisabled());
+    await btns[0].click();
+    eq(await page.evaluate(() => window.__fo.profile.sparks), sp + 25);
+    assert(await page.$eval('#missions .row', r => r.classList.contains('done')));
+    await page.screenshot({ path: path.join(outDir, 'v11-missions-en.png') });
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
   });
   await test('în afara Telegram (browser simplu) jocul tot pornește', async () => {
     const { page, ctx, errors } = await openPage({ telegram: false, lang: 'en' });
