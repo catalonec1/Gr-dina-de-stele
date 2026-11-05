@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Lumen Links</title>
+<meta name="description" content="Rotate the tiles and lead the lantern light to every crystal. Relaxing puzzle with endless levels.">
+<style>
+:root{--bg:#0b0f24;--panel:#151b3a;--ink:#e9ecff;--dim:#8b93c4;--acc:#ffd166}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;touch-action:manipulation}
+#app{position:fixed;inset:0;display:flex;flex-direction:column}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center}
+.screen.on{display:flex}
+button{font:inherit;color:inherit;background:var(--panel);border:1px solid #2a3366;border-radius:14px;padding:12px 18px;cursor:pointer}
+button:active{transform:scale(.97)}
+button.big{font-size:20px;padding:14px 0;width:min(78vw,300px);margin:6px 0}
+button.pri{background:linear-gradient(180deg,#ffd166,#f4a940);color:#2a1a00;border:none;font-weight:700}
+button.ico{padding:8px 12px;min-width:44px}
+button:disabled{opacity:.4}
+#menu h1{margin:9vh 0 2px;font-size:clamp(34px,9vw,54px);letter-spacing:1px;background:linear-gradient(90deg,#ffd166,#9be7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+#menu .sub{color:var(--dim);margin:0 16px 4vh;text-align:center}
+#menuStars{color:var(--acc);margin-bottom:12px}
+.row{display:flex;gap:8px;margin-top:14px}
+#hud{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 10px 4px;gap:6px}
+#hud .mid{text-align:center;flex:1}
+#hud .t{font-weight:700;font-size:18px}
+#hud .s{color:var(--dim);font-size:13px}
+#board{flex:1;width:100%;display:block;touch-action:none}
+#levels .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px 16px 30px;width:min(100%,460px);overflow-y:auto}
+#levels .grid button{padding:10px 0;font-weight:700}
+#levels .grid small{display:block;color:var(--acc);font-weight:400;font-size:11px;min-height:13px}
+.top{width:100%;display:flex;align-items:center;gap:10px;padding:10px}
+.top h2{margin:0;font-size:20px}
+#overlay{position:absolute;inset:0;background:rgba(5,8,20,.72);display:none;align-items:center;justify-content:center;z-index:5}
+#overlay.on{display:flex}
+.card{background:var(--panel);border:1px solid #2a3366;border-radius:20px;padding:22px 26px;text-align:center;min-width:260px;max-width:90vw}
+.card h3{margin:0 0 6px;font-size:24px}
+.stars{font-size:40px;letter-spacing:6px;margin:6px 0 2px}
+.stars .off{opacity:.2}
+#pals{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;justify-content:center}
+#pals button{width:44px;height:44px;padding:0;border-radius:50%;position:relative}
+#pals button.sel{outline:3px solid var(--ink)}
+#pals button small{position:absolute;bottom:-17px;left:0;right:0;font-size:10px;color:var(--dim)}
+#toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#232b5c;padding:8px 14px;border-radius:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9}
+</style>
+</head>
+<body>
+<div id="app">
+  <section id="menu" class="screen on">
+    <h1>Lumen Links</h1>
+    <div class="sub" data-i="tag"></div>
+    <div id="menuStars"></div>
+    <button class="big pri" id="bPlay"></button>
+    <button class="big" id="bLevels" data-i="levels"></button>
+    <button class="big" id="bDaily"></button>
+    <div id="pals"></div>
+    <div class="row" style="margin-top:28px">
+      <button class="ico" id="bLang"></button>
+      <button class="ico" id="bSound"></button>
+    </div>
+  </section>
+  <section id="levels" class="screen">
+    <div class="top"><button class="ico" data-back>‹</button><h2 data-i="levels"></h2></div>
+    <div class="grid" id="lvGrid"></div>
+  </section>
+  <section id="game" class="screen">
+    <div id="hud">
+      <button class="ico" id="bBack">‹</button>
+      <div class="mid"><div class="t" id="hTitle"></div><div class="s" id="hMoves"></div></div>
+      <button class="ico" id="bUndo" title="Undo">↶</button>
+      <button class="ico" id="bHint"></button>
+      <button class="ico" id="bRestart" title="Restart">⟲</button>
+    </div>
+    <canvas id="board"></canvas>
+  </section>
+  <div id="overlay"><div class="card" id="card"></div></div>
+  <div id="toast"></div>
+</div>
+<script>
+"use strict";
+// ---------- Texte ----------
+const T = {
+  en: { tag: "Rotate the tiles and lead the lantern light to every crystal.", play: "Play", cont: "Continue · level {n}", levels: "Levels", daily: "Daily puzzle", dailyDone: "Daily puzzle ✓", level: "Level {n}", dailyT: "Daily {d}", moves: "Moves: {m} · par {p}", solved: "Solved!", next: "Next level", menu: "Menu", again: "Play again", hint: "Hint", noHints: "No hints left. Solve a level to earn one.", watch: "Watch ad: +3 hints", gotHints: "+3 hints", locked: "Unlock with {n} ★", lang: "EN", palette: "Colors", total: "{n} ★ collected", dailyBonus: "Daily bonus: +2 hints", tut: "Tap a tile to rotate it. Light every crystal." },
+  ro: { tag: "Rotește piesele și du lumina felinarului la fiecare cristal.", play: "Joacă", cont: "Continuă · nivelul {n}", levels: "Niveluri", daily: "Puzzle-ul zilei", dailyDone: "Puzzle-ul zilei ✓", level: "Nivelul {n}", dailyT: "Ziua {d}", moves: "Mutări: {m} · țintă {p}", solved: "Rezolvat!", next: "Nivelul următor", menu: "Meniu", again: "Încă o dată", hint: "Indiciu", noHints: "Nu mai ai indicii. Rezolvă un nivel ca să primești unul.", watch: "Reclamă: +3 indicii", gotHints: "+3 indicii", locked: "Se deblochează la {n} ★", lang: "RO", palette: "Culori", total: "{n} ★ adunate", dailyBonus: "Bonusul zilei: +2 indicii", tut: "Atinge o piesă ca s-o rotești. Aprinde toate cristalele." },
+  ru: { tag: "Поворачивайте плитки и ведите свет фонаря к каждому кристаллу.", play: "Играть", cont: "Продолжить · уровень {n}", levels: "Уровни", daily: "Головоломка дня", dailyDone: "Головоломка дня ✓", level: "Уровень {n}", dailyT: "День {d}", moves: "Ходы: {m} · цель {p}", solved: "Готово!", next: "Следующий уровень", menu: "Меню", again: "Ещё раз", hint: "Подсказка", noHints: "Подсказок нет. Пройдите уровень, чтобы получить одну.", watch: "Реклама: +3 подсказки", gotHints: "+3 подсказки", locked: "Открывается за {n} ★", lang: "RU", palette: "Цвета", total: "Собрано {n} ★", dailyBonus: "Бонус дня: +2 подсказки", tut: "Нажмите на плитку, чтобы повернуть. Зажгите все кристаллы." },
+};
+const LANGS = ["en", "ro", "ru"];
+const PLATFORM = window.GAME_PLATFORM || "web";
+function detectLang() {
+  if (window.GAME_PLATFORM) return "en";
+  const l = (navigator.language || "en").slice(0, 2).toLowerCase();
+  return l === "ro" || l === "mo" ? "ro" : l === "ru" ? "ru" : "en";
+}
+const t = (k, v = {}) => (T[S.lang][k] || T.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
+
+// ---------- Salvare ----------
+const KEY = "lumen-links-v1";
+let S = { lang: detectLang(), sound: true, level: 1, stars: {}, daily: {}, hints: 3, pal: 0, tut: false };
+try { const d = JSON.parse(localStorage.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+const totalStars = () => Object.values(S.stars).reduce((a, b) => a + b, 0) + Object.keys(S.daily).length * 3;
+
+// ---------- Palete (cosmetice, se deblochează cu stele) ----------
+const PALS = [
+  { need: 0, lit: "#ffd166", glow: "#ffb703", crystal: "#9be7ff" },
+  { need: 25, lit: "#7cf5c8", glow: "#2ec4b6", crystal: "#ff9ff3" },
+  { need: 60, lit: "#ff8fab", glow: "#ff4d6d", crystal: "#ffe66d" },
+  { need: 120, lit: "#b8a1ff", glow: "#7b5cff", crystal: "#7cf5c8" },
+  { need: 200, lit: "#e9ecff", glow: "#9be7ff", crystal: "#ffd166" },
+];
+const pal = () => PALS[S.pal] || PALS[0];
+
+// ---------- Generator de niveluri (determinist, dintr-un seed) ----------
+// Biți: N=1, E=2, S=4, W=8. Rotire în sensul acelor: N→E→S→W.
+const DIRS = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]]; // dx, dy, bit, bit opus
+const rotMask = (m, r) => { r &= 3; for (let i = 0; i < r; i++) m = ((m << 1) | (m >> 3)) & 15; return m; };
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let x = a; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+function sizeFor(n) { return n <= 3 ? 3 : n <= 10 ? 4 : n <= 25 ? 5 : n <= 45 ? 6 : n <= 70 ? 7 : n <= 100 ? 8 : 9; }
+function genLevel(seed, W, H) {
+  const R = rng(seed), N = W * H, sol = new Array(N).fill(0);
+  const src = Math.floor(H / 2) * W + Math.floor(W / 2);
+  const inTree = new Array(N).fill(false); inTree[src] = true;
+  const frontier = [];
+  const addF = i => { const x = i % W, y = (i / W) | 0; DIRS.forEach(([dx, dy, b, ob]) => { const nx = x + dx, ny = y + dy; if (nx >= 0 && ny >= 0 && nx < W && ny < H) frontier.push([i, ny * W + nx, b, ob]); }); };
+  addF(src);
+  // Prim aleator, cu preferință pentru a nu face cruci prea des
+  while (frontier.length) {
+    const k = Math.floor(R() * frontier.length); const [a, c, b, ob] = frontier[k];
+    frontier[k] = frontier[frontier.length - 1]; frontier.pop();
+    if (inTree[c]) continue;
+    const deg = [1, 2, 4, 8].filter(x => sol[a] & x).length;
+    if (deg >= 3 && R() < 0.75 && frontier.some(f => !inTree[f[1]] && f[0] !== a)) { frontier.push([a, c, b, ob]); continue; }
+    sol[a] |= b; sol[c] |= ob; inTree[c] = true; addF(c);
+  }
+  const rot = sol.map(() => Math.floor(R() * 4));
+  // nicio piesă nu începe deja aliniată dacă se poate (nivel mai interesant), dar păstrăm determinismul
+  const tiles = sol.map((m, i) => ({ base: m, rot: rot[i] }));
+  const lv = { W, H, src, sol, tiles };
+  if (isSolved(lv)) tiles.forEach(tl => { if (rotMask(tl.base, 1) !== tl.base) tl.rot = (tl.rot + 1) & 3; });
+  lv.par = tiles.reduce((s, tl, i) => s + minTurns(tl, sol[i]), 0);
+  return lv;
+}
+const cur = tl => rotMask(tl.base, tl.rot);
+function minTurns(tl, target) { for (let k = 0; k < 4; k++) if (rotMask(tl.base, tl.rot + k) === target) return k; return 0; }
+function litSet(lv) {
+  const { W, H, tiles } = lv, lit = new Array(W * H).fill(false), q = [lv.src]; lit[lv.src] = true;
+  while (q.length) {
+    const i = q.pop(), x = i % W, y = (i / W) | 0, m = cur(tiles[i]);
+    for (const [dx, dy, b, ob] of DIRS) {
+      if (!(m & b)) continue; const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+      const j = ny * W + nx; if (!lit[j] && (cur(tiles[j]) & ob)) { lit[j] = true; q.push(j); }
+    }
+  }
+  return lit;
+}
+// Rezolvat = toate piesele sunt aprinse și nu există capete deschise (orice soluție validă e acceptată)
+function isSolved(lv) {
+  const lit = litSet(lv); if (lit.includes(false)) return false;
+  const { W, H, tiles } = lv;
+  for (let i = 0; i < W * H; i++) { const x = i % W, y = (i / W) | 0, m = cur(tiles[i]);
+    for (const [dx, dy, b, ob] of DIRS) { if (!(m & b)) continue; const nx = x + dx, ny = y + dy;
+      if (nx < 0 || ny < 0 || nx >= W || ny >= H || !(cur(tiles[ny * W + nx]) & ob)) return false; } }
+  return true;
+}
+const levelSeed = n => (n * 2654435761) ^ 0x5bd1e995;
+const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+const dailySeed = d => d.split("-").reduce((a, x) => a * 100 + +x, 0) ^ 0x1234567;
+
+// ---------- Sunet (WebAudio, fără fișiere) ----------
+let AC = null;
+function tone(f, d = 0.08, type = "sine", v = 0.12, when = 0) {
+  if (!S.sound) return;
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const o = AC.createOscillator(), g = AC.createGain(), t0 = AC.currentTime + when;
+    o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t0); g.gain.exponentialRampToValueAtTime(0.001, t0 + d);
+    o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + d + 0.02);
+  } catch (e) {}
+}
+const sfx = {
+  rot() { tone(520, 0.05, "triangle", 0.07); },
+  lit(n) { tone(660 + n * 40, 0.12, "sine", 0.06); },
+  win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, "sine", 0.1, i * 0.09)); },
+};
+
+// ---------- Reclame (CrazyGames v3 / Poki v2 / GameDistribution; pe web și itch: fără reclame) ----------
+function loadScript(src) { return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); }
+const Ads = {
+  a: null, busy: false, wins: 0,
+  async init() {
+    try {
+      if (PLATFORM === "crazygames" || /(^|\.)crazygames\./.test(location.hostname)) {
+        await loadScript("https://sdk.crazygames.com/crazygames-sdk-v3.js");
+        const sdk = window.CrazyGames.SDK; await sdk.init();
+        if (sdk.environment !== "crazygames" && sdk.environment !== "local") return;
+        try { sdk.game.loadingStop(); } catch (e) {}
+        this.a = { gameplay(on) { try { on ? sdk.game.gameplayStart() : sdk.game.gameplayStop(); } catch (e) {} },
+          show(type) { return new Promise(r => sdk.ad.requestAd(type, { adStarted() {}, adFinished: () => r(true), adError: () => r(false) })); },
+          happy() { try { sdk.game.happytime(); } catch (e) {} } };
+      } else if (PLATFORM === "poki") {
+        await loadScript("https://game-cdn.poki.com/scripts/v2/poki-sdk.js");
+        const sdk = window.PokiSDK; await sdk.init().catch(() => {}); try { sdk.gameLoadingFinished(); } catch (e) {}
+        this.a = { gameplay(on) { try { on ? sdk.gameplayStart() : sdk.gameplayStop(); } catch (e) {} },
+          show(type) { return type === "rewarded" ? sdk.rewardedBreak().then(Boolean) : sdk.commercialBreak().then(() => true); } };
+      } else if (PLATFORM === "gamedistribution" && window.GD_GAME_ID) {
+        let ok = false;
+        window.GD_OPTIONS = { gameId: window.GD_GAME_ID, onEvent(ev) { if (ev.name === "SDK_REWARDED_WATCH_COMPLETE") ok = true; } };
+        await loadScript("https://html5.api.gamedistribution.com/main.min.js");
+        this.a = { gameplay() {}, show(type) { ok = false; return Promise.resolve(window.gdsdk.showAd(type === "rewarded" ? "rewarded" : undefined)).then(() => type === "rewarded" ? ok : true).catch(() => false); } };
+      }
+    } catch (e) { this.a = null; }
+    renderHud();
+  },
+  gameplay(on) { this.a && this.a.gameplay(on); },
+  async show(type) {
+    if (!this.a || this.busy) return false;
+    this.busy = true; S.soundWas = S.sound; S.sound = false;
+    const r = await this.a.show(type).catch(() => false);
+    S.sound = S.soundWas; delete S.soundWas; this.busy = false; return r;
+  },
+};
+
+// ---------- Stare joc ----------
+let G = null; // { lv, mode:'level'|'daily', n, moves, hist, anim[], done, litPrev }
+const $ = id => document.getElementById(id);
+const cvs = $("board"), ctx = cvs.getContext("2d");
+function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); if (id === "game") resize(); Ads.gameplay(id === "game"); }
+function startLevel(n) {
+  const s = sizeFor(n);
+  G = { lv: genLevel(levelSeed(n), s, s), mode: "level", n, moves: 0, hist: [], anim: {}, done: false, hintsUsed: 0 };
+  G.litPrev = litSet(G.lv).filter(Boolean).length;
+  show("game"); renderHud(); if (!S.tut) toast(t("tut"), 3500);
+}
+function startDaily() {
+  const d = today();
+  G = { lv: genLevel(dailySeed(d), 7, 7), mode: "daily", d, moves: 0, hist: [], anim: {}, done: false, hintsUsed: 0 };
+  G.litPrev = litSet(G.lv).filter(Boolean).length;
+  show("game"); renderHud();
+}
+function rotate(i, record = true) {
+  if (!G || G.done) return;
+  const tl = G.lv.tiles[i]; tl.rot = (tl.rot + 1) & 3;
+  G.anim[i] = { from: -Math.PI / 2, t0: performance.now() };
+  if (record) { G.moves++; G.hist.push(i); }
+  sfx.rot(); afterChange();
+}
+function undo() {
+  if (!G || G.done || !G.hist.length) return;
+  const i = G.hist.pop(), tl = G.lv.tiles[i]; tl.rot = (tl.rot + 3) & 3; G.moves++;
+  G.anim[i] = { from: Math.PI / 2, t0: performance.now() }; sfx.rot(); afterChange();
+}
+function afterChange() {
+  const n = litSet(G.lv).filter(Boolean).length;
+  if (n > G.litPrev) sfx.lit(n % 8);
+  G.litPrev = n; renderHud();
+  if (isSolved(G.lv)) win();
+}
+function hint() {
+  if (!G || G.done) return;
+  if (S.hints <= 0) return offerHints();
+  const { tiles, sol } = G.lv;
+  const lit = litSet(G.lv);
+  // preferă o piesă greșită lângă zona aprinsă
+  let cand = tiles.map((tl, i) => i).filter(i => cur(tiles[i]) !== sol[i]);
+  if (!cand.length) return;
+  const near = cand.filter(i => { const x = i % G.lv.W, y = (i / G.lv.W) | 0; return DIRS.some(([dx, dy]) => { const nx = x + dx, ny = y + dy; return nx >= 0 && ny >= 0 && nx < G.lv.W && ny < G.lv.H && lit[ny * G.lv.W + nx]; }); });
+  const i = (near.length ? near : cand)[0];
+  const k = minTurns(tiles[i], sol[i]);
+  tiles[i].rot = (tiles[i].rot + k) & 3; G.anim[i] = { from: -k * Math.PI / 2, t0: performance.now(), hint: true };
+  S.hints--; G.hintsUsed++; G.hist = G.hist.filter(j => j !== i); save(); sfx.rot(); afterChange();
+}
+async function offerHints() {
+  if (!Ads.a) return toast(t("noHints"));
+  overlay(`<h3>${t("hint")}</h3><p>${t("noHints")}</p><button class="big pri" id="oWatch">${t("watch")}</button><br><button class="big" id="oClose">✕</button>`);
+  $("oClose").onclick = closeOverlay;
+  $("oWatch").onclick = async () => { closeOverlay(); if (await Ads.show("rewarded")) { S.hints += 3; save(); renderHud(); toast(t("gotHints")); } };
+}
+function starsFor(moves, par) { return moves <= par ? 3 : moves <= Math.ceil(par * 1.6) + 2 ? 2 : 1; }
+function win() {
+  G.done = true; sfx.win(); if (Ads.a && Ads.a.happy) Ads.a.happy();
+  let st = 3, title;
+  if (G.mode === "level") {
+    st = starsFor(G.moves, G.lv.par);
+    S.stars[G.n] = Math.max(S.stars[G.n] || 0, st);
+    if (G.n >= S.level) S.level = G.n + 1;
+    S.hints = Math.min(S.hints + 1, 99); title = t("level", { n: G.n });
+  } else {
+    if (!S.daily[G.d]) { S.daily[G.d] = 1; S.hints += 2; }
+    title = t("dailyT", { d: G.d });
+  }
+  S.tut = true; save(); Ads.wins++;
+  setTimeout(() => {
+    const starsHtml = [1, 2, 3].map(k => `<span class="${k <= st ? "" : "off"}">★</span>`).join("");
+    overlay(`<h3>${t("solved")}</h3><div class="s" style="color:var(--dim)">${title}</div><div class="stars">${starsHtml}</div>
+      <div style="color:var(--dim);margin-bottom:10px">${t("moves", { m: G.moves, p: G.lv.par })}</div>
+      ${G.mode === "daily" ? `<div style="color:var(--acc)">${t("dailyBonus")}</div>` : ""}
+      ${G.mode === "level" ? `<button class="big pri" id="oNext">${t("next")}</button>` : ""}
+      <button class="big" id="oMenu">${t("menu")}</button>`);
+    const goNext = async () => { closeOverlay(); if (Ads.a && Ads.wins % 3 === 0) await Ads.show("midgame"); startLevel(G.n + 1); };
+    if ($("oNext")) $("oNext").onclick = goNext;
+    $("oMenu").onclick = () => { closeOverlay(); toMenu(); };
+  }, 650);
+}
+function overlay(html) { $("card").innerHTML = html; $("overlay").classList.add("on"); }
+function closeOverlay() { $("overlay").classList.remove("on"); }
+let toastT = 0;
+function toast(msg, ms = 2200) { const e = $("toast"); e.textContent = msg; e.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => e.style.opacity = 0, ms); }
+
+// ---------- UI ----------
+function renderHud() {
+  if (!G) return;
+  $("hTitle").textContent = G.mode === "level" ? t("level", { n: G.n }) : t("dailyT", { d: G.d });
+  $("hMoves").textContent = t("moves", { m: G.moves, p: G.lv.par });
+  $("bHint").textContent = "💡" + S.hints;
+  $("bUndo").disabled = !G.hist.length;
+}
+function renderMenu() {
+  document.querySelectorAll("[data-i]").forEach(e => e.textContent = t(e.dataset.i));
+  $("bPlay").textContent = S.level > 1 ? t("cont", { n: S.level }) : t("play");
+  $("bDaily").textContent = S.daily[today()] ? t("dailyDone") : t("daily");
+  $("bLang").textContent = "🌐 " + t("lang");
+  $("bSound").textContent = S.sound ? "🔊" : "🔇";
+  const ts = totalStars(); $("menuStars").textContent = t("total", { n: ts });
+  $("pals").innerHTML = PALS.map((p, i) => `<button data-p="${i}" class="${i === S.pal ? "sel" : ""}" ${ts < p.need ? "disabled" : ""} style="background:radial-gradient(circle,${p.lit} 0 35%,${p.glow} 36% 60%,#151b3a 61%)" title="${ts < p.need ? t("locked", { n: p.need }) : t("palette")}"><small>${ts < p.need ? p.need + "★" : ""}</small></button>`).join("");
+  $("pals").querySelectorAll("button").forEach(b => b.onclick = () => { S.pal = +b.dataset.p; save(); renderMenu(); });
+}
+function renderLevels() {
+  const max = Math.max(S.level + 9, 30), g = $("lvGrid");
+  let h = "";
+  for (let n = 1; n <= max; n++) { const st = S.stars[n] || 0;
+    h += `<button data-n="${n}" ${n > S.level ? "disabled" : ""}>${n}<small>${st ? "★".repeat(st) : ""}</small></button>`; }
+  g.innerHTML = h; g.querySelectorAll("button").forEach(b => b.onclick = () => startLevel(+b.dataset.n));
+}
+function toMenu() { G = null; renderMenu(); show("menu"); }
+$("bPlay").onclick = () => startLevel(S.level);
+$("bLevels").onclick = () => { renderLevels(); show("levels"); };
+$("bDaily").onclick = startDaily;
+$("bLang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); renderMenu(); };
+$("bSound").onclick = () => { S.sound = !S.sound; save(); renderMenu(); };
+document.querySelectorAll("[data-back]").forEach(b => b.onclick = toMenu);
+$("bBack").onclick = toMenu;
+$("bUndo").onclick = undo;
+$("bHint").onclick = hint;
+$("bRestart").onclick = () => G && (G.mode === "level" ? startLevel(G.n) : startDaily());
+addEventListener("keydown", e => { if (e.key === "z" && (e.ctrlKey || e.metaKey)) undo(); if (e.key === "Escape") { closeOverlay(); toMenu(); } });
+
+// ---------- Desen ----------
+let geo = { s: 40, ox: 0, oy: 0 }, DPR = 1;
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2);
+  const r = cvs.getBoundingClientRect(); cvs.width = r.width * DPR; cvs.height = r.height * DPR;
+  if (!G) return;
+  const pad = 14, s = Math.floor(Math.min((r.width - pad * 2) / G.lv.W, (r.height - pad * 2) / G.lv.H, 96));
+  geo = { s, ox: (r.width - s * G.lv.W) / 2, oy: (r.height - s * G.lv.H) / 2 };
+}
+addEventListener("resize", resize);
+function tileAt(px, py) {
+  const x = Math.floor((px - geo.ox) / geo.s), y = Math.floor((py - geo.oy) / geo.s);
+  return x >= 0 && y >= 0 && x < G.lv.W && y < G.lv.H ? y * G.lv.W + x : -1;
+}
+cvs.addEventListener("pointerdown", e => {
+  if (!G || G.done) return; const r = cvs.getBoundingClientRect();
+  const i = tileAt(e.clientX - r.left, e.clientY - r.top); if (i >= 0) rotate(i);
+});
+cvs.addEventListener("contextmenu", e => e.preventDefault());
+const STARS = Array.from({ length: 70 }, (_, i) => { const r = rng(i + 7); return [r(), r(), r()]; });
+const ease = x => 1 - Math.pow(1 - x, 3);
+function draw(now) {
+  requestAnimationFrame(draw);
+  if (!G || !$("game").classList.contains("on")) return;
+  const W = cvs.width / DPR, H = cvs.height / DPR, P = pal();
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
+  // fundal cu stele discrete
+  ctx.fillStyle = "#0b0f24"; ctx.fillRect(0, 0, W, H);
+  const lit = litSet(G.lv), { s, ox, oy } = geo, lv = G.lv;
+  for (const st of STARS) { ctx.fillStyle = `rgba(200,210,255,${0.25 + 0.25 * Math.sin(now / 900 + st[2] * 9)})`; ctx.fillRect(st[0] * W, st[1] * H, 1.5, 1.5); }
+  for (let i = 0; i < lv.W * lv.H; i++) {
+    const x = ox + (i % lv.W) * s, y = oy + ((i / lv.W) | 0) * s;
+    ctx.fillStyle = lit[i] ? (G.done ? `rgba(60,70,150,${0.6 + 0.3 * Math.sin(now / 200)})` : "#1a2150") : "#141a3a";
+    ctx.beginPath(); ctx.roundRect(x + 2, y + 2, s - 4, s - 4, s * 0.16); ctx.fill();
+  }
+  for (let i = 0; i < lv.W * lv.H; i++) {
+    const x = ox + (i % lv.W) * s, y = oy + ((i / lv.W) | 0) * s, tl = lv.tiles[i];
+    let ang = tl.rot * Math.PI / 2; const an = G.anim[i];
+    if (an) { const p = Math.min(1, (now - an.t0) / 140); ang += an.from * (1 - ease(p)); if (p >= 1) delete G.anim[i]; }
+    ctx.save(); ctx.translate(x + s / 2, y + s / 2); ctx.rotate(ang);
+    const col = lit[i] ? P.lit : "#3a4380";
+    ctx.strokeStyle = col; ctx.lineCap = "butt"; ctx.lineWidth = s * 0.17;
+    if (lit[i]) { ctx.shadowColor = P.glow; ctx.shadowBlur = s * 0.35; }
+    ctx.beginPath();
+    for (const [dx, dy, b] of DIRS) if (tl.base & b) { ctx.moveTo(0, 0); ctx.lineTo(dx * s / 2, dy * s / 2); }
+    ctx.stroke(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, s * 0.085, 0, 7); ctx.fill();
+    const deg = [1, 2, 4, 8].filter(b => tl.base & b).length;
+    if (i === lv.src) { // felinar
+      ctx.rotate(-ang); ctx.shadowColor = P.glow; ctx.shadowBlur = s * 0.6;
+      ctx.fillStyle = P.lit; ctx.beginPath(); ctx.arc(0, 0, s * 0.26, 0, 7); ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = "#fff8e1"; ctx.beginPath(); ctx.arc(0, 0, s * 0.12 + Math.sin(now / 300) * s * 0.02, 0, 7); ctx.fill();
+    } else if (deg === 1) { // cristal
+      ctx.rotate(-ang); const c = lit[i] ? P.crystal : "#4a5390", r = s * 0.22;
+      if (lit[i]) { ctx.shadowColor = P.crystal; ctx.shadowBlur = s * 0.5; } else ctx.shadowBlur = 0;
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(0, -r * 1.2); ctx.lineTo(r, 0); ctx.lineTo(0, r * 1.2); ctx.lineTo(-r, 0); ctx.closePath(); ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.beginPath(); ctx.moveTo(0, -r * 1.2); ctx.lineTo(r * 0.4, -r * 0.2); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
+    } else { ctx.shadowBlur = 0; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, s * 0.1, 0, 7); ctx.fill(); }
+    ctx.restore();
+  }
+}
+renderMenu();
+requestAnimationFrame(draw);
+Ads.init();
+</script>
+</body>
+</html>
