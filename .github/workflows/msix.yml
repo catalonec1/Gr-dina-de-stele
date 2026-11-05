@@ -1,0 +1,40 @@
+name: Build Store packages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['tools/msix.js', 'pwa/manifest.webmanifest', '.github/workflows/msix.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  msix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Wait for Pages to serve the current manifest
+        run: sleep 120
+      - run: node tools/msix.js
+      - name: Unpack bundles
+        run: |
+          mkdir -p out && cd msix && unzip -l star-garden.zip
+          unzip -o -j star-garden.zip '*.msixbundle' '*.appxbundle' -d ../out
+          cp star-garden.zip ../out/ && ls -l ../out
+      - uses: actions/upload-artifact@v4
+        with:
+          name: store-packages
+          path: out/*
+      - name: Publish packages to the msix-files branch
+        run: |
+          cd out
+          git init -q -b msix-files
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -qm "Store packages for ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" msix-files
