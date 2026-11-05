@@ -185,6 +185,19 @@ async function fresh(b, locale = 'ro-RO', init) {
     await c2.close();
   }
   srv2.close();
+  // Regresii găsite prin teste de mutație (skill rea-ci-tests-audit): fiecare verificare de mai jos
+  // pică dacă formula sau validarea respectivă se schimbă, ceea ce suita veche nu observa.
+  p = await fresh(b, 'ro-RO', () => { if (!sessionStorage.z) { sessionStorage.z = 1;
+    localStorage.setItem('gradina-de-stele-v1', JSON.stringify({ light: 0, lifeLight: 0, owned: [0, 10, 0, 0, 0, 0], ups: {}, dust: 0, boostUntil: 0, lang: 'xx', buyMode: 'abc', sound: true, last: Date.now() - 24 * 3600e3 })); } });
+  await p.waitForTimeout(300);
+  ok(Math.abs(await p.evaluate(() => S.light) - 288000) < 3000, 'mutație: câștigul offline e plafonat la 8h');
+  ok(await p.evaluate(() => S.lang === 'en' && S.buyMode === 1), 'mutație: salvare cu limbă / mod de cumpărare invalid se corectează');
+  ok(await p.evaluate(() => { S.last = 0; save(); return JSON.parse(localStorage.getItem(SAVE_KEY)).last > Date.now() - 5000; }), 'mutație: save() actualizează ora ultimei sesiuni');
+  ok(await p.evaluate(() => { S.owned[0] = 1; return starCost(0) === Math.ceil(STAR_TYPES[0].cost * 1.15); }), 'mutație: costul stelei crește cu 15%, rotunjit în sus');
+  ok(await p.evaluate(() => { S.ach = {}; S.ups = {}; S.boostUntil = 0; S.dust = 0; const r0 = ratePerSec(); S.dust = 5; return Math.abs(ratePerSec() / r0 - 1.5) < 1e-9; }), 'mutație: fiecare praf de stele +10%');
+  ok(await p.evaluate(() => { S.dust = 0; const r0 = ratePerSec(); S.ups = { global0: true }; return Math.abs(ratePerSec() / r0 - 1.5) < 1e-9; }), 'mutație: îmbunătățirea globală x1.5');
+  ok(await p.evaluate(() => { S.ups = { tap2: true }; S.boostUntil = 0; return Math.abs(tapValue() - (2 + ratePerSec() * 0.05)) < 1e-9; }), 'mutație: atingerea adaugă 5% din producție');
+  ok(p.errs.length === 0, 'mutație: fără erori în consolă ' + p.errs.join('|'));
   await b.close();
   console.log(fails ? `\n${fails} TESTE PICATE` : '\nTOATE TESTELE AU TRECUT');
   process.exit(fails ? 1 : 0);
