@@ -28,6 +28,8 @@ jobs:
         run: node printabile/tests/run.js
       - name: Teste Lumen Links
         run: node lumen/tests/run.js
+      - name: Teste Paper River
+        run: node river/tests/run.js
 
   deploy:
     needs: test
@@ -52,6 +54,10 @@ jobs:
           mkdir -p dist/web/lumen
           cp lumen/index.html dist/web/lumen/
           cp lumen/launch/cover-630x500.png lumen/launch/icon-512.png dist/web/lumen/
+      - name: Adaugă Paper River în /river/
+        run: |
+          mkdir -p dist/web/river
+          cp river/index.html river/launch/cover-630x500.png river/launch/icon-512.png dist/web/river/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Fișe gratuite de printat în /printabile/
