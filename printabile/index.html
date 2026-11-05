@@ -93,6 +93,7 @@ footer{margin-top:24px;color:var(--muted);font-size:13px}
     <a id="p-math" href="https://payhip.com/b/8nKd3"><b>Math Worksheets</b><small></small></a>
     <a id="p-abc" href="https://payhip.com/b/YU6QZ"><b>Alphabet Tracing</b><small></small></a>
     <a id="p-free" href="https://payhip.com/b/HfnBT"><b>Free sample pack</b><small></small></a>
+    <a id="p-clock" href="https://payhip.com/b/HPF3W"><b>Telling Time</b><small></small></a>
   </div>
 </section>
 <footer id="t-foot"></footer>
@@ -104,7 +105,7 @@ const T={
   maze:'Labirint',words:'Cuvinte ascunse',math:'Matematică',level:'Nivel',easy:'Ușor',medium:'Mediu',hard:'Greu',theme:'Temă',op:'Operație',range:'Numere până la',
   add:'Adunare',subt:'Scădere',mix:'Amestec',newb:'Altă fișă',print:'Printează / PDF',name:'Nume: ____________',
   mazeT:'Ajută racheta să ajungă la stea!',wordsT:'Găsește cuvintele',mathT:'Calculează',key:'Răspunsuri',
-  more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',
+  more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',clockP:'Fișe cu ceasul, 20 de pagini (PDF)',
   foot:'Fișele sunt generate în browser; poți să le printezi liber pentru acasă sau pentru clasă.',
   themes:{space:'Spațiu',animals:'Animale',fruits:'Fructe'},
   clock:'Ceasul',clockRead:'Cât este ceasul? Scrie ora.',clockDraw:'Desenează acele ceasului.',mode:'Exercițiu',readM:'Citește ceasul',drawM:'Desenează acele',lvClock:{easy:'Ore fixe și jumătăți',medium:'Sferturi',hard:'Din 5 în 5 minute'}},
@@ -112,7 +113,7 @@ const T={
   maze:'Maze',words:'Word search',math:'Math',level:'Level',easy:'Easy',medium:'Medium',hard:'Hard',theme:'Theme',op:'Operation',range:'Numbers up to',
   add:'Addition',subt:'Subtraction',mix:'Mixed',newb:'New sheet',print:'Print / PDF',name:'Name: ____________',
   mazeT:'Help the rocket reach the star!',wordsT:'Find the words',mathT:'Solve',key:'Answer key',
-  more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',
+  more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',clockP:'Telling time workbook, 20 pages (PDF)',
   foot:'Sheets are generated in your browser; print them freely for home or classroom use.',
   themes:{space:'Space',animals:'Animals',fruits:'Fruits'},
   clock:'Clock',clockRead:'What time is it? Write the time.',clockDraw:'Draw the clock hands.',mode:'Exercise',readM:'Read the clock',drawM:'Draw the hands',lvClock:{easy:'O’clock and half past',medium:'Quarter past / to',hard:'Every 5 minutes'}},
@@ -120,7 +121,7 @@ const T={
   maze:'Лабиринт',words:'Поиск слов',math:'Математика',level:'Уровень',easy:'Лёгкий',medium:'Средний',hard:'Сложный',theme:'Тема',op:'Действие',range:'Числа до',
   add:'Сложение',subt:'Вычитание',mix:'Смешанные',newb:'Новый лист',print:'Печать / PDF',name:'Имя: ____________',
   mazeT:'Помоги ракете добраться до звезды!',wordsT:'Найди слова',mathT:'Реши примеры',key:'Ответы',
-  more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',
+  more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',clockP:'Тетрадь «Часы», 20 страниц (PDF)',
   foot:'Листы создаются в браузере; их можно свободно печатать для дома или класса.',
   themes:{space:'Космос',animals:'Животные',fruits:'Фрукты'},
   clock:'Часы',clockRead:'Который час? Запиши время.',clockDraw:'Нарисуй стрелки часов.',mode:'Задание',readM:'Определи время',drawM:'Нарисуй стрелки',lvClock:{easy:'Ровно и половина',medium:'Четверти',hard:'Каждые 5 минут'}}};
@@ -243,7 +244,7 @@ function applyLang(){const t=T[lang];document.documentElement.lang=lang;document
   $('t-title').textContent=t.title;$('t-sub').textContent=t.sub;$('t-name').textContent=t.name;$('t-more').textContent=t.more;$('t-foot').textContent=t.foot;
   for(const k of ['maze','words','math','clock']){const b=$('tab-'+k);b.textContent=t[k];b.setAttribute('aria-selected',k===kind)}
   document.querySelectorAll('.langs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
-  const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP};
+  const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP,'p-clock':t.clockP};
   for(const id in P){const a=$(id);a.querySelector('small').textContent=P[id];
     try{const u=new URL(a.href);if(u.hostname.endsWith('github.io')){u.searchParams.set('utm_source','printabile');a.href=u}}catch(e){}
     a.target='_blank';a.rel='noopener';}
