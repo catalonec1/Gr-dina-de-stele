@@ -33,6 +33,7 @@ for (const [name, o] of Object.entries(PLATFORMS)) {
     copyDir(path.join(ROOT, 'pwa/icons'), path.join(out, 'icons'));
     copyDir(path.join(ROOT, 'pwa/screenshots'), path.join(out, 'screenshots'));
     fs.copyFileSync(path.join(ROOT, 'launch/cover-630x500.png'), path.join(out, 'cover.png'));
+    fs.copyFileSync(path.join(ROOT, 'pwa/privacy.html'), path.join(out, 'privacy.html'));
   }
   execFileSync('zip', ['-qr', path.join(DIST, name + '.zip'), '.'], { cwd: out });
   console.log('OK', name, o.platform === 'gamedistribution' && !o.gdId ? '(fără GD_GAME_ID: reclamele GD rămân oprite)' : '');
