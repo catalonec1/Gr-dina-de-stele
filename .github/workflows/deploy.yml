@@ -30,6 +30,8 @@ jobs:
         run: node printabile/tests/run.js
       - name: Teste Lumen Links
         run: node lumen/tests/run.js
+      - name: Teste Lumen Links v1.1
+        run: node lumen/tests/v11.js
 
   deploy:
     needs: test
