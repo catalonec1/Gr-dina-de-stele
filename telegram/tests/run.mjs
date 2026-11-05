@@ -204,7 +204,10 @@ await test('/setup setează webhook cu secret derivat din token, comenzi, buton 
 // ---------------- browser ----------------
 console.log('browser (Playwright, Telegram simulat)');
 let chromium;
-try { ({ chromium } = require('playwright')); } catch { console.log('  skip: playwright lipsește'); }
+try { ({ chromium } = require('playwright')); } catch {
+  // În CI, testele de browser sunt obligatorii: lipsa Playwright nu are voie să dea verde.
+  if (process.env.CI) { failed++; console.log('  FAIL playwright lipsește în CI'); } else console.log('  skip: playwright lipsește');
+}
 
 if (chromium) {
   const API = 'https://api.test';
