@@ -775,6 +775,10 @@ const Ads = {
         this.usePoki(window.PokiSDK);
       } else if (PLATFORM === "gamedistribution") {
         this.useGD();
+      } else if (PLATFORM === "gamepix") {
+        this.useGamePix(window.GamePix);
+      } else if (PLATFORM === "y8") {
+        this.useY8();
       }
     } catch (e) { this.adapter = null; this.enabled = false; }
   },
@@ -824,6 +828,42 @@ const Ads = {
         },
       });
     }).catch(() => {});
+  },
+  // GamePix SDK v3 (scriptul e pus în <head> de build, înaintea jocului, ca să sincronizeze localStorage)
+  useGamePix(gp) {
+    if (!gp || !gp.ads) return;
+    gp.events.on("pause", () => { this.muted = true; Music.pause(); });
+    gp.events.on("resume", () => { if (!this.busy) { this.muted = false; Music.resume(); } });
+    this.enable({
+      gameplay() {},
+      show(type, onStart) {
+        onStart();
+        return (type === "rewarded" ? gp.ads.reward() : gp.ads.interstitial()).then(r => !!(r && r.success));
+      },
+    });
+  },
+  // Y8 SDK 2.0 (appId și gameId vin din build: window.Y8_APP_ID, window.Y8_GAME_ID)
+  useY8() {
+    if (!window.Y8_APP_ID || !window.Y8_GAME_ID) return;
+    const self = this;
+    addEventListener("y8sdk.ready", () => {
+      const sdk = window.y8.sdk();
+      sdk.init({ appId: window.Y8_APP_ID, autoLogin: false }, { gameId: window.Y8_GAME_ID, preloadAdBreaks: "auto" });
+      self.enable({
+        gameplay() {},
+        show(type, onStart) {
+          return new Promise(res => {
+            let ok = false, done = false; const fin = v => { if (!done) { done = true; res(v); } };
+            const cfg = type === "rewarded"
+              ? { type: "reward", name: "x2-bonus", beforeReward: show => show(), beforeAd: onStart,
+                  adViewed: () => { ok = true; }, adDismissed: () => { ok = false; }, adBreakDone: () => fin(ok) }
+              : { type: "next", name: "next-tier", beforeAd: onStart, adBreakDone: () => fin(true) };
+            Promise.resolve(sdk.showAd(cfg)).catch(() => fin(false));
+          });
+        },
+      });
+    }, { once: true });
+    loadScript("https://cdn.y8.com/minimal-sdk/2-0/y8.min.js").then(() => { if (window.y8 && window.y8.emitReadyEvent) window.y8.emitReadyEvent(); }).catch(() => {});
   },
   request(type, onDone, onFail) {
     if (!this.enabled || this.busy) { onFail && onFail(); return; }
