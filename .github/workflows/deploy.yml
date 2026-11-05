@@ -24,6 +24,8 @@ jobs:
       - run: npm test
       - name: Teste joc Telegram
         run: node telegram/tests/run.mjs
+      - name: Teste fișe gratuite (printabile)
+        run: node printabile/tests/run.js
 
   deploy:
     needs: test
@@ -45,6 +47,10 @@ jobs:
           cp telegram/index.html telegram/config.js telegram/core.js dist/web/telegram/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
+      - name: Fișe gratuite de printat în /printabile/
+        run: |
+          mkdir -p dist/web/printabile
+          cp printabile/index.html dist/web/printabile/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

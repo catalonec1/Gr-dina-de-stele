@@ -1,0 +1,100 @@
+// Teste automate pentru fișele gratuite: node printabile/tests/run.js  (necesită playwright)
+const { chromium } = require('playwright');
+const path = require('path');
+const URL = 'file://' + path.resolve(__dirname, '..', 'index.html');
+let fails = 0;
+const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
+
+(async () => {
+  const b = await chromium.launch();
+  const open = async (q = '', vw = { width: 390, height: 844 }, locale = 'ro-RO') => {
+    const ctx = await b.newContext({ viewport: vw, locale });
+    const p = await ctx.newPage(); p.errs = [];
+    p.on('pageerror', e => p.errs.push(e.message));
+    p.on('console', m => m.type() === 'error' && p.errs.push(m.text()));
+    await p.goto(URL + q); return p;
+  };
+
+  let p = await open();
+  ok(await p.evaluate(() => document.documentElement.lang) === 'ro', 'limba implicită din browser (RO)');
+  ok(await p.$eval('#t-title', e => e.textContent) === 'Fișe gratuite de printat', 'titlu în română');
+  ok(await p.$eval('#t-sub', e => e.textContent.length) > 60, 'descrierea paginii e afișată (nu eticheta unei opțiuni)');
+
+  // Labirint: rezolvabil pe toate nivelurile, pe mai multe semințe
+  for (const level of ['easy', 'medium', 'hard']) {
+    await p.selectOption('#level', level);
+    let solvable = true, perfect = true;
+    for (let i = 0; i < 15; i++) {
+      await p.click('#new');
+      const r = await p.evaluate(() => {
+        const c = window.__last.maze, h = c.length, w = c[0].length;
+        let open = 0; for (const row of c) for (const k of row) open += (k.e ? 0 : 1) + (k.s ? 0 : 1);
+        return { path: !!solveMaze(c), perfect: open === w * h - 1 };
+      });
+      solvable = solvable && r.path; perfect = perfect && r.perfect;
+    }
+    ok(solvable, `labirint ${level}: are drum de la start la final (15 variante)`);
+    ok(perfect, `labirint ${level}: labirint perfect (un singur drum, fără zone închise)`);
+  }
+  ok(await p.$$eval('#out svg', s => s.length) === 2, 'labirint + soluție (soluția doar la printare)');
+
+  // Aceeași sămânță => aceeași fișă
+  const u = await p.evaluate(() => location.search);
+  const svg1 = await p.$eval('#out', e => e.innerHTML);
+  const p2 = await open(u);
+  ok(await p2.$eval('#out', e => e.innerHTML) === svg1, 'linkul cu ?seed= reproduce aceeași fișă');
+
+  // Cuvinte ascunse, în toate limbile și temele
+  for (const lang of ['ro', 'en', 'ru']) {
+    const q = await open(`?lang=${lang}&k=words`);
+    let good = true;
+    for (const level of ['easy', 'medium', 'hard']) for (const theme of ['space', 'animals', 'fruits']) {
+      await q.selectOption('#level', level); await q.selectOption('#theme', theme);
+      const r = await q.evaluate(() => {
+        const { g, placed } = window.__last.ws;
+        const full = g.every(row => row.every(ch => ch && ch.length === 1));
+        const found = placed.every(p => [...p.w].every((ch, i) => g[p.y + p.dy * i][p.x + p.dx * i] === ch));
+        return full && found && placed.length >= 8;
+      });
+      good = good && r;
+    }
+    ok(good, `cuvinte ascunse ${lang}: grila plină, minim 8 cuvinte, toate se găsesc (9 combinații)`);
+    ok(q.errs.length === 0, `fără erori în consolă (${lang})`);
+  }
+
+  // Matematică: rezultate corecte, fără numere negative, în interval
+  p = await open('?lang=en&k=math');
+  let mathOk = true;
+  for (const op of ['add', 'sub', 'mix']) for (const range of ['10', '20', '100']) {
+    await p.selectOption('#op', op); await p.selectOption('#range', range);
+    mathOk = mathOk && await p.evaluate(max => window.__last.math.every(x =>
+      (x.o === '+' ? x.a + x.b : x.a - x.b) === x.res && x.res >= 0 && x.res <= max && x.a <= max && x.b <= max) &&
+      window.__last.math.length === 24, +range);
+  }
+  ok(mathOk, 'matematică: 24 de exerciții corecte, în interval, fără negative (9 combinații)');
+
+  // Schimbarea limbii
+  await p.click('.langs button[data-l=ru]');
+  ok(await p.$eval('#tab-maze', e => e.textContent) === 'Лабиринт', 'comutare în rusă');
+
+  // Mobil: fără scroll orizontal
+  for (const k of ['maze', 'words', 'math']) {
+    const m = await open(`?k=${k}&lang=ru`, { width: 360, height: 740 });
+    if (k === 'words') await m.selectOption('#level', 'hard');
+    ok(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `mobil 360px fără scroll orizontal (${k})`);
+  }
+
+  // Printare: interfața ascunsă, răspunsurile pe pagină separată
+  await p.emulateMedia({ media: 'print' });
+  ok(await p.$eval('.controls', e => getComputedStyle(e).display) === 'none', 'la printare butoanele sunt ascunse');
+  ok(await p.$eval('.promo', e => getComputedStyle(e).display) === 'none', 'la printare reclama proprie e ascunsă');
+  ok(await p.$eval('.key', e => getComputedStyle(e).display) === 'block', 'la printare apare foaia cu răspunsuri');
+
+  // Linkuri către produsele proprii
+  const links = await p.$$eval('.cards a', as => as.map(a => a.href));
+  ok(links.length === 5 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
+
+  await b.close();
+  console.log(fails ? `\n${fails} teste au eșuat` : '\nToate testele au trecut');
+  process.exit(fails ? 1 : 0);
+})();
