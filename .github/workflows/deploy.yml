@@ -26,6 +26,8 @@ jobs:
         run: node telegram/tests/run.mjs
       - name: Teste fișe gratuite (printabile)
         run: node printabile/tests/run.js
+      - name: Teste Lumen Links
+        run: node lumen/tests/run.js
 
   deploy:
     needs: test
@@ -45,6 +47,11 @@ jobs:
         run: |
           mkdir -p dist/web/telegram
           cp telegram/index.html telegram/config.js telegram/core.js dist/web/telegram/
+      - name: Adaugă Lumen Links în /lumen/
+        run: |
+          mkdir -p dist/web/lumen
+          cp lumen/index.html dist/web/lumen/
+          cp lumen/launch/cover-630x500.png lumen/launch/icon-512.png dist/web/lumen/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Fișe gratuite de printat în /printabile/

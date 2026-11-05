@@ -64,6 +64,53 @@ async function fresh(b, locale = 'ro-RO', init) {
   await p.setViewportSize({ width: 1280, height: 800 });
   ok(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'fără scroll orizontal');
   ok(p.errs.length === 0, 'fără erori în consolă ' + p.errs.join('|'));
+  // v1.1: stele noi, cumpărare x10 / Max, cometă de aur, trofee, statistici, tastatură
+  p = await fresh(b);
+  ok(await p.evaluate(() => STAR_TYPES.length === 8 && ['ro','en','ru'].every(k => T[k].stars.length === 8)), 'v1.1: 8 tipuri de stele traduse');
+  ok(await p.evaluate(() => ['ro','en','ru'].every(k => ACHIEVEMENTS.every(a => T[k].an[a.id] && T[k].ad[a.k]))), 'v1.1: trofee traduse în toate limbile');
+  await p.evaluate(() => { S.light = 1e4; S.buyMode = 10; renderList(); });
+  const cost10 = await p.evaluate(() => starCostN(0, 10));
+  await p.click('.row:nth-child(2) .buy');
+  ok(await p.evaluate(c => S.owned[0] === 10 && Math.abs(S.light - (1e4 - c)) < 1, cost10), 'v1.1: cumpărare x10 (cost exact)');
+  ok(await p.evaluate(() => !!S.ach.constel1 && achCount() >= 1), 'v1.1: trofeu la prima constelație');
+  await p.evaluate(() => { S.light = 5000; S.buyMode = 'max'; renderList(); });
+  const nMax = await p.evaluate(() => buyCount(0));
+  await p.click('.row:nth-child(2) .buy');
+  ok(await p.evaluate(n => S.owned[0] === 10 + n && S.light >= 0 && S.light < starCost(0), nMax), 'v1.1: cumpărare Max');
+  ok(await p.evaluate(() => document.querySelectorAll('.modes button').length === 3), 'v1.1: comutator x1/x10/Max');
+  const rA = await p.evaluate(() => { S.ach = {}; return ratePerSec(); });
+  const rB = await p.evaluate(() => { S.ach = { taps1: true, comets1: true }; return ratePerSec(); });
+  ok(Math.abs(rB / rA - 1.04) < 1e-9, 'v1.1: fiecare trofeu +2% lumină');
+  await p.evaluate(() => { comet = null; nextComet = 0; });
+  await p.waitForTimeout(100);
+  const gc = await p.evaluate(() => { comet.gold = true; comet.vx = 0; comet.vy = 0; comet.x = 200; comet.y = 250; return { l: S.light, v: rewardBase() * 450 }; });
+  await p.mouse.click(200, 250);
+  ok(await p.evaluate(gc => S.stats.gold === 1 && S.light - gc.l >= gc.v * 0.99 && !!S.ach.gold1, gc), 'v1.1: cometa de aur dă x5 și trofeu');
+  const k0 = await p.evaluate(() => S.stats.taps); await p.keyboard.press('Space');
+  ok(await p.evaluate(k => S.stats.taps === k + 1, k0), 'v1.1: Space strânge lumină pe desktop');
+  await p.evaluate(() => { tab = 'trophies'; renderList(); });
+  ok(await p.evaluate(() => document.querySelectorAll('#list .row.ach').length === ACHIEVEMENTS.length && !!document.querySelector('.stats')), 'v1.1: tab trofee cu statistici');
+  await p.evaluate(() => { S.lifeLight = 1e6; tab = 'rebirth'; renderList(); });
+  await p.click('.row .buy');
+  ok(await p.evaluate(() => S.stats.rebirths === 1 && !!S.ach.rebirths1 && !!S.ach.gold1 && S.buyMode === 'max'), 'v1.1: trofeele și statisticile rămân după renaștere');
+  ok(await p.evaluate(() => fmt(1e21) === '1Sx' && fmt(1e33) === '1Dc'), 'v1.1: sufixe pentru numere mari');
+  ok(await p.evaluate(() => !T.ru.q.comets.includes('{n} кометы')), 'v1.1: RU fără acord greșit la comete');
+  ok(p.errs.length === 0, 'v1.1: fără erori în consolă ' + p.errs.join('|'));
+  // salvare din v1.0 (6 tipuri, fără statistici) se migrează
+  p = await fresh(b, 'ro-RO', () => { if (!sessionStorage.y) { sessionStorage.y = 1;
+    localStorage.setItem('gradina-de-stele-v1', JSON.stringify({ light: 50, lifeLight: 5e5, owned: [3, 0, 0, 0, 0, 0], ups: {}, dust: 1, boostUntil: 0, lang: 'ro', sound: true, last: Date.now() })); } });
+  await p.waitForTimeout(300);
+  ok(await p.evaluate(() => S.owned.length === 8 && S.stats.total >= 5e5 && S.seen === VERSION && !!S.ach.total2 === false && !!S.ach.total1), 'v1.1: migrare salvare v1.0');
+  await p.waitForFunction(() => document.getElementById('toast').textContent.includes('1.1'), null, { timeout: 5000 }).catch(() => {});
+  ok(await p.evaluate(() => document.getElementById('toast').textContent.includes('1.1')), 'v1.1: mesaj „Noutăți” pentru jucătorii vechi');
+  // reclamă în curs: sunetul jucătorului nu se salvează ca oprit
+  p = await fresh(b);
+  await p.evaluate(() => { Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} },
+    ad: { requestAd(type, cb) { cb.adStarted(); window.__fin = cb.adFinished; } } }); });
+  await p.click('.row:nth-child(1) .buy');
+  ok(await p.evaluate(() => { save(); return JSON.parse(localStorage.getItem(SAVE_KEY)).sound === true && Ads.muted; }), 'v1.1: în timpul reclamei sunetul e oprit fără să strice setarea');
+  await p.evaluate(() => __fin());
+  ok(await p.evaluate(() => !Ads.muted && S.boostUntil > Date.now()), 'v1.1: după reclamă sunetul revine');
   // limbă după locale + offline
   p = await fresh(b, 'ru-RU'); ok(await p.evaluate(() => S.lang) === 'ru', 'limba implicită RU');
   p = await fresh(b, 'de-DE'); ok(await p.evaluate(() => S.lang) === 'en', 'limba implicită EN pentru alte țări');
