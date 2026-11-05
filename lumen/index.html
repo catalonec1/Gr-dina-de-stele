@@ -97,8 +97,12 @@ const t = (k, v = {}) => (T[S.lang][k] || T.en[k]).replace(/\{(\w+)\}/g, (_, x) 
 // ---------- Salvare ----------
 const KEY = "lumen-links-v1";
 let S = { lang: detectLang(), sound: true, level: 1, stars: {}, daily: {}, hints: 3, pal: 0, tut: false };
-try { const d = JSON.parse(localStorage.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {}
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+// Store = localStorage; pe CrazyGames se înlocuiește cu Data Module din SDK (salvare legată de cont)
+let Store = null; try { Store = window.localStorage; } catch (e) {}
+function load() { try { const d = JSON.parse(Store.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {} }
+load();
+let muted = false; // mut cerut de platformă (CrazyGames)
+function save() { try { const o = Object.assign({}, S); delete o.soundWas; Store.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
 const totalStars = () => Object.values(S.stars).reduce((a, b) => a + b, 0) + Object.keys(S.daily).length * 3;
 
 // ---------- Palete (cosmetice, se deblochează cu stele) ----------
@@ -171,7 +175,7 @@ const dailySeed = d => d.split("-").reduce((a, x) => a * 100 + +x, 0) ^ 0x123456
 // ---------- Sunet (WebAudio, fără fișiere) ----------
 let AC = null;
 function tone(f, d = 0.08, type = "sine", v = 0.12, when = 0) {
-  if (!S.sound) return;
+  if (!S.sound || muted) return;
   try {
     AC = AC || new (window.AudioContext || window.webkitAudioContext)();
     const o = AC.createOscillator(), g = AC.createGain(), t0 = AC.currentTime + when;
@@ -196,6 +200,9 @@ const Ads = {
         const sdk = window.CrazyGames.SDK; await sdk.init();
         if (sdk.environment !== "crazygames" && sdk.environment !== "local") return;
         try { sdk.game.loadingStop(); } catch (e) {}
+        try { if (sdk.data) { const had = Store && Store.getItem(KEY); Store = sdk.data; if (!Store.getItem(KEY) && had) Store.setItem(KEY, had); load(); renderMenu(); } } catch (e) {}
+        try { const st = sdk.game.settings; muted = !!(st && st.muteAudio);
+          sdk.game.addSettingsChangeListener(ns => { muted = !!ns.muteAudio; }); } catch (e) {}
         this.a = { gameplay(on) { try { on ? sdk.game.gameplayStart() : sdk.game.gameplayStop(); } catch (e) {} },
           show(type) { return new Promise(r => sdk.ad.requestAd(type, { adStarted() {}, adFinished: () => r(true), adError: () => r(false) })); },
           happy() { try { sdk.game.happytime(); } catch (e) {} } };
