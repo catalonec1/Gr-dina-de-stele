@@ -7,6 +7,7 @@ Joc idle HTML5 într-un singur fișier (`index.html`), în RO / EN / RU.
 - Publicare: orice push pe `main` rulează testele și, dacă trec, publică pe GitHub Pages.
 - Pachet pentru portaluri (itch.io, CrazyGames): `launch/`
 - Fișe gratuite de printat (labirinturi, cuvinte ascunse, matematică; RO/EN/RU): `printabile/` → https://catalonec1.github.io/Gr-dina-de-stele/printabile/ · teste: `node printabile/tests/run.js`
+- **Paper River** (joc arcade: bărcuță de hârtie pe un râu infinit; RO/EN/RU): `river/` → https://catalonec1.github.io/Gr-dina-de-stele/river/ · teste: `node river/tests/run.js`
 
 ## Versiuni
 - **v1.2** (2026-11-06): a 9-a stea, Galaxia spirală (cu brațe animate și 3 îmbunătățiri), ploi de meteori la ~10 min (30 s de comete dese, 25% aur), misiune zilnică nouă „prinde o cometă de aur”, 4 trofee noi (23 în total). Teste: `node tests/v12.js`.
