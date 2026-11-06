@@ -260,6 +260,9 @@ function detectLang() {
   const n = (navigator.language || "en").slice(0, 2).toLowerCase();
   return LANGS.includes(n) ? n : "en";
 }
+// Store = localStorage; pe CrazyGames se înlocuiește cu SDK Data Module (sdk.data, aceeași interfață)
+let Store = null;
+try { Store = window.localStorage; } catch (e) {}
 let S = load() || freshState();
 let tab = "stars";
 const L = () => T[S.lang];
@@ -417,11 +420,11 @@ function fmt(n) {
 // ---------- Salvare ----------
 function save() {
   S.last = Date.now();
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* fără stocare: jocul merge oricum */ }
+  try { Store.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) { /* fără stocare: jocul merge oricum */ }
 }
 function load() {
   try {
-    const raw = localStorage.getItem(SAVE_KEY);
+    const raw = Store && Store.getItem(SAVE_KEY);
     if (!raw) return null;
     const old = JSON.parse(raw), s = Object.assign(freshState(), old);
     while (s.owned.length < STAR_TYPES.length) s.owned.push(0);
@@ -787,6 +790,16 @@ const Ads = {
   useSdk(sdk) {
     if (!sdk || (sdk.environment !== "crazygames" && sdk.environment !== "local")) return;
     try { sdk.game.loadingStop(); sdk.game.gameplayStart(); } catch (e) {}
+    // Progres salvat prin Data Module (sincronizat cu contul CrazyGames)
+    try {
+      if (sdk.data) {
+        const local = Store && Store.getItem(SAVE_KEY);
+        Store = sdk.data;
+        const remote = Store.getItem(SAVE_KEY);
+        if (!remote && local) Store.setItem(SAVE_KEY, local);
+        else if (remote && remote !== local) { S = load() || S; applyLang(); }
+      }
+    } catch (e) {}
     this.enable({
       gameplay(on) { try { on ? sdk.game.gameplayStart() : sdk.game.gameplayStop(); } catch (e) {} },
       show(type, onStart) {
