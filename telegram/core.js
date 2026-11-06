@@ -17,11 +17,14 @@
   var GOLD_CHANCE = 0.08;                  // din picături, după primele 10 s
   var GOLD_SPARKS = 5;
   var MISSION_REWARD = 25;
-  var FREE_DAILY = 25;                     // cadoul zilnic fără reclamă (când Adsgram nu e activ)
+  var FREE_DAILY = 25;
+  var VERSION = '1.2';
+  var MOON_CHANCE = 0.05;                  // v1.2: lună (din picături, după 15 s): încetinește timpul
+  var MOON_TIME = 5, MOON_SLOW = 0.6;                     // cadoul zilnic fără reclamă (când Adsgram nu e activ)
   // Misiuni zilnice: 3 pe zi, alese determinist după dată (UTC)
   var MISSION_POOL = [
     { k: 'drops', n: 15 }, { k: 'drops', n: 30 }, { k: 'score', n: 150 }, { k: 'score', n: 300 },
-    { k: 'combo', n: 8 }, { k: 'combo', n: 15 }, { k: 'runs', n: 3 }, { k: 'runs', n: 5 }, { k: 'gold', n: 1 }, { k: 'gold', n: 3 }
+    { k: 'combo', n: 8 }, { k: 'combo', n: 15 }, { k: 'runs', n: 3 }, { k: 'runs', n: 5 }, { k: 'gold', n: 1 }, { k: 'gold', n: 3 }, { k: 'moon', n: 2 }
   ];
 
   // Magazin: prețuri în scântei (monedă de joc) sau în Telegram Stars (XTR).
@@ -32,6 +35,8 @@
     { id: 'violet', color: '#c8a2ff', glow: '#9d4edd', price: 600 },
     { id: 'frost',  color: '#e0fbfc', glow: '#98c1d9', price: 1000 },
     { id: 'sun',    color: '#fff3b0', glow: '#ff9f1c', price: 2000 },
+    { id: 'dusk',   color: '#ffb4a2', glow: '#e5989b', price: 3000 },
+    { id: 'jade',   color: '#b5e48c', glow: '#52b69a', price: 4500 },
     { id: 'aurora', color: '#9bf6ff', glow: '#4cc9f0', stars: true },
     { id: 'ember',  color: '#ff9e6d', glow: '#f3722c', stars: true }
   ];
@@ -72,6 +77,8 @@
       bestCombo: 0,
       drops: 0,
       golds: 0,
+      moons: 0,
+      slow: 0,             // v1.2: secunde rămase de timp încetinit
       items: [],             // {kind:'drop'|'moth', ring, angle, drift, ttl}
       spawnIn: 0.6,
       shield: !!opts.shield,
@@ -90,6 +97,7 @@
     var kind = rng() < mothChance ? 'moth' : 'drop';
     // v1.1: picătură de aur rară (după 10 s): +5 scântei
     if (kind === 'drop' && run.t > 10 && rng() < GOLD_CHANCE) kind = 'gold';
+    else if (kind === 'drop' && run.t > 15 && rng() < MOON_CHANCE) kind = 'moon';
     var ring = Math.floor(rng() * RINGS.length);
     var ahead = 1.4 + rng() * (TAU - 2.5);   // ≥80° în față și ≥63° în spate
     var angle = normAngle(run.angle + run.dir * ahead);
@@ -101,7 +109,8 @@
     if (run.over) return run;
     run.events.length = 0;
     run.t += dt;
-    run.speed = speedAt(run.t);
+    if (run.slow > 0) run.slow = Math.max(0, run.slow - dt);
+    run.speed = speedAt(run.t) * (run.slow > 0 ? MOON_SLOW : 1);
     run.angle = normAngle(run.angle + run.dir * run.speed * dt);
     run.score += dt * 2;
     if (run.jumpFx > 0) run.jumpFx = Math.max(0, run.jumpFx - dt * 4);
@@ -119,13 +128,14 @@
       if (it.ttl <= 0) { run.items.splice(i, 1); continue; }
       if (it.ring !== run.ring) continue;
       var d = angDist(it.angle, run.angle);
-      if ((it.kind === 'drop' || it.kind === 'gold') && d < PICK_ANGLE) {
+      if ((it.kind === 'drop' || it.kind === 'gold' || it.kind === 'moon') && d < PICK_ANGLE) {
         run.items.splice(i, 1);
         run.combo += 1;
         run.drops += 1;
         run.bestCombo = Math.max(run.bestCombo, run.combo);
         var gain = 1 + Math.floor(run.combo / 5);
         if (it.kind === 'gold') { gain += GOLD_SPARKS; run.golds += 1; run.events.push('gold'); }
+        if (it.kind === 'moon') { run.slow = MOON_TIME; run.moons += 1; run.events.push('moon'); }
         run.sparks += gain;
         run.score += 10 * gain;
         run.events.push('pick');
@@ -176,6 +186,7 @@
       shields: 0,
       lastDaily: '',
       lang: '',
+      seen: '',
       missions: null
     };
   }
@@ -196,6 +207,7 @@
     if (typeof raw.skin === 'string' && p.owned.indexOf('skin:' + raw.skin) >= 0) p.skin = raw.skin;
     if (typeof raw.lastDaily === 'string') p.lastDaily = raw.lastDaily.slice(0, 10);
     if (raw.lang === 'ro' || raw.lang === 'en' || raw.lang === 'ru') p.lang = raw.lang;
+    if (typeof raw.seen === 'string') p.seen = raw.seen.slice(0, 10);
     var m = raw.missions;
     if (m && typeof m.day === 'string' && Array.isArray(m.list) && m.list.length === 3) {
       var list = m.list.map(function (q) {
@@ -236,7 +248,7 @@
     var list = ensureMissions(p, date), done = [];
     list.forEach(function (q) {
       if (q.prog >= q.n) return;
-      var v = q.k === 'drops' ? q.prog + run.drops : q.k === 'gold' ? q.prog + run.golds :
+      var v = q.k === 'drops' ? q.prog + run.drops : q.k === 'gold' ? q.prog + run.golds : q.k === 'moon' ? q.prog + (run.moons || 0) :
         q.k === 'runs' ? q.prog + 1 : q.k === 'score' ? Math.max(q.prog, Math.floor(run.score)) : Math.max(q.prog, run.bestCombo);
       q.prog = Math.min(q.n, v);
       if (q.prog >= q.n) done.push(q);
@@ -332,7 +344,8 @@
       hint: 'Atinge oriunde',
       dailyFree: 'Cadou zilnic +25', missions: 'Misiunile zilei', claim: 'Ia +{n}', gold: 'Picătură de aur! +5',
       m_drops: 'Culege {n} picături', m_score: 'Fă {n} puncte într-o tură', m_combo: 'Serie de {n}',
-      m_runs: 'Joacă {n} ture', m_gold: 'Picături de aur: {n}', mDone: 'Misiune îndeplinită!'
+      m_runs: 'Joacă {n} ture', m_gold: 'Picături de aur: {n}', mDone: 'Misiune îndeplinită!',
+      m_moon: 'Prinde {n} luni', moon: 'Lună! Timpul curge mai încet', whatsNew: 'Noutăți v{n}: luna care încetinește timpul și 2 culori noi'
     },
     en: {
       title: 'Firefly Orbit',
@@ -352,7 +365,8 @@
       hint: 'Tap anywhere',
       dailyFree: 'Daily gift +25', missions: "Today's missions", claim: 'Claim +{n}', gold: 'Golden drop! +5',
       m_drops: 'Catch {n} drops', m_score: 'Score {n} in one run', m_combo: 'Reach a {n} streak',
-      m_runs: 'Play {n} runs', m_gold: 'Golden drops: {n}', mDone: 'Mission complete!'
+      m_runs: 'Play {n} runs', m_gold: 'Golden drops: {n}', mDone: 'Mission complete!',
+      m_moon: 'Catch {n} moons', moon: 'Moon! Time slows down', whatsNew: 'New in v{n}: the time-slowing moon and 2 new colors'
     },
     ru: {
       title: 'Орбита светлячка',
@@ -372,7 +386,8 @@
       hint: 'Нажми где угодно',
       dailyFree: 'Подарок дня +25', missions: 'Задания дня', claim: 'Забрать +{n}', gold: 'Золотая капля! +5',
       m_drops: 'Собери капель: {n}', m_score: 'Набери {n} очков за забег', m_combo: 'Серия ×{n}',
-      m_runs: 'Сыграй забегов: {n}', m_gold: 'Собери золотых капель: {n}', mDone: 'Задание выполнено!'
+      m_runs: 'Сыграй забегов: {n}', m_gold: 'Собери золотых капель: {n}', mDone: 'Задание выполнено!',
+      m_moon: 'Поймай лун: {n}', moon: 'Луна! Время замедляется', whatsNew: 'Новое в v{n}: луна, замедляющая время, и 2 новых цвета'
     }
   };
 
@@ -398,6 +413,7 @@
     owns: owns, finishRun: finishRun, buySkin: buySkin, equipSkin: equipSkin, skinById: skinById,
     grantStarItem: grantStarItem, todayKey: todayKey, canClaimDaily: canClaimDaily, claimDaily: claimDaily,
     pickLang: pickLang, tr: tr,
+    VERSION: VERSION, MOON_CHANCE: MOON_CHANCE, MOON_TIME: MOON_TIME, MOON_SLOW: MOON_SLOW,
     MISSION_POOL: MISSION_POOL, MISSION_REWARD: MISSION_REWARD, FREE_DAILY: FREE_DAILY, GOLD_CHANCE: GOLD_CHANCE,
     missionsFor: missionsFor, ensureMissions: ensureMissions, trackMissions: trackMissions, claimMission: claimMission
   };
