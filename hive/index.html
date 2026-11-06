@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Hive Bloom</title>
+<meta name="description" content="A cozy hex merge puzzle. Place sprouts on the honeycomb, join three of a kind and grow them into flowers, honey, bees and a golden star.">
+<meta name="theme-color" content="#2b1d0e">
+<style>
+:root{--bg:#24180b;--panel:#3a2914;--line:#6b4b22;--ink:#fff7e6;--dim:#d9c39a;--acc:#ffc93c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;z-index:2}
+.screen.on{display:flex}
+button{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 18px;cursor:pointer}
+button:active{transform:scale(.97)}
+button.big{font-size:20px;padding:14px 0;width:min(78vw,300px);margin:6px 0}
+button.pri{background:linear-gradient(180deg,#ffe08a,#ffb22e);color:#3a2100;border:none;font-weight:700}
+button.ico{padding:8px 12px;min-width:46px;min-height:44px}
+button:disabled{opacity:.45}
+button.act{outline:3px solid var(--acc)}
+#menu{background:linear-gradient(180deg,rgba(36,24,11,.75),rgba(36,24,11,.3) 55%,rgba(36,24,11,.8))}
+#menu h1{margin:9vh 0 4px;font-size:clamp(38px,10vw,60px);letter-spacing:1px;color:#fff3cf;text-shadow:0 0 24px rgba(255,201,60,.6)}
+#menu .sub{color:#f3e4c2;margin:0 16px 3vh;text-align:center;max-width:420px}
+#menuInfo{color:var(--acc);margin-bottom:12px;font-weight:600}
+.row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+#hud{position:fixed;left:0;right:0;top:0;display:none;align-items:center;justify-content:space-between;padding:10px;z-index:3;pointer-events:none}
+#hud.on{display:flex}
+#hud button{pointer-events:auto}
+#hud .sc{font-weight:800;font-size:24px;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+#hud .ln{font-weight:700;font-size:18px;color:var(--acc);text-shadow:0 2px 6px rgba(0,0,0,.6)}
+#hud .bx{display:flex;flex-direction:column;align-items:flex-start}
+#tools{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:space-between;align-items:flex-end;padding:12px 14px calc(12px + env(safe-area-inset-bottom));z-index:3;pointer-events:none}
+#tools.on{display:flex}
+#tools button{pointer-events:auto;min-width:86px}
+#tools small{display:block;font-size:12px;color:var(--dim)}
+#tut{pointer-events:none;position:fixed;left:50%;top:76px;transform:translateX(-50%);background:rgba(36,24,11,.86);border:1px solid var(--line);padding:10px 16px;border-radius:14px;text-align:center;z-index:3;display:none;max-width:88vw}
+#tut.on{display:block}
+#shop{background:var(--bg)}
+.top{width:100%;display:flex;align-items:center;gap:10px;padding:10px;max-width:520px}
+.top h2{margin:0;font-size:20px;flex:1}
+.top .ln{color:var(--acc);font-weight:700}
+#skins{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:6px 16px 30px;width:min(100%,520px);overflow-y:auto}
+.sk{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;text-align:center}
+.sk.sel{outline:3px solid var(--acc)}
+.sk canvas{position:static;width:120px;height:72px;display:block;margin:0 auto}
+.sk b{display:block;margin:4px 0 8px}
+.sk button{width:100%;padding:8px}
+#overlay{position:fixed;inset:0;background:rgba(15,9,3,.7);display:none;align-items:center;justify-content:center;z-index:5}
+#overlay.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px 26px;text-align:center;min-width:270px;max-width:90vw}
+.card h3{margin:0 0 8px;font-size:26px}
+.card .big{width:100%}
+.card p{margin:6px 0;color:var(--dim)}
+.card .val{font-size:34px;font-weight:800;color:#fff}
+.ladder{font-size:22px;letter-spacing:2px;margin:8px 0}
+.nb{color:var(--acc);font-weight:700}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:rgba(58,41,20,.94);padding:8px 14px;border-radius:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9;font-weight:600}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<section id="menu" class="screen on">
+  <h1>Hive Bloom</h1>
+  <div class="sub" data-i="tag"></div>
+  <div id="menuInfo"></div>
+  <button class="big pri" id="bPlay"></button>
+  <button class="big" id="bDaily"></button>
+  <button class="big" id="bShop"></button>
+  <div class="row" style="margin-top:22px">
+    <button class="ico" id="bLang"></button>
+    <button class="ico" id="bSound"></button>
+    <button class="ico" id="bMusic"></button>
+  </div>
+</section>
+<section id="shop" class="screen">
+  <div class="top"><button class="ico" id="bShopBack">‹</button><h2 data-i="themes"></h2><span class="ln" id="shopCoins"></span></div>
+  <div id="skins"></div>
+</section>
+<div id="hud">
+  <div class="bx"><div class="sc" id="hScore">0</div><div class="ln" id="hCoins">🍯 0</div></div>
+  <button class="ico" id="bPause">Ⅱ</button>
+</div>
+<div id="tools">
+  <button class="ico" id="bSwap"></button>
+  <button class="ico" id="bHammer"></button>
+</div>
+<div id="tut"></div>
+<div id="overlay"><div class="card" id="card"></div></div>
+<div id="toast"></div>
+<script>
+"use strict";
+// ---------- Texte (RO / EN / RU) ----------
+const T = {
+  en: { tag: "A cozy honeycomb puzzle. Join three of a kind to grow sprouts into flowers, honey, bees and a golden star.", play: "Play", daily: "Daily hive", dailyBest: "Daily hive · best {n}", themes: "Themes", best: "Best: {n}", over: "The hive is full!", score: "Score", earned: "Honey: +{n} 🍯", newBest: "New record!", again: "Play again", menu: "Menu", revive: "Make room · {n} 🍯", paused: "Paused", resume: "Resume", tut: "Tap an empty cell to place the piece. Three or more touching equal pieces merge into the next one! Merging next to a rock 🪨 breaks it.", tutKeys: "Keyboard: arrows + Enter · S swap · H hammer", swap: "Swap", hammer: "Hammer", hammerOn: "Tap a piece to remove it", noCoins: "Not enough honey", chain: "Chain x{n}!", bloom: "Golden bloom!", top: "Top piece", buy: "Buy · {n} 🍯", use: "Use", inUse: "Selected", sound: "Sound", music: "Music", lang: "EN", next: "next",
+    skins: ["Meadow", "Lavender", "Autumn", "Night garden", "Sakura", "Aurora"] },
+  ro: { tag: "Un puzzle liniștit pe fagure. Unește trei la fel și crește lăstarii în flori, miere, albine și o stea de aur.", play: "Joacă", daily: "Stupul zilei", dailyBest: "Stupul zilei · record {n}", themes: "Teme", best: "Record: {n}", over: "Stupul s-a umplut!", score: "Scor", earned: "Miere: +{n} 🍯", newBest: "Record nou!", again: "Încă o dată", menu: "Meniu", revive: "Fă loc · {n} 🍯", paused: "Pauză", resume: "Continuă", tut: "Atinge o celulă goală ca să pui piesa. Trei sau mai multe piese egale care se ating se unesc în următoarea! O unire lângă o piatră 🪨 o sparge.", tutKeys: "Tastatură: săgeți + Enter · S schimbă · H ciocan", swap: "Schimbă", hammer: "Ciocan", hammerOn: "Atinge o piesă ca s-o scoți", noCoins: "Nu ai destulă miere", chain: "Lanț x{n}!", bloom: "Floare de aur!", top: "Cea mai mare piesă", buy: "Cumpără · {n} 🍯", use: "Alege", inUse: "Aleasă", sound: "Sunet", music: "Muzică", lang: "RO", next: "urm.",
+    skins: ["Pajiște", "Levănțică", "Toamnă", "Grădină de noapte", "Sakura", "Auroră"] },
+  ru: { tag: "Уютная головоломка на сотах. Соединяйте три одинаковых, чтобы вырастить ростки в цветы, мёд, пчёл и золотую звезду.", play: "Играть", daily: "Улей дня", dailyBest: "Улей дня · рекорд {n}", themes: "Темы", best: "Рекорд: {n}", over: "Улей заполнен!", score: "Очки", earned: "Мёд: +{n} 🍯", newBest: "Новый рекорд!", again: "Ещё раз", menu: "Меню", revive: "Освободить место · {n} 🍯", paused: "Пауза", resume: "Продолжить", tut: "Нажмите на пустую ячейку, чтобы поставить фишку. Три и больше одинаковых рядом сливаются в следующую! Слияние рядом с камнем 🪨 разбивает его.", tutKeys: "Клавиатура: стрелки + Enter · S обмен · H молоток", swap: "Обмен", hammer: "Молоток", hammerOn: "Нажмите на фишку, чтобы убрать её", noCoins: "Не хватает мёда", chain: "Цепочка x{n}!", bloom: "Золотой цветок!", top: "Лучшая фишка", buy: "Купить · {n} 🍯", use: "Выбрать", inUse: "Выбрана", sound: "Звук", music: "Музыка", lang: "RU", next: "след.",
+    skins: ["Луг", "Лаванда", "Осень", "Ночной сад", "Сакура", "Сияние"] },
+};
+const LANGS = ["en", "ro", "ru"];
+function detectLang() {
+  const l = (navigator.language || "en").slice(0, 2).toLowerCase();
+  return l === "ro" || l === "mo" ? "ro" : l === "ru" ? "ru" : "en";
+}
+const t = (k, v = {}) => String(T[S.lang][k] ?? T.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
+
+// ---------- Salvare ----------
+const KEY = "hive-bloom-v1";
+let S = { lang: detectLang(), sound: true, music: true, best: 0, coins: 0, owned: [0], skin: 0, daily: {}, tut: false, runs: 0, top: 0 };
+let Store = null; try { Store = window.localStorage; } catch (e) {}
+try { const d = JSON.parse(Store.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {}
+if (!T[S.lang]) S.lang = "en";
+function save() { try { Store.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Piese și teme ----------
+const ICON = ["", "🌱", "🍀", "🌷", "🌼", "🌻", "🍯", "🐝", "👑", "🌟"];
+const MAXL = 9, RAD = 3, HAMMER = 15, REVIVE = 25, ROCK = -1;
+const SKINS = [ // fundal sus/jos, celulă goală, margine, culori nivel 1..9
+  { price: 0, bg: ["#3b2a12", "#1f1508"], cell: "#5a4120", edge: "#8a6630", lv: ["#8fd16a", "#4fbf7a", "#ff8fb1", "#fff07a", "#ffc23d", "#ffa21a", "#f4d35e", "#e9a6ff", "#fff6c9"] },
+  { price: 80, bg: ["#3a2c52", "#1b1430"], cell: "#4c3b6b", edge: "#7e66a8", lv: ["#b9e6a1", "#86d6b3", "#d9a8ff", "#ffd1f0", "#c7b5ff", "#ffb86b", "#ffe28a", "#9fd3ff", "#ffffff"] },
+  { price: 200, bg: ["#4a2a14", "#24120a"], cell: "#6a3a1c", edge: "#a8602a", lv: ["#c9d46a", "#93b356", "#ff8a5c", "#ffd36b", "#ffae42", "#e8742c", "#f6c453", "#d98bff", "#fff1c1"] },
+  { price: 400, bg: ["#0f1a35", "#060b18"], cell: "#1d2b52", edge: "#3e5aa0", lv: ["#7ee0b0", "#59c3c3", "#ff9de1", "#fff59a", "#ffd35e", "#ffb14a", "#ffe08a", "#b6a6ff", "#fffbe0"] },
+  { price: 700, bg: ["#4d2b3a", "#24121c"], cell: "#6b3b52", edge: "#b06a8c", lv: ["#c8f0a8", "#9edfa0", "#ffc2d6", "#ffe8f1", "#ffb3c8", "#ff8fab", "#ffd98e", "#f0b3ff", "#ffffff"] },
+  { price: 1000, bg: ["#0e2a2e", "#07151b"], cell: "#164046", edge: "#2f8a8c", lv: ["#9cf6d4", "#6fe3e0", "#c6a8ff", "#fff6a6", "#a8ffcf", "#ffd36b", "#ffe9a8", "#d9b8ff", "#ffffff"], aurora: true },
+];
+
+// ---------- Fagurele: grilă hexagonală (coordonate axiale) ----------
+const CELLS = []; // [q, r]
+for (let q = -RAD; q <= RAD; q++) for (let r = -RAD; r <= RAD; r++) if (Math.abs(q + r) <= RAD) CELLS.push([q, r]);
+const NCELL = CELLS.length; // 37
+const IDX = new Map(CELLS.map(([q, r], i) => [q + "," + r, i]));
+const DIRS = [[1, 0], [1, -1], [0, -1], [-1, 0], [-1, 1], [0, 1]];
+const NB = CELLS.map(([q, r]) => DIRS.map(([dq, dr]) => IDX.get((q + dq) + "," + (r + dr))).filter(i => i !== undefined));
+
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let x = a; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+function hashStr(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function todayStr(dt = new Date()) { return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
+function dailySeed(d) { return hashStr("hive-bloom:" + d); }
+
+// piesa următoare: mai ales lăstari; piese mai mari apar pe măsură ce crește stupul
+function genPiece(R, top, moves = 0) {
+  const mx = Math.min(Math.max(3, top - 1), 3 + (moves > 60) + (moves > 160));
+  const w = [0, 50, 30, 18, 12, 8].slice(0, mx + 1); let x = R() * w.reduce((a, b) => a + b, 0);
+  for (let lv = 1; lv <= mx; lv++) { x -= w[lv]; if (x < 0) return lv; }
+  return 1;
+}
+function group(cells, k) { // celulele legate, de același nivel
+  const lv = cells[k], seen = new Set([k]), st = [k];
+  while (st.length) { const i = st.pop(); for (const j of NB[i]) if (!seen.has(j) && cells[j] === lv) { seen.add(j); st.push(j); } }
+  return [...seen];
+}
+// pune piesa și rezolvă unirile în lanț; întoarce ce s-a întâmplat (pur, pe un vector de celule)
+function resolve(cells, k) {
+  const out = { score: 0, honey: 0, chain: 0, steps: [], bloom: false, rocks: 0 };
+  for (;;) {
+    const lv = cells[k]; if (lv <= 0) break;
+    const g = group(cells, k); if (g.length < 3) break;
+    out.chain++;
+    for (const i of g) { if (i !== k) cells[i] = 0; for (const j of NB[i]) if (cells[j] === ROCK) { cells[j] = 0; out.rocks++; } }
+    out.score += lv * g.length * 10 * out.chain; out.honey += lv;
+    if (lv >= MAXL) { // floarea de aur eliberează vecinii
+      cells[k] = 0; for (const j of NB[k]) cells[j] = 0;
+      out.score += 5000; out.honey += 50; out.bloom = true; out.steps.push({ k, g, lv, to: 0 }); break;
+    }
+    cells[k] = lv + 1; out.steps.push({ k, g, lv, to: lv + 1 });
+  }
+  return out;
+}
+// după mutarea 25 apar pietre: tot mai des; o unire lângă piatră o sparge
+function rockEvery(moves) { return moves < 25 ? 0 : Math.max(4, 12 - Math.floor((moves - 25) / 30)); }
+function emptyCount(cells) { let n = 0; for (const v of cells) if (!v) n++; return n; }
+
+// ---------- Starea partidei ----------
+let G = null, mode = "menu";
+function newRun(seed, daily) {
+  const R = rng(seed);
+  G = { seed, daily, R, cells: new Array(NCELL).fill(0), score: 0, honey: 0, moves: 0, top: 1, over: false, paused: false, revived: false, hammer: false, cursor: 0, anim: [], parts: [], floats: [], hover: -1, t: 0 };
+  // câteva piese de pornire, fără uniri
+  const R2 = rng(seed ^ 0x9e37);
+  for (let n = 0; n < 5; n++) {
+    const k = Math.floor(R2() * NCELL); if (G.cells[k]) continue;
+    G.cells[k] = 1 + Math.floor(R2() * 2); if (group(G.cells, k).length >= 3) G.cells[k] = 0;
+  }
+  G.cur = genPiece(R, 1); G.next = genPiece(R, 1);
+  G.alive = true;
+}
+function topLevel() { return Math.max(1, ...G.cells); }
+function place(k) {
+  if (!G || !G.alive || G.paused || G.over) return false;
+  if (k == null || k < 0 || k >= NCELL) return false;
+  if (G.hammer) return smash(k);
+  if (G.cells[k]) return false;
+  G.cells[k] = G.cur; G.moves++; G.anim.push({ k, t: 0, kind: "pop" });
+  const r = resolve(G.cells, k);
+  G.score += r.score; G.honey += r.honey; S.coins += r.honey;
+  if (r.chain) {
+    sfx(r.bloom ? "bloom" : "merge", r.chain);
+    for (const st of r.steps) for (const i of st.g) if (i !== st.k) G.anim.push({ k: i, to: st.k, t: 0, kind: "fly", lv: st.lv });
+    G.floats.push({ k, txt: "+" + r.score, t: 0 });
+    if (r.chain > 1) toast(t("chain", { n: r.chain }));
+    if (r.bloom) { toast(t("bloom")); burst(k, 40); } else burst(k, 14);
+  } else sfx("place");
+  G.top = Math.max(G.top, topLevel()); if (r.bloom) G.top = MAXL;
+  if (G.top > S.top) S.top = G.top;
+  if (r.rocks) { sfx("smash"); }
+  const re = rockEvery(G.moves);
+  if (re && G.moves % re === 0) { const free = []; G.cells.forEach((v, i) => { if (!v) free.push(i); }); if (free.length > 1) { const k2 = free[Math.floor(G.R() * free.length)]; G.cells[k2] = ROCK; G.anim.push({ k: k2, t: 0, kind: "pop" }); } }
+  G.cur = G.next; G.next = genPiece(G.R, G.top, G.moves);
+  endTut();
+  if (!G.daily && G.moves % 10 === 0) save();
+  if (emptyCount(G.cells) === 0) { G.alive = false; setTimeout(gameOver, 600); }
+  return true;
+}
+function swap() { if (!G || !G.alive || G.paused) return; [G.cur, G.next] = [G.next, G.cur]; sfx("ui"); }
+function toggleHammer() {
+  if (!G || !G.alive || G.paused) return;
+  if (!G.hammer && S.coins < HAMMER) { toast(t("noCoins")); return; }
+  G.hammer = !G.hammer; if (G.hammer) toast(t("hammerOn")); updTools();
+}
+function smash(k) {
+  if (!G.cells[k] || S.coins < HAMMER) { G.hammer = false; updTools(); return false; }
+  S.coins -= HAMMER; burst(k, 12); G.cells[k] = 0; G.hammer = false; sfx("smash"); save(); updTools(); return true;
+}
+function revive() {
+  if (G.revived || S.coins < REVIVE) return;
+  S.coins -= REVIVE; G.revived = true;
+  // scoate cele mai mici 7 piese
+  const idx = G.cells.map((v, i) => [v, i]).sort((a, b) => a[0] - b[0]).slice(0, 7);
+  for (const [, i] of idx) { G.cells[i] = 0; burst(i, 6); }
+  G.alive = true; G.over = false; hideOverlay(); save(); sfx("bloom", 1);
+}
+
+// ---------- Interfață ----------
+const $ = id => document.getElementById(id);
+function applyLang() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll("[data-i]").forEach(e => e.textContent = t(e.dataset.i));
+  $("bPlay").textContent = t("play"); $("bShop").textContent = "🎨 " + t("themes");
+  const dd = S.daily[todayStr()];
+  $("bDaily").textContent = dd != null ? t("dailyBest", { n: dd }) : "📅 " + t("daily");
+  $("bLang").textContent = "🌐 " + t("lang");
+  $("bSound").textContent = (S.sound ? "🔊 " : "🔇 ") + t("sound");
+  $("bMusic").textContent = (S.music ? "🎵 " : "🎵̸ ") + t("music");
+  $("bSound").setAttribute("aria-pressed", S.sound); $("bMusic").setAttribute("aria-pressed", S.music);
+  $("menuInfo").textContent = (S.best ? t("best", { n: S.best }) + " · " : "") + "🍯 " + S.coins + (S.top > 1 ? " · " + ICON[S.top] : "");
+  updTools();
+}
+function updTools() {
+  $("bSwap").innerHTML = "🔄 " + t("swap");
+  $("bHammer").innerHTML = "🔨 " + t("hammer") + "<small>" + HAMMER + " 🍯</small>";
+  $("bHammer").classList.toggle("act", !!(G && G.hammer));
+}
+function show(m) {
+  mode = m;
+  $("menu").classList.toggle("on", m === "menu");
+  $("shop").classList.toggle("on", m === "shop");
+  $("hud").classList.toggle("on", m === "play");
+  $("tools").classList.toggle("on", m === "play");
+  if (m !== "play") { $("tut").classList.remove("on"); hideOverlay(); }
+  if (m === "menu") { applyLang(); demo(); }
+  if (m === "shop") renderShop();
+}
+function demo() { newRun(424242, false); G.demo = true; G.alive = false; const R = rng(7); for (let i = 0; i < NCELL; i++) if (R() < 0.45) G.cells[i] = 1 + Math.floor(R() * 8); }
+function startRun(daily) {
+  ac();
+  const seed = daily ? dailySeed(todayStr()) : (Math.random() * 4294967296) >>> 0;
+  newRun(seed, daily); S.runs++; save();
+  show("play"); updTools();
+  if (!S.tut) { $("tut").innerHTML = t("tut") + "<br><small style='color:#d9c39a'>" + t("tutKeys") + "</small>"; $("tut").classList.add("on"); }
+}
+function endTut() { if (!S.tut) { S.tut = true; save(); $("tut").classList.remove("on"); } }
+function hideOverlay() { $("overlay").classList.remove("on"); }
+function card(html) { $("card").innerHTML = html; $("overlay").classList.add("on"); }
+function gameOver() {
+  if (!G || G.over || G.alive) return;
+  G.over = true; sfx("over");
+  const sc = G.score, isBest = sc > S.best;
+  if (isBest) S.best = sc;
+  if (G.daily) { const d = todayStr(); S.daily[d] = Math.max(S.daily[d] || 0, sc); }
+  save();
+  const canRev = !G.revived && S.coins >= REVIVE;
+  const lad = ICON.slice(1, G.top + 1).join("");
+  card(`<h3>${t("over")}</h3><p>${t("score")}</p><div class="val">${sc}</div>` +
+    (isBest ? `<p class="nb">${t("newBest")}</p>` : `<p>${t("best", { n: S.best })}</p>`) +
+    `<p>${t("top")}</p><div class="ladder">${lad}</div><p class="nb">${t("earned", { n: G.honey })}</p>` +
+    (canRev ? `<button class="big" id="bRevive">${t("revive", { n: REVIVE })}</button>` : "") +
+    `<button class="big pri" id="bAgain">${t("again")}</button><button class="big" id="bMenu">${t("menu")}</button>`);
+  if (canRev) $("bRevive").onclick = revive;
+  $("bAgain").onclick = () => startRun(G.daily);
+  $("bMenu").onclick = () => show("menu");
+}
+function pause(on) {
+  if (mode !== "play" || !G || G.over) return;
+  if (!G.alive && !on) return;
+  G.paused = on;
+  if (on) {
+    card(`<h3>${t("paused")}</h3><p>${t("score")}: ${G.score}</p><div class="ladder">${ICON.slice(1).map((e, i) => i < G.top ? e : "·").join("")}</div>` +
+      `<button class="big pri" id="bResume">${t("resume")}</button><button class="big" id="bQuit">${t("menu")}</button>`);
+    $("bResume").onclick = () => pause(false); $("bQuit").onclick = () => { save(); show("menu"); };
+  } else hideOverlay();
+}
+function toast(msg) { const e = $("toast"); e.textContent = msg; e.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => e.style.opacity = 0, 1500); }
+function renderShop() {
+  $("shopCoins").textContent = "🍯 " + S.coins;
+  const box = $("skins"); box.innerHTML = "";
+  SKINS.forEach((sk, i) => {
+    const own = S.owned.includes(i), d = document.createElement("div");
+    d.className = "sk" + (S.skin === i ? " sel" : ""); d.dataset.i = i;
+    d.innerHTML = `<canvas width="240" height="144"></canvas><b>${T[S.lang].skins[i]}</b>`;
+    const btn = document.createElement("button");
+    btn.textContent = S.skin === i ? t("inUse") : own ? t("use") : t("buy", { n: sk.price });
+    btn.disabled = S.skin === i || (!own && S.coins < sk.price);
+    btn.onclick = () => { if (!own) { if (S.coins < sk.price) return; S.coins -= sk.price; S.owned.push(i); sfx("bloom", 1); } S.skin = i; save(); renderShop(); };
+    d.appendChild(btn); box.appendChild(d);
+    const c = d.querySelector("canvas").getContext("2d"), g = c.createLinearGradient(0, 0, 0, 144);
+    g.addColorStop(0, sk.bg[0]); g.addColorStop(1, sk.bg[1]); c.fillStyle = g; c.fillRect(0, 0, 240, 144);
+    [[60, 50, 1], [120, 50, 4], [180, 50, 7], [90, 102, 3], [150, 102, 9]].forEach(([x, y, lv]) => drawHex(c, x, y, 28, sk, lv, 1, 0));
+  });
+}
+
+// ---------- Desen ----------
+const cv = $("cv"), cx = cv.getContext("2d");
+let CW = 0, CH = 0, DPR = 1, HS = 30, OX = 0, OY = 0;
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); CW = innerWidth; CH = innerHeight;
+  cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+  // fagurele (7 coloane) încape între HUD (sus) și tava de piese (jos)
+  const topH = 70, botH = 150, avW = CW * 0.94, avH = CH - topH - botH;
+  HS = Math.max(14, Math.min(avW / (Math.sqrt(3) * (2 * RAD + 1)), avH / (3 * RAD + 2)));
+  OX = CW / 2; OY = topH + avH / 2;
+}
+addEventListener("resize", resize); resize();
+function cellXY(i) { const [q, r] = CELLS[i]; return [OX + HS * Math.sqrt(3) * (q + r / 2), OY + HS * 1.5 * r]; }
+function cellAt(px, py) { // pixel → celulă (rotunjire cubică)
+  const x = (px - OX) / HS, y = (py - OY) / HS;
+  let q = (Math.sqrt(3) / 3 * x - y / 3), r = 2 / 3 * y, s = -q - r;
+  let rq = Math.round(q), rr = Math.round(r); const rs = Math.round(s);
+  const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs - s);
+  if (dq > dr && dq > ds) rq = -rr - rs; else if (dr > ds) rr = -rq - rs;
+  const k = IDX.get(rq + "," + rr); return k === undefined ? -1 : k;
+}
+function trayXY() { return [CW / 2, CH - 78]; }
+function hexPath(c, x, y, s) { c.beginPath(); for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i - 30); c.lineTo(x + s * Math.cos(a), y + s * Math.sin(a)); } c.closePath(); }
+function drawHex(c, x, y, s, sk, lv, scale = 1, time = 0, ghost = false) {
+  const ss = s * scale;
+  if (!lv) { hexPath(c, x, y, ss * 0.94); c.fillStyle = sk.cell; c.fill(); c.strokeStyle = sk.edge; c.lineWidth = Math.max(1, s * 0.06); c.stroke(); return; }
+  if (lv === ROCK) { c.save(); hexPath(c, x, y, ss * 0.94); const gr = c.createLinearGradient(x, y - ss, x, y + ss); gr.addColorStop(0, "#b9b2a6"); gr.addColorStop(1, "#4d4840"); c.fillStyle = gr; c.fill(); c.strokeStyle = "#2c2924"; c.lineWidth = Math.max(1, s * 0.07); c.stroke(); c.font = `${Math.round(ss * 0.85)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("🪨", x, y + ss * 0.05); c.restore(); return; }
+  const col = sk.lv[lv - 1];
+  c.save(); if (ghost) c.globalAlpha = 0.5;
+  if (lv >= 7) { c.shadowColor = col; c.shadowBlur = s * (0.5 + 0.3 * Math.sin(time / 300 + x)); }
+  hexPath(c, x, y, ss * 0.94);
+  const g = c.createLinearGradient(x, y - ss, x, y + ss); g.addColorStop(0, "#ffffff"); g.addColorStop(0.18, col); g.addColorStop(1, shade(col, -0.35));
+  c.fillStyle = g; c.fill(); c.shadowBlur = 0;
+  c.strokeStyle = shade(col, -0.5); c.lineWidth = Math.max(1, s * 0.07); c.stroke();
+  c.font = `${Math.round(ss * 0.95)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",sans-serif`; c.textAlign = "center"; c.textBaseline = "middle";
+  c.fillText(ICON[lv], x, y + ss * 0.05);
+  c.font = `800 ${Math.round(ss * 0.36)}px system-ui,sans-serif`; c.fillStyle = "rgba(40,20,0,.75)"; c.fillText(lv, x + ss * 0.52, y + ss * 0.5);
+  c.restore();
+}
+function shade(hex, f) { const n = parseInt(hex.slice(1), 16); let r = n >> 16, g = (n >> 8) & 255, b = n & 255; const m = f < 0 ? 0 : 255, a = Math.abs(f); r = Math.round(r + (m - r) * a); g = Math.round(g + (m - g) * a); b = Math.round(b + (m - b) * a); return `rgb(${r},${g},${b})`; }
+function burst(k, n) { const [x, y] = cellXY(k); const col = SKINS[S.skin].lv[Math.max(0, (G.cells[k] > 0 ? G.cells[k] : 1) - 1)]; for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 120; G.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, col }); } }
+// celulele care s-ar uni dacă piesa curentă ar fi pusă aici
+function preview(k) { if (k < 0 || G.cells[k]) return []; const c = G.cells.slice(); c[k] = G.cur; const g = group(c, k); return g.length >= 3 ? g : []; }
+function draw(time) {
+  const c = cx, sk = SKINS[S.skin]; c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const bg = c.createLinearGradient(0, 0, 0, CH); bg.addColorStop(0, sk.bg[0]); bg.addColorStop(1, sk.bg[1]); c.fillStyle = bg; c.fillRect(0, 0, CW, CH);
+  if (sk.aurora) { for (let i = 0; i < 3; i++) { c.fillStyle = `hsla(${150 + i * 40},80%,60%,.07)`; c.beginPath(); c.ellipse(CW * (0.3 + i * 0.2) + Math.sin(time / 2000 + i) * 40, CH * 0.15, CW * 0.5, 60, 0.2 * i, 0, 6.283); c.fill(); } }
+  // polen plutitor
+  for (let i = 0; i < 26; i++) { const px = (i * 97.3 + time * 0.012 * (1 + i % 3)) % (CW + 40) - 20, py = (i * 53.7 + Math.sin(time / 1500 + i) * 30 + CH) % CH; c.fillStyle = "rgba(255,230,150,.22)"; c.beginPath(); c.arc(px, py, 1.5 + i % 3, 0, 6.283); c.fill(); }
+  if (!G) return;
+  const prev = (mode === "play" && G.alive && !G.paused && !G.hammer) ? preview(G.kbd ? G.cursor : G.hover) : [];
+  // fundalul fagurelui
+  c.save(); c.globalAlpha = 0.35; hexPath(c, OX, OY, HS * Math.sqrt(3) * (RAD + 0.75)); c.fillStyle = "#000"; c.fill(); c.restore();
+  const flying = new Set(G.anim.filter(a => a.kind === "fly").map(a => a.k));
+  for (let i = 0; i < NCELL; i++) {
+    const [x, y] = cellXY(i);
+    drawHex(c, x, y, HS, sk, 0);
+    const a = G.anim.find(a => a.k === i && a.kind === "pop");
+    const sc = a ? 0.6 + 0.4 * easeBack(Math.min(1, a.t / 0.25)) : 1;
+    if (G.cells[i] && !flying.has(i)) drawHex(c, x, y, HS, sk, G.cells[i], sc * (G.demo ? 1 + 0.03 * Math.sin(time / 600 + i) : 1), time);
+    if (prev.includes(i)) { hexPath(c, x, y, HS * 0.9); c.strokeStyle = "#fff"; c.lineWidth = 3; c.setLineDash([5, 4]); c.stroke(); c.setLineDash([]); }
+    if (mode === "play" && (i === G.hover || (G.kbd && i === G.cursor))) { hexPath(c, x, y, HS * 0.98); c.strokeStyle = G.hammer ? "#ff6b6b" : sk.edge === "#fff" ? "#ffc93c" : "#ffe08a"; c.lineWidth = 3; c.stroke(); if (!G.cells[i] && !G.hammer && G.alive) drawHex(c, x, y, HS, sk, G.cur, 1, time, true); }
+  }
+  // piese care zboară spre celula unde se unesc
+  for (const a of G.anim) if (a.kind === "fly") { const p = Math.min(1, a.t / 0.22), [x0, y0] = cellXY(a.k), [x1, y1] = cellXY(a.to); drawHex(c, x0 + (x1 - x0) * p, y0 + (y1 - y0) * p, HS, sk, a.lv, 1 - 0.4 * p, time); }
+  for (const p of G.parts) { c.fillStyle = p.col; c.globalAlpha = Math.max(0, p.life); c.beginPath(); c.arc(p.x, p.y, 3, 0, 6.283); c.fill(); c.globalAlpha = 1; }
+  for (const f of G.floats) { const [x, y] = cellXY(f.k); c.globalAlpha = Math.max(0, 1 - f.t); c.fillStyle = "#fff"; c.font = `800 ${Math.round(HS * 0.6)}px system-ui,sans-serif`; c.textAlign = "center"; c.fillText(f.txt, x, y - HS - f.t * 40); c.globalAlpha = 1; }
+  // tava: piesa curentă + următoarea
+  if (mode === "play") {
+    const [tx, ty] = trayXY(), s = Math.min(42, HS * 1.25);
+    drawHex(c, tx, ty, s, sk, G.cur, 1 + 0.04 * Math.sin(time / 300), time);
+    drawHex(c, tx + s * 2.1, ty + s * 0.35, s * 0.6, sk, G.next, 1, time);
+    c.fillStyle = "rgba(255,247,230,.7)"; c.font = "600 12px system-ui,sans-serif"; c.textAlign = "center"; c.fillText(t("next"), tx + s * 2.1, ty - s * 0.45);
+  }
+}
+const easeBack = x => 1 + 2.7 * Math.pow(x - 1, 3) + 1.7 * Math.pow(x - 1, 2);
+function tick(dt) {
+  if (!G) return; G.t += dt;
+  G.anim.forEach(a => a.t += dt); G.anim = G.anim.filter(a => a.t < (a.kind === "fly" ? 0.22 : 0.3));
+  G.parts.forEach(p => { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 120 * dt; p.life -= dt * 1.4; }); G.parts = G.parts.filter(p => p.life > 0);
+  G.floats.forEach(f => f.t += dt * 1.2); G.floats = G.floats.filter(f => f.t < 1);
+}
+
+// ---------- Sunet (sintetizat, fără fișiere) ----------
+let AC = null, nextNote = 0, noteI = 0;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === "suspended") AC.resume(); return AC; }
+function tone(f, d, type = "sine", g = 0.1, slide = 0, when = 0) {
+  const a = AC; if (!a) return; const t0 = a.currentTime + when;
+  const o = a.createOscillator(), gn = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t0 + d);
+  gn.gain.setValueAtTime(0.0001, t0); gn.gain.exponentialRampToValueAtTime(g, t0 + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+  o.connect(gn).connect(a.destination); o.start(t0); o.stop(t0 + d + 0.05);
+}
+const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];
+function sfx(k, n = 1) {
+  if (!S.sound || !ac()) return;
+  if (k === "place") tone(440 + Math.random() * 60, 0.09, "triangle", 0.06, 1.3);
+  else if (k === "merge") for (let i = 0; i < Math.min(5, n + 1); i++) tone(PENTA[(i * 2 + n) % 8] * 2, 0.18, "triangle", 0.07, 0, i * 0.07);
+  else if (k === "bloom") { [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.35, "triangle", 0.07, 0, i * 0.08)); }
+  else if (k === "smash") { tone(200, 0.2, "square", 0.06, 0.5); tone(120, 0.3, "sawtooth", 0.04, 0.5); }
+  else if (k === "over") { tone(330, 0.4, "triangle", 0.07, 0.7); tone(247, 0.6, "triangle", 0.06, 0.7, 0.2); }
+  else tone(660, 0.07, "sine", 0.05);
+}
+function music() { // arpegiu liniștit, pentatonic
+  if (!S.music || !AC || mode !== "play" || !G || !G.alive || G.paused) return;
+  if (AC.currentTime < nextNote) return;
+  nextNote = AC.currentTime + 0.5; noteI++;
+  const f = PENTA[(noteI * 5 + (noteI >> 2)) % PENTA.length] / (noteI % 3 === 0 ? 2 : 1);
+  tone(f, 1.1, "sine", 0.03);
+}
+
+// ---------- Control ----------
+cv.addEventListener("pointermove", e => { if (mode === "play" && G && e.pointerType === "mouse") { G.hover = cellAt(e.clientX, e.clientY); G.kbd = false; } });
+cv.addEventListener("pointerleave", () => { if (G) G.hover = -1; });
+cv.addEventListener("pointerdown", e => {
+  if (mode !== "play" || !G || !G.alive || G.paused) return; ac();
+  const [tx, ty] = trayXY();
+  if (Math.hypot(e.clientX - tx, e.clientY - ty) < 46) { swap(); return; } // atingerea piesei din tavă = schimbă
+  const k = cellAt(e.clientX, e.clientY); if (k >= 0) { G.kbd = false; place(k); }
+});
+addEventListener("keydown", e => {
+  if (mode === "play" && G) {
+    const [q, r] = CELLS[G.cursor]; let m = null;
+    if (e.code === "ArrowLeft" || e.code === "KeyA") m = [q - 1, r];
+    else if (e.code === "ArrowRight" || e.code === "KeyD") m = [q + 1, r];
+    else if (e.code === "ArrowUp" || e.code === "KeyW") m = [q + (r % 2 ? 0 : 1), r - 1];
+    else if (e.code === "ArrowDown") m = [q - (r % 2 ? 0 : 1), r + 1];
+    if (m) { const k = IDX.get(m[0] + "," + m[1]); if (k !== undefined) G.cursor = k; G.kbd = true; G.hover = -1; e.preventDefault(); return; }
+    if (e.code === "Enter" || e.code === "Space") { if (!G.paused) { G.kbd = true; place(G.cursor); } e.preventDefault(); }
+    else if (e.code === "KeyS" || e.code === "Tab") { swap(); e.preventDefault(); }
+    else if (e.code === "KeyH") toggleHammer();
+    else if (e.code === "Escape" || e.code === "KeyP") pause(!G.paused);
+  } else if (mode === "menu" && (e.code === "Enter" || e.code === "Space")) startRun(false);
+});
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(true); });
+$("bPlay").onclick = () => { sfx("ui"); startRun(false); };
+$("bDaily").onclick = () => { sfx("ui"); startRun(true); };
+$("bShop").onclick = () => { sfx("ui"); show("shop"); };
+$("bShopBack").onclick = () => { sfx("ui"); show("menu"); };
+$("bPause").onclick = () => pause(true);
+$("bSwap").onclick = () => swap();
+$("bHammer").onclick = () => toggleHammer();
+$("bLang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); applyLang(); };
+$("bSound").onclick = () => { S.sound = !S.sound; save(); applyLang(); sfx("ui"); };
+$("bMusic").onclick = () => { S.music = !S.music; save(); applyLang(); };
+
+// ---------- Bucla ----------
+let last = 0;
+function loop(now) {
+  const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
+  if (G && !window.__noLoop) tick(dt);
+  if (G && mode === "play") { $("hScore").textContent = G.score; $("hCoins").textContent = "🍯 " + S.coins + "  " + ICON[G.top]; }
+  music();
+  draw(now);
+  requestAnimationFrame(loop);
+}
+show("menu");
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
