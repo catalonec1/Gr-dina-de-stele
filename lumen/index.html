@@ -8,7 +8,7 @@
 <style>
 :root{--bg:#0b0f24;--panel:#151b3a;--ink:#e9ecff;--dim:#8b93c4;--acc:#ffd166}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;touch-action:manipulation}
+html,body{margin:0;height:100%;background:#071019;color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;touch-action:manipulation}
 #app{position:fixed;inset:0;display:flex;flex-direction:column}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center}
 .screen.on{display:flex}
@@ -44,12 +44,31 @@ button:disabled{opacity:.4}
 #pals button{width:44px;height:44px;padding:0;border-radius:50%;position:relative}
 #pals button.sel{outline:3px solid var(--ink)}
 #pals button small{position:absolute;bottom:-17px;left:0;right:0;font-size:10px;color:var(--dim)}
+#bg{position:fixed;inset:0;width:100%;height:100%;display:block;z-index:0}
+#app{z-index:1}
+#logo{width:64px;height:64px;margin-top:6vh;filter:drop-shadow(0 0 14px rgba(255,190,80,.55));animation:bob 3.2s ease-in-out infinite}
+#menu h1{margin-top:4px!important;text-shadow:0 0 30px rgba(255,209,102,.25)}
+@keyframes bob{50%{transform:translateY(-5px)}}
+button{background:linear-gradient(180deg,rgba(40,48,100,.85),rgba(24,30,70,.85));border:1px solid rgba(150,170,255,.22);box-shadow:0 4px 14px rgba(0,0,0,.25);backdrop-filter:blur(4px)}
+button.pri{box-shadow:0 6px 22px rgba(255,183,3,.35)}
+.card{background:linear-gradient(180deg,rgba(32,40,90,.96),rgba(20,26,62,.96));box-shadow:0 20px 60px rgba(0,0,0,.5);animation:cardIn .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes cardIn{from{transform:scale(.8);opacity:0}}
+.stars span.pop{display:inline-block;color:#ffd166;text-shadow:0 0 18px rgba(255,209,102,.8);animation:starPop .5s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes starPop{from{transform:scale(0) rotate(-60deg);opacity:0}}
+#banner{position:absolute;left:50%;top:70px;transform:translate(-50%,-20px);background:linear-gradient(180deg,rgba(40,48,110,.95),rgba(24,30,72,.95));border:1px solid rgba(255,209,102,.4);border-radius:16px;padding:10px 18px;text-align:center;opacity:0;transition:all .4s;pointer-events:none;z-index:8;width:max-content;max-width:90vw}
+#banner.on{opacity:1;transform:translate(-50%,0)}
+#banner b{display:block;color:#ffd166;font-size:17px}#banner span{font-size:14px;color:#cfd5ff}
+#levels .grid h4{grid-column:1/-1;margin:14px 0 2px;color:#ffd166;font-size:15px;display:flex;justify-content:space-between}
+#levels .grid h4 small{color:var(--dim);font-weight:400}
+#levels .grid button.cur{outline:2px solid #ffd166}
 #toast{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);background:#232b5c;padding:8px 14px;border-radius:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9}
 </style>
 </head>
 <body>
+<canvas id="bg"></canvas>
 <div id="app">
   <section id="menu" class="screen on">
+    <svg id="logo" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="lg"><stop offset="0" stop-color="#ffe9a8"/><stop offset=".45" stop-color="#ffb703" stop-opacity=".7"/><stop offset="1" stop-color="#ffb703" stop-opacity="0"/></radialGradient></defs><circle cx="32" cy="34" r="30" fill="url(#lg)"/><rect x="22" y="12" width="20" height="5" rx="2" fill="#3a2f55"/><rect x="22" y="49" width="20" height="5" rx="2" fill="#3a2f55"/><rect x="24" y="17" width="16" height="32" rx="5" fill="#fff4cf" fill-opacity=".25" stroke="#6b5a86" stroke-width="2"/><ellipse cx="32" cy="35" rx="5" ry="9" fill="#ffd166"/><ellipse cx="32" cy="37" rx="2.4" ry="4.5" fill="#fffbe8"/><path d="M28 12 Q32 4 36 12" fill="none" stroke="#6b5a86" stroke-width="2"/></svg>
     <h1>Lumen Links</h1>
     <div class="sub" data-i="tag"></div>
     <div id="menuStars"></div>
@@ -62,6 +81,7 @@ button:disabled{opacity:.4}
     <div class="row" style="margin-top:28px">
       <button class="ico" id="bLang"></button>
       <button class="ico" id="bSound"></button>
+      <button class="ico" id="bMusic"></button>
     </div>
   </section>
   <section id="levels" class="screen">
@@ -80,14 +100,15 @@ button:disabled{opacity:.4}
   </section>
   <div id="overlay"><div class="card" id="card"></div></div>
   <div id="toast"></div>
+  <div id="banner"></div>
 </div>
 <script>
 "use strict";
 // ---------- Texte ----------
 const T = {
-  en: { tag: "Rotate the tiles and lead the lantern light to every crystal.", play: "Play", cont: "Continue · level {n}", levels: "Levels", daily: "Daily puzzle", dailyDone: "Daily puzzle ✓", level: "Level {n}", dailyT: "Daily {d}", moves: "Moves: {m} · par {p}", solved: "Solved!", next: "Next level", menu: "Menu", again: "Play again", hint: "Hint", noHints: "No hints left. Solve a level to earn one.", watch: "Watch ad: +3 hints", gotHints: "+3 hints", locked: "Unlock with {n} ★", lang: "EN", palette: "Colors", total: "{n} ★ collected", dailyBonus: "Daily bonus: +2 hints", tut: "Tap a tile to rotate it. Light every crystal.", rush: "Time rush", rushT: "Rush · {n} solved", time: "Time {s}s · par {p}", rushEnd: "Time's up!", rushScore: "Puzzles solved: {n}", rushBest: "Best: {n}", newBest: "New record!", streak: "Streak: {n} days", zen: "Zen mode", zenT: "Zen · {n} solved", zenS: "No timer, no moves count · 5 solved = +1 hint", zenHint: "Zen: +1 hint", whatsNew: "New in v{v}: Zen mode and 2 new color palettes" },
-  ro: { tag: "Rotește piesele și du lumina felinarului la fiecare cristal.", play: "Joacă", cont: "Continuă · nivelul {n}", levels: "Niveluri", daily: "Puzzle-ul zilei", dailyDone: "Puzzle-ul zilei ✓", level: "Nivelul {n}", dailyT: "Ziua {d}", moves: "Mutări: {m} · țintă {p}", solved: "Rezolvat!", next: "Nivelul următor", menu: "Meniu", again: "Încă o dată", hint: "Indiciu", noHints: "Nu mai ai indicii. Rezolvă un nivel ca să primești unul.", watch: "Reclamă: +3 indicii", gotHints: "+3 indicii", locked: "Se deblochează la {n} ★", lang: "RO", palette: "Culori", total: "{n} ★ adunate", dailyBonus: "Bonusul zilei: +2 indicii", tut: "Atinge o piesă ca s-o rotești. Aprinde toate cristalele.", rush: "Contra cronometru", rushT: "Cronometru · {n} rezolvate", time: "Timp {s}s · țintă {p}", rushEnd: "Timpul a expirat!", rushScore: "Puzzle-uri rezolvate: {n}", rushBest: "Record: {n}", newBest: "Record nou!", streak: "Serie: {n} zile", zen: "Mod Zen", zenT: "Zen · {n} rezolvate", zenS: "Fără cronometru, fără mutări numărate · 5 rezolvate = +1 indiciu", zenHint: "Zen: +1 indiciu", whatsNew: "Noutăți v{v}: modul Zen și 2 palete noi de culori" },
-  ru: { tag: "Поворачивайте плитки и ведите свет фонаря к каждому кристаллу.", play: "Играть", cont: "Продолжить · уровень {n}", levels: "Уровни", daily: "Головоломка дня", dailyDone: "Головоломка дня ✓", level: "Уровень {n}", dailyT: "День {d}", moves: "Ходы: {m} · цель {p}", solved: "Готово!", next: "Следующий уровень", menu: "Меню", again: "Ещё раз", hint: "Подсказка", noHints: "Подсказок нет. Пройдите уровень, чтобы получить одну.", watch: "Реклама: +3 подсказки", gotHints: "+3 подсказки", locked: "Открывается за {n} ★", lang: "RU", palette: "Цвета", total: "Собрано {n} ★", dailyBonus: "Бонус дня: +2 подсказки", tut: "Нажмите на плитку, чтобы повернуть. Зажгите все кристаллы.", rush: "На время", rushT: "На время · решено {n}", time: "Время {s}с · цель {p}", rushEnd: "Время вышло!", rushScore: "Решено головоломок: {n}", rushBest: "Рекорд: {n}", newBest: "Новый рекорд!", streak: "Серия: {n} дн.", zen: "Режим дзен", zenT: "Дзен · решено {n}", zenS: "Без таймера и подсчёта ходов · 5 решённых = +1 подсказка", zenHint: "Дзен: +1 подсказка", whatsNew: "Новое в v{v}: режим дзен и 2 новые палитры" },
+  en: { tag: "Rotate the tiles and lead the lantern light to every crystal.", play: "Play", cont: "Continue · level {n}", levels: "Levels", daily: "Daily puzzle", dailyDone: "Daily puzzle ✓", level: "Level {n}", dailyT: "Daily {d}", moves: "Moves: {m} · par {p}", solved: "Solved!", next: "Next level", menu: "Menu", again: "Play again", hint: "Hint", noHints: "No hints left. Solve a level to earn one.", watch: "Watch ad: +3 hints", gotHints: "+3 hints", locked: "Unlock with {n} ★", lang: "EN", palette: "Colors", total: "{n} ★ collected", dailyBonus: "Daily bonus: +2 hints", tut: "Tap a tile to rotate it. Light every crystal.", rush: "Time rush", rushT: "Rush · {n} solved", time: "Time {s}s · par {p}", rushEnd: "Time's up!", rushScore: "Puzzles solved: {n}", rushBest: "Best: {n}", newBest: "New record!", streak: "Streak: {n} days", zen: "Zen mode", zenT: "Zen · {n} solved", zenS: "No timer, no moves count · 5 solved = +1 hint", zenHint: "Zen: +1 hint", whatsNew: "New in v{v}: 5 worlds, locked and twin tiles, music and a brand-new look", worlds: "Worlds", w0: "Lantern Woods", w1: "Crystal Caves", w2: "Moon Lake", w3: "Aurora Peaks", w4: "Star Sea", wIntro: "World {w}: {name}", mLock: "New: locked tiles can't turn. Build around them.", mTwin: "New: twin tiles (same mark) turn together.", mBoth: "Locked and twin tiles together. Think ahead!", mBig: "Bigger boards, every tile type. Shine on!", lockedTile: "This tile is locked", music: "Music", tapHere: "Tap here" },
+  ro: { tag: "Rotește piesele și du lumina felinarului la fiecare cristal.", play: "Joacă", cont: "Continuă · nivelul {n}", levels: "Niveluri", daily: "Puzzle-ul zilei", dailyDone: "Puzzle-ul zilei ✓", level: "Nivelul {n}", dailyT: "Ziua {d}", moves: "Mutări: {m} · țintă {p}", solved: "Rezolvat!", next: "Nivelul următor", menu: "Meniu", again: "Încă o dată", hint: "Indiciu", noHints: "Nu mai ai indicii. Rezolvă un nivel ca să primești unul.", watch: "Reclamă: +3 indicii", gotHints: "+3 indicii", locked: "Se deblochează la {n} ★", lang: "RO", palette: "Culori", total: "{n} ★ adunate", dailyBonus: "Bonusul zilei: +2 indicii", tut: "Atinge o piesă ca s-o rotești. Aprinde toate cristalele.", rush: "Contra cronometru", rushT: "Cronometru · {n} rezolvate", time: "Timp {s}s · țintă {p}", rushEnd: "Timpul a expirat!", rushScore: "Puzzle-uri rezolvate: {n}", rushBest: "Record: {n}", newBest: "Record nou!", streak: "Serie: {n} zile", zen: "Mod Zen", zenT: "Zen · {n} rezolvate", zenS: "Fără cronometru, fără mutări numărate · 5 rezolvate = +1 indiciu", zenHint: "Zen: +1 indiciu", whatsNew: "Noutăți v{v}: 5 lumi, piese blocate și gemene, muzică și aspect nou", worlds: "Lumi", w0: "Pădurea felinarelor", w1: "Peșterile de cristal", w2: "Lacul lunii", w3: "Piscurile aurorei", w4: "Marea de stele", wIntro: "Lumea {w}: {name}", mLock: "Nou: piesele blocate nu se rotesc. Construiește în jurul lor.", mTwin: "Nou: piesele gemene (același semn) se rotesc împreună.", mBoth: "Piese blocate și gemene împreună. Gândește înainte!", mBig: "Table mai mari, toate tipurile de piese. Strălucește!", lockedTile: "Piesa e blocată", music: "Muzică", tapHere: "Atinge aici" },
+  ru: { tag: "Поворачивайте плитки и ведите свет фонаря к каждому кристаллу.", play: "Играть", cont: "Продолжить · уровень {n}", levels: "Уровни", daily: "Головоломка дня", dailyDone: "Головоломка дня ✓", level: "Уровень {n}", dailyT: "День {d}", moves: "Ходы: {m} · цель {p}", solved: "Готово!", next: "Следующий уровень", menu: "Меню", again: "Ещё раз", hint: "Подсказка", noHints: "Подсказок нет. Пройдите уровень, чтобы получить одну.", watch: "Реклама: +3 подсказки", gotHints: "+3 подсказки", locked: "Открывается за {n} ★", lang: "RU", palette: "Цвета", total: "Собрано {n} ★", dailyBonus: "Бонус дня: +2 подсказки", tut: "Нажмите на плитку, чтобы повернуть. Зажгите все кристаллы.", rush: "На время", rushT: "На время · решено {n}", time: "Время {s}с · цель {p}", rushEnd: "Время вышло!", rushScore: "Решено головоломок: {n}", rushBest: "Рекорд: {n}", newBest: "Новый рекорд!", streak: "Серия: {n} дн.", zen: "Режим дзен", zenT: "Дзен · решено {n}", zenS: "Без таймера и подсчёта ходов · 5 решённых = +1 подсказка", zenHint: "Дзен: +1 подсказка", whatsNew: "Новое в v{v}: 5 миров, закреплённые плитки и близнецы, музыка и новый облик", worlds: "Миры", w0: "Лес фонарей", w1: "Хрустальные пещеры", w2: "Лунное озеро", w3: "Пики сияния", w4: "Звёздное море", wIntro: "Мир {w}: {name}", mLock: "Новое: закреплённые плитки не вращаются.", mTwin: "Новое: плитки-близнецы (одинаковый знак) вращаются вместе.", mBoth: "Закреплённые плитки и близнецы вместе. Думайте наперёд!", mBig: "Большие поля и все виды плиток. Сияйте!", lockedTile: "Плитка закреплена", music: "Музыка", tapHere: "Нажмите сюда" },
 };
 const LANGS = ["en", "ro", "ru"];
 const PLATFORM = window.GAME_PLATFORM || "web";
@@ -99,8 +120,8 @@ function detectLang() {
 const t = (k, v = {}) => (T[S.lang][k] || T.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
 
 // ---------- Salvare ----------
-const KEY = "lumen-links-v1", VERSION = "1.2";
-let S = { lang: detectLang(), sound: true, level: 1, stars: {}, daily: {}, hints: 3, pal: 0, tut: false, rushBest: 0, streak: { n: 0, last: "" }, zen: 0, seen: null };
+const KEY = "lumen-links-v1", VERSION = "2.0";
+let S = { lang: detectLang(), sound: true, level: 1, stars: {}, daily: {}, hints: 3, pal: 0, tut: false, rushBest: 0, streak: { n: 0, last: "" }, zen: 0, seen: null, music: true, worldSeen: 0 };
 // Store = localStorage; pe CrazyGames se înlocuiește cu Data Module din SDK (salvare legată de cont)
 let Store = null; try { Store = window.localStorage; } catch (e) {}
 function load() { try { const d = JSON.parse(Store.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {} }
@@ -130,7 +151,7 @@ const DIRS = [[0, -1, 1, 4], [1, 0, 2, 8], [0, 1, 4, 1], [-1, 0, 8, 2]]; // dx, 
 const rotMask = (m, r) => { r &= 3; for (let i = 0; i < r; i++) m = ((m << 1) | (m >> 3)) & 15; return m; };
 function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let x = a; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
 function sizeFor(n) { return n <= 3 ? 3 : n <= 10 ? 4 : n <= 25 ? 5 : n <= 45 ? 6 : n <= 70 ? 7 : n <= 100 ? 8 : 9; }
-function genLevel(seed, W, H) {
+function genLevel(seed, W, H, mech = {}) {
   const R = rng(seed), N = W * H, sol = new Array(N).fill(0);
   const src = Math.floor(H / 2) * W + Math.floor(W / 2);
   const inTree = new Array(N).fill(false); inTree[src] = true;
@@ -150,10 +171,37 @@ function genLevel(seed, W, H) {
   // nicio piesă nu începe deja aliniată dacă se poate (nivel mai interesant), dar păstrăm determinismul
   const tiles = sol.map((m, i) => ({ base: m, rot: rot[i] }));
   const lv = { W, H, src, sol, tiles };
-  if (isSolved(lv)) tiles.forEach(tl => { if (rotMask(tl.base, 1) !== tl.base) tl.rot = (tl.rot + 1) & 3; });
-  lv.par = tiles.reduce((s, tl, i) => s + minTurns(tl, sol[i]), 0);
+  // v2.0: piese blocate (deja aliniate, nu se rotesc) și piese gemene (se rotesc împreună)
+  const ids = sol.map((m, i) => i).filter(i => i !== src && rotMask(sol[i], 1) !== sol[i]);
+  for (let k = ids.length - 1; k > 0; k--) { const j = Math.floor(R() * (k + 1)); [ids[k], ids[j]] = [ids[j], ids[k]]; }
+  const nLock = Math.round(W * H * (mech.lock || 0)), nTwin = mech.twin || 0;
+  ids.slice(0, nLock).forEach(i => { tiles[i].rot = 0; tiles[i].locked = true; });
+  const free = ids.slice(nLock);
+  for (let k = 0; k < nTwin && free.length >= 2; k++) {
+    const a = free.shift(), b = free.shift();
+    tiles[b].rot = tiles[a].rot || 1; tiles[a].rot = tiles[b].rot; tiles[a].twin = b; tiles[b].twin = a; tiles[a].tw = tiles[b].tw = k % 4;
+  }
+  if (isSolved(lv)) tiles.forEach(tl => { if (!tl.locked && tl.twin === undefined && rotMask(tl.base, 1) !== tl.base) tl.rot = (tl.rot + 1) & 3; });
+  if (isSolved(lv)) tiles.forEach(tl => { if (!tl.locked && rotMask(tl.base, 1) !== tl.base) tl.rot = (tl.rot + 1) & 3; });
+  lv.par = solveTurns(lv).reduce((a, b) => a + b, 0);
   return lv;
 }
+// câte atingeri trebuie pe fiecare piesă (geamănul secundar = 0, se rotește odată cu primul)
+function solveTurns(lv) {
+  return lv.tiles.map((tl, i) => {
+    if (tl.locked) return 0;
+    if (tl.twin === undefined) return minTurns(tl, lv.sol[i]);
+    if (tl.twin < i) return 0;
+    const o = lv.tiles[tl.twin];
+    for (let k = 0; k < 4; k++) if (rotMask(tl.base, tl.rot + k) === lv.sol[i] && rotMask(o.base, o.rot + k) === lv.sol[tl.twin]) return k;
+    return 0;
+  });
+}
+// Lumi (v2.0): 20 de niveluri fiecare; a 5-a continuă la nesfârșit
+const worldOf = n => Math.min(4, Math.floor((n - 1) / 20));
+function mechFor(n) { const w = worldOf(n), s = sizeFor(n);
+  return { lock: w === 1 || w >= 3 ? 0.14 : 0, twin: w >= 2 ? Math.max(1, Math.floor(s * s / 12)) : 0 }; }
+const WMECH = ["tut", "mLock", "mTwin", "mBoth", "mBig"];
 const cur = tl => rotMask(tl.base, tl.rot);
 function minTurns(tl, target) { for (let k = 0; k < 4; k++) if (rotMask(tl.base, tl.rot + k) === target) return k; return 0; }
 function litSet(lv) {
@@ -198,11 +246,35 @@ function tone(f, d = 0.08, type = "sine", v = 0.12, when = 0) {
     o.connect(g); g.connect(AC.destination); o.start(t0); o.stop(t0 + d + 0.02);
   } catch (e) {}
 }
+const PENTA = [523.25, 587.33, 659.25, 783.99, 880, 1046.5, 1174.66, 1318.5];
 const sfx = {
-  rot() { tone(520, 0.05, "triangle", 0.07); },
-  lit(n) { tone(660 + n * 40, 0.12, "sine", 0.06); },
-  win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.25, "sine", 0.1, i * 0.09)); },
+  rot() { tone(420 + Math.random() * 40, 0.06, "triangle", 0.06); tone(840, 0.03, "sine", 0.02, 0.01); },
+  lit(n) { tone(PENTA[n % PENTA.length], 0.18, "sine", 0.05); },
+  crystal(k) { const f = PENTA[k % PENTA.length] * 2; tone(f, 0.5, "sine", 0.06); tone(f * 1.5, 0.35, "sine", 0.025, 0.03); },
+  lock() { tone(140, 0.09, "square", 0.04); tone(110, 0.08, "sine", 0.06, 0.03); },
+  win() { [523, 659, 784, 1047, 1319].forEach((f, i) => { tone(f, 0.45, "sine", 0.08, i * 0.08); tone(f * 2, 0.3, "sine", 0.02, i * 0.08 + 0.02); }); },
+  star(k) { tone(880 * Math.pow(1.26, k), 0.3, "sine", 0.07); },
 };
+// Muzică ambientală generată (fără fișiere): acorduri lente + clopoței pentatonici
+const Music = {
+  on: false, next: 0, step: 0, master: null,
+  CH: [[220, 261.63, 329.63], [174.61, 220, 261.63], [196, 246.94, 293.66], [164.81, 207.65, 246.94]],
+  tick() {
+    if (!S.music || !S.sound || muted || document.hidden || Ads.busy || !AC) return;
+    if (!this.master) { this.master = AC.createGain(); this.master.gain.value = 0.5; const lp = AC.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 1400; this.master.connect(lp); lp.connect(AC.destination); }
+    const now = AC.currentTime; if (now < this.next - 0.2) return;
+    const t0 = Math.max(now, this.next), ch = this.CH[this.step % 4];
+    ch.forEach((f, i) => { const o = AC.createOscillator(), g = AC.createGain(); o.type = i ? "sine" : "triangle"; o.frequency.value = f / (i ? 1 : 2);
+      g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.035, t0 + 1.4); g.gain.linearRampToValueAtTime(0.0001, t0 + 4.3);
+      o.connect(g); g.connect(this.master); o.start(t0); o.stop(t0 + 4.4); });
+    for (let k = 0; k < 2; k++) if (Math.random() < 0.7) { const f = PENTA[Math.floor(Math.random() * 6)], o = AC.createOscillator(), g = AC.createGain(), w = t0 + 0.6 + k * 1.6 + Math.random() * 0.5;
+      o.type = "sine"; o.frequency.value = f; g.gain.setValueAtTime(0.0001, w); g.gain.linearRampToValueAtTime(0.03, w + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, w + 1.6);
+      o.connect(g); g.connect(this.master); o.start(w); o.stop(w + 1.7); }
+    this.step++; this.next = t0 + 4;
+  },
+};
+setInterval(() => Music.tick(), 500);
+addEventListener("pointerdown", () => { if (!S.sound || muted) return; try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === "suspended") AC.resume(); } catch (e) {} }, { capture: true });
 
 // ---------- Reclame (CrazyGames v3 / Poki v2 / GameDistribution; pe web și itch: fără reclame) ----------
 function loadScript(src) { return new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = src; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc); }); }
@@ -271,14 +343,15 @@ const cvs = $("board"), ctx = cvs.getContext("2d");
 function show(id) { document.querySelectorAll(".screen").forEach(s => s.classList.toggle("on", s.id === id)); if (id === "game") resize(); Ads.gameplay(id === "game"); }
 function startLevel(n) {
   const s = sizeFor(n);
-  G = { lv: genLevel(levelSeed(n), s, s), mode: "level", n, moves: 0, hist: [], anim: {}, done: false, hintsUsed: 0 };
-  G.litPrev = litSet(G.lv).filter(Boolean).length;
+  G = { lv: genLevel(levelSeed(n), s, s, mechFor(n)), mode: "level", n, moves: 0, hist: [], anim: {}, done: false, hintsUsed: 0 };
+  G.litPrev = litSet(G.lv).filter(Boolean).length; G.litMask = litSet(G.lv); FX.reset();
+  const w = worldOf(n); if (n === w * 20 + 1 || (w > (S.worldSeen || 0) && n > w * 20)) { banner(t("wIntro", { w: w + 1, name: t("w" + w) }), t(WMECH[w])); if (w > (S.worldSeen || 0)) { S.worldSeen = w; save(); } }
   show("game"); renderHud(); if (!S.tut) toast(t("tut"), 3500);
 }
 function startDaily() {
   const d = today();
-  G = { lv: genLevel(dailySeed(d), 7, 7), mode: "daily", d, moves: 0, hist: [], anim: {}, done: false, hintsUsed: 0 };
-  G.litPrev = litSet(G.lv).filter(Boolean).length;
+  G = { lv: genLevel(dailySeed(d), 7, 7, { lock: 0.1 }), mode: "daily", d, moves: 0, hist: [], anim: {}, done: false, hintsUsed: 0 };
+  G.litPrev = litSet(G.lv).filter(Boolean).length; G.litMask = litSet(G.lv); FX.reset();
   show("game"); renderHud();
 }
 function startRush() {
@@ -292,12 +365,12 @@ function startZen() {
 function nextZen() {
   const s = zenSize(G.k);
   Object.assign(G, { lv: genLevel(G.seed + G.k * 104729, s, s), moves: 0, hist: [], anim: {}, done: false });
-  G.litPrev = litSet(G.lv).filter(Boolean).length; resize();
+  G.litPrev = litSet(G.lv).filter(Boolean).length; G.litMask = litSet(G.lv); FX.reset(); resize();
 }
 function nextRush() {
   const s = rushSize(G.k);
   Object.assign(G, { lv: genLevel(G.seed + G.k * 7919, s, s), moves: 0, hist: [], anim: {}, done: false });
-  G.litPrev = litSet(G.lv).filter(Boolean).length; resize();
+  G.litPrev = litSet(G.lv).filter(Boolean).length; G.litMask = litSet(G.lv); FX.reset(); resize();
 }
 function rushLeft() { return G && G.mode === "rush" ? Math.max(0, Math.ceil((G.end - performance.now()) / 1000)) : 0; }
 function endRush() {
@@ -313,20 +386,26 @@ function endRush() {
 setInterval(() => { if (G && G.mode === "rush" && !G.over) { if (rushLeft() <= 0) endRush(); else renderHud(); } }, 250);
 function rotate(i, record = true) {
   if (!G || G.done) return;
-  const tl = G.lv.tiles[i]; tl.rot = (tl.rot + 1) & 3;
+  const tl = G.lv.tiles[i];
+  if (tl.locked) { G.anim[i] = { shake: true, t0: performance.now() }; sfx.lock(); return; }
+  tl.rot = (tl.rot + 1) & 3;
   G.anim[i] = { from: -Math.PI / 2, t0: performance.now() };
+  if (tl.twin !== undefined) { const o = G.lv.tiles[tl.twin]; o.rot = (o.rot + 1) & 3; G.anim[tl.twin] = { from: -Math.PI / 2, t0: performance.now(), link: i }; }
   if (record) { G.moves++; G.hist.push(i); }
   sfx.rot(); afterChange();
 }
 function undo() {
   if (!G || G.done || !G.hist.length) return;
   const i = G.hist.pop(), tl = G.lv.tiles[i]; tl.rot = (tl.rot + 3) & 3; G.moves++;
-  G.anim[i] = { from: Math.PI / 2, t0: performance.now() }; sfx.rot(); afterChange();
+  G.anim[i] = { from: Math.PI / 2, t0: performance.now() };
+  if (tl.twin !== undefined) { const o = G.lv.tiles[tl.twin]; o.rot = (o.rot + 3) & 3; G.anim[tl.twin] = { from: Math.PI / 2, t0: performance.now() }; } sfx.rot(); afterChange();
 }
 function afterChange() {
-  const n = litSet(G.lv).filter(Boolean).length;
+  const lit = litSet(G.lv), n = lit.filter(Boolean).length;
   if (n > G.litPrev) sfx.lit(n % 8);
-  G.litPrev = n; renderHud();
+  const was = G.litMask || [], deg = m => [1, 2, 4, 8].filter(b => m & b).length; let kc = 0;
+  lit.forEach((on, i) => { if (on && !was[i] && i !== G.lv.src && deg(G.lv.tiles[i].base) === 1) { FX.burst(i, 14); sfx.crystal(kc++); } });
+  G.litMask = lit; G.litPrev = n; renderHud();
   if (isSolved(G.lv)) win();
 }
 function hint() {
@@ -335,13 +414,15 @@ function hint() {
   const { tiles, sol } = G.lv;
   const lit = litSet(G.lv);
   // preferă o piesă greșită lângă zona aprinsă
-  let cand = tiles.map((tl, i) => i).filter(i => cur(tiles[i]) !== sol[i]);
+  const need = solveTurns(G.lv);
+  let cand = tiles.map((tl, i) => i).filter(i => need[i] > 0);
   if (!cand.length) return;
   const near = cand.filter(i => { const x = i % G.lv.W, y = (i / G.lv.W) | 0; return DIRS.some(([dx, dy]) => { const nx = x + dx, ny = y + dy; return nx >= 0 && ny >= 0 && nx < G.lv.W && ny < G.lv.H && lit[ny * G.lv.W + nx]; }); });
   const i = (near.length ? near : cand)[0];
-  const k = minTurns(tiles[i], sol[i]);
+  const k = need[i], tw = tiles[i].twin;
   tiles[i].rot = (tiles[i].rot + k) & 3; G.anim[i] = { from: -k * Math.PI / 2, t0: performance.now(), hint: true };
-  S.hints--; G.hintsUsed++; G.hist = G.hist.filter(j => j !== i); save(); sfx.rot(); afterChange();
+  if (tw !== undefined) { tiles[tw].rot = (tiles[tw].rot + k) & 3; G.anim[tw] = { from: -k * Math.PI / 2, t0: performance.now(), hint: true }; }
+  S.hints--; G.hintsUsed++; G.hist = G.hist.filter(j => j !== i && j !== tw); save(); sfx.rot(); afterChange();
 }
 async function offerHints() {
   if (!Ads.a) return toast(t("noHints"));
@@ -353,16 +434,16 @@ function starsFor(moves, par) { return moves <= par ? 3 : moves <= Math.ceil(par
 function win() {
   if (G.mode === "rush") { // fără ecran de victorie: următorul puzzle imediat
     if (G.over) return;
-    G.k++; G.end += RUSH_BONUS * 1000; sfx.win(); toast("+" + RUSH_BONUS + "s", 900);
+    G.k++; G.end += RUSH_BONUS * 1000; sfx.win(); FX.win(); toast("+" + RUSH_BONUS + "s", 900);
     nextRush(); renderHud(); return;
   }
   if (G.mode === "zen") { // după o pauză scurtă, următorul puzzle
-    G.done = true; G.k++; S.zen = (S.zen || 0) + 1; sfx.win();
+    G.done = true; G.winT = performance.now(); G.k++; S.zen = (S.zen || 0) + 1; sfx.win(); FX.win();
     if (S.zen % 5 === 0) { S.hints = Math.min(S.hints + 1, 99); toast(t("zenHint"), 1200); }
     S.tut = true; save(); renderHud();
     setTimeout(() => { if (G && G.mode === "zen" && G.done) { nextZen(); renderHud(); } }, 700); return;
   }
-  G.done = true; sfx.win(); if (Ads.a && Ads.a.happy) Ads.a.happy();
+  G.done = true; G.winT = performance.now(); sfx.win(); FX.win(); if (Ads.a && Ads.a.happy) Ads.a.happy();
   let st = 3, title;
   if (G.mode === "level") {
     st = starsFor(G.moves, G.lv.par);
@@ -377,7 +458,8 @@ function win() {
   }
   S.tut = true; save(); Ads.wins++;
   setTimeout(() => {
-    const starsHtml = [1, 2, 3].map(k => `<span class="${k <= st ? "" : "off"}">★</span>`).join("");
+    const starsHtml = [1, 2, 3].map(k => `<span class="${k <= st ? "pop" : "off"}" style="animation-delay:${k * 0.18}s">★</span>`).join("");
+    for (let k = 0; k < st; k++) setTimeout(() => sfx.star(k), 180 * (k + 1));
     overlay(`<h3>${t("solved")}</h3><div class="s" style="color:var(--dim)">${title}</div><div class="stars">${starsHtml}</div>
       <div style="color:var(--dim);margin-bottom:10px">${t("moves", { m: G.moves, p: G.lv.par })}</div>
       ${G.mode === "daily" ? `<div style="color:var(--acc)">${t("dailyBonus")} · 🔥 ${t("streak", { n: S.streak.n })}</div>` : ""}
@@ -386,11 +468,13 @@ function win() {
     const goNext = async () => { closeOverlay(); if (Ads.a && Ads.wins % 3 === 0) await Ads.show("midgame"); startLevel(G.n + 1); };
     if ($("oNext")) $("oNext").onclick = goNext;
     $("oMenu").onclick = () => { closeOverlay(); toMenu(); };
-  }, 650);
+  }, 750);
 }
 function overlay(html) { $("card").innerHTML = html; $("overlay").classList.add("on"); }
 function closeOverlay() { $("overlay").classList.remove("on"); }
 let toastT = 0;
+let bannerT = 0;
+function banner(title, sub) { const e = $("banner"); e.innerHTML = `<b>${title}</b><span>${sub}</span>`; e.classList.add("on"); clearTimeout(bannerT); bannerT = setTimeout(() => e.classList.remove("on"), 3800); }
 function toast(msg, ms = 2200) { const e = $("toast"); e.textContent = msg; e.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(() => e.style.opacity = 0, ms); }
 
 // ---------- UI ----------
@@ -410,15 +494,18 @@ function renderMenu() {
   $("bZen").textContent = "🌙 " + t("zen") + (S.zen ? " · " + S.zen : "");
   $("bLang").textContent = "🌐 " + t("lang");
   $("bSound").textContent = S.sound ? "🔊" : "🔇";
+  $("bMusic").textContent = S.music ? "🎵" : "🎵̸"; $("bMusic").style.opacity = S.music ? 1 : 0.45; $("bMusic").title = t("music");
   const ts = totalStars(); $("menuStars").textContent = t("total", { n: ts });
   $("pals").innerHTML = PALS.map((p, i) => `<button data-p="${i}" class="${i === S.pal ? "sel" : ""}" ${ts < p.need ? "disabled" : ""} style="background:radial-gradient(circle,${p.lit} 0 35%,${p.glow} 36% 60%,#151b3a 61%)" title="${ts < p.need ? t("locked", { n: p.need }) : t("palette")}"><small>${ts < p.need ? p.need + "★" : ""}</small></button>`).join("");
   $("pals").querySelectorAll("button").forEach(b => b.onclick = () => { S.pal = +b.dataset.p; save(); renderMenu(); });
 }
 function renderLevels() {
-  const max = Math.max(S.level + 9, 30), g = $("lvGrid");
+  const max = Math.ceil(Math.max(S.level + 9, 20) / 20) * 20, g = $("lvGrid");
   let h = "";
   for (let n = 1; n <= max; n++) { const st = S.stars[n] || 0;
-    h += `<button data-n="${n}" ${n > S.level ? "disabled" : ""}>${n}<small>${st ? "★".repeat(st) : ""}</small></button>`; }
+    if ((n - 1) % 20 === 0) { const w = worldOf(n); let got = 0; for (let k = n; k < n + 20; k++) got += S.stars[k] || 0;
+      h += `<h4>${w + 1}. ${t("w" + w)}<small>${got}/60 ★</small></h4>`; }
+    h += `<button data-n="${n}" class="${n === S.level ? "cur" : ""}" ${n > S.level ? "disabled" : ""}>${n}<small>${st ? "★".repeat(st) : ""}</small></button>`; }
   g.innerHTML = h; g.querySelectorAll("button").forEach(b => b.onclick = () => startLevel(+b.dataset.n));
 }
 function toMenu() { G = null; renderMenu(); show("menu"); }
@@ -429,6 +516,7 @@ $("bRush").onclick = startRush;
 $("bZen").onclick = startZen;
 $("bLang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); renderMenu(); };
 $("bSound").onclick = () => { S.sound = !S.sound; save(); renderMenu(); };
+$("bMusic").onclick = () => { S.music = !S.music; save(); renderMenu(); };
 document.querySelectorAll("[data-back]").forEach(b => b.onclick = toMenu);
 $("bBack").onclick = toMenu;
 $("bUndo").onclick = undo;
@@ -436,13 +524,19 @@ $("bHint").onclick = hint;
 $("bRestart").onclick = () => G && (G.mode === "level" ? startLevel(G.n) : G.mode === "rush" ? startRush() : G.mode === "zen" ? startZen() : startDaily());
 addEventListener("keydown", e => { if (e.key === "z" && (e.ctrlKey || e.metaKey)) undo(); if (e.key === "Escape") { closeOverlay(); toMenu(); } });
 
-// ---------- Desen ----------
+// ---------- Desen (v2.0: fundal animat pe lumi, piese de sticlă, lumină care curge, particule) ----------
 let geo = { s: 40, ox: 0, oy: 0 }, DPR = 1;
+const bg = $("bg"), bctx = bg.getContext("2d");
+// culori de fundal pe lumi: [cer sus, cer jos, nebuloasă 1, nebuloasă 2]
+const WCOL = [["#0b1430", "#071019", "#1f6f5c", "#3b2a6b"], ["#0c0f2e", "#05060f", "#2b5aa8", "#7a3fb0"], ["#0a1630", "#040a16", "#3a6fb5", "#b8c7ff"],
+  ["#0d0b26", "#05040f", "#2fae7a", "#a23fb5"], ["#140a2a", "#05030c", "#c04f7a", "#3f62d1"]];
+const curWorld = () => G && G.mode === "level" ? worldOf(G.n) : G && G.mode === "daily" ? 1 : G && G.mode === "rush" ? 4 : G && G.mode === "zen" ? 2 : 0;
 function resize() {
   DPR = Math.min(devicePixelRatio || 1, 2);
+  bg.width = innerWidth * DPR; bg.height = innerHeight * DPR;
   const r = cvs.getBoundingClientRect(); cvs.width = r.width * DPR; cvs.height = r.height * DPR;
   if (!G) return;
-  const pad = 14, s = Math.floor(Math.min((r.width - pad * 2) / G.lv.W, (r.height - pad * 2) / G.lv.H, 96));
+  const pad = 16, s = Math.floor(Math.min((r.width - pad * 2) / G.lv.W, (r.height - pad * 2) / G.lv.H, 96));
   geo = { s, ox: (r.width - s * G.lv.W) / 2, oy: (r.height - s * G.lv.H) / 2 };
 }
 addEventListener("resize", resize);
@@ -452,51 +546,134 @@ function tileAt(px, py) {
 }
 cvs.addEventListener("pointerdown", e => {
   if (!G || G.done) return; const r = cvs.getBoundingClientRect();
-  const i = tileAt(e.clientX - r.left, e.clientY - r.top); if (i >= 0) rotate(i);
+  const px = e.clientX - r.left, py = e.clientY - r.top, i = tileAt(px, py);
+  if (i >= 0) { FX.ripple(px, py); rotate(i); if (G) G.tapped = true; }
 });
 cvs.addEventListener("contextmenu", e => e.preventDefault());
-const STARS = Array.from({ length: 70 }, (_, i) => { const r = rng(i + 7); return [r(), r(), r()]; });
+const STARS = Array.from({ length: 110 }, (_, i) => { const r = rng(i + 7); return [r(), r(), r(), r()]; });
+const FLIES = Array.from({ length: 14 }, (_, i) => { const r = rng(i + 991); return [r(), r(), r() * 6.28, 0.3 + r() * 0.7]; });
 const ease = x => 1 - Math.pow(1 - x, 3);
+// Efecte: particule, unde la atingere, undă de lumină la rezolvare
+const FX = {
+  parts: [], rips: [],
+  reset() { this.rips = []; },
+  center(i) { return [geo.ox + (i % G.lv.W + 0.5) * geo.s, geo.oy + (((i / G.lv.W) | 0) + 0.5) * geo.s]; },
+  burst(i, n, col) { if (!G) return; const [x, y] = this.center(i), P = pal();
+    for (let k = 0; k < n; k++) { const a = Math.random() * 6.28, v = 40 + Math.random() * 120;
+      this.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 30, t: 0, life: 0.6 + Math.random() * 0.6, col: col || (k % 2 ? P.crystal : P.lit), r: 1.5 + Math.random() * 2.5 }); }
+    if (this.parts.length > 600) this.parts.splice(0, this.parts.length - 600); },
+  ripple(x, y) { this.rips.push({ x, y, t0: performance.now() }); },
+  win() { if (!G) return; const deg = m => [1, 2, 4, 8].filter(b => m & b).length;
+    G.lv.tiles.forEach((tl, i) => { if (deg(tl.base) === 1 || i === G.lv.src) this.burst(i, i === G.lv.src ? 30 : 10); }); },
+};
+// distanța (în piese) de la felinar, pentru unda de lumină
+function distMap(lv) { const d = new Array(lv.W * lv.H).fill(99), q = [lv.src]; d[lv.src] = 0;
+  while (q.length) { const i = q.shift(), x = i % lv.W, y = (i / lv.W) | 0, m = cur(lv.tiles[i]);
+    for (const [dx, dy, b, ob] of DIRS) { if (!(m & b)) continue; const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= lv.W || ny >= lv.H) continue;
+      const j = ny * lv.W + nx; if (d[j] === 99 && (cur(lv.tiles[j]) & ob)) { d[j] = d[i] + 1; q.push(j); } } }
+  return d; }
+function drawBg(now) {
+  const W = bg.width / DPR, H = bg.height / DPR, c = WCOL[curWorld()];
+  bctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const g = bctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, c[0]); g.addColorStop(1, c[1]); bctx.fillStyle = g; bctx.fillRect(0, 0, W, H);
+  const neb = (x, y, r, col, a) => { const rg = bctx.createRadialGradient(x, y, 0, x, y, r); rg.addColorStop(0, col + a); rg.addColorStop(1, col + "00"); bctx.fillStyle = rg; bctx.fillRect(0, 0, W, H); };
+  const t = now / 1000;
+  neb(W * (0.25 + 0.05 * Math.sin(t / 9)), H * 0.25, Math.max(W, H) * 0.55, c[2], "40");
+  neb(W * (0.8 + 0.05 * Math.cos(t / 11)), H * 0.75, Math.max(W, H) * 0.5, c[3], "38");
+  for (const st of STARS) { const a = 0.25 + 0.35 * Math.sin(t * (0.6 + st[3]) + st[2] * 9);
+    bctx.fillStyle = `rgba(220,228,255,${Math.max(0.05, a)})`; const z = st[3] > 0.85 ? 2.2 : 1.3; bctx.fillRect(st[0] * W, st[1] * H, z, z); }
+  for (const f of FLIES) { const x = (f[0] * W + Math.sin(t * f[3] + f[2]) * 40 + t * 6 * f[3]) % W, y = (f[1] * H + Math.cos(t * f[3] * 0.8 + f[2]) * 30) % H;
+    const a = 0.35 + 0.35 * Math.sin(t * 2 * f[3] + f[2]); const rg = bctx.createRadialGradient(x, y, 0, x, y, 10);
+    rg.addColorStop(0, `rgba(255,220,140,${a})`); rg.addColorStop(1, "rgba(255,220,140,0)"); bctx.fillStyle = rg; bctx.fillRect(x - 10, y - 10, 20, 20); }
+}
+let lastT = 0;
 function draw(now) {
   requestAnimationFrame(draw);
+  const dt = Math.min(0.05, (now - (lastT || now)) / 1000); lastT = now;
+  drawBg(now);
   if (!G || !$("game").classList.contains("on")) return;
   const W = cvs.width / DPR, H = cvs.height / DPR, P = pal();
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.clearRect(0, 0, W, H);
-  // fundal cu stele discrete
-  ctx.fillStyle = "#0b0f24"; ctx.fillRect(0, 0, W, H);
-  const lit = litSet(G.lv), { s, ox, oy } = geo, lv = G.lv;
-  for (const st of STARS) { ctx.fillStyle = `rgba(200,210,255,${0.25 + 0.25 * Math.sin(now / 900 + st[2] * 9)})`; ctx.fillRect(st[0] * W, st[1] * H, 1.5, 1.5); }
-  for (let i = 0; i < lv.W * lv.H; i++) {
-    const x = ox + (i % lv.W) * s, y = oy + ((i / lv.W) | 0) * s;
-    ctx.fillStyle = lit[i] ? (G.done ? `rgba(60,70,150,${0.6 + 0.3 * Math.sin(now / 200)})` : "#1a2150") : "#141a3a";
-    ctx.beginPath(); ctx.roundRect(x + 2, y + 2, s - 4, s - 4, s * 0.16); ctx.fill();
-  }
-  for (let i = 0; i < lv.W * lv.H; i++) {
+  const lv = G.lv, lit = litSet(lv), { s, ox, oy } = geo, N = lv.W * lv.H;
+  const deg = m => [1, 2, 4, 8].filter(b => m & b).length;
+  const dmap = G.done ? (G.dmap = G.dmap && G.dmapLv === lv ? G.dmap : distMap(lv), G.dmapLv = lv, G.dmap) : null;
+  const wave = G.done && G.winT ? (now - G.winT) / 55 : -1;
+  // placa: umbră + ramă
+  ctx.save(); ctx.shadowColor = "rgba(0,0,0,.55)"; ctx.shadowBlur = 24; ctx.fillStyle = "rgba(10,14,34,.72)";
+  ctx.beginPath(); ctx.roundRect(ox - 8, oy - 8, s * lv.W + 16, s * lv.H + 16, 18); ctx.fill(); ctx.restore();
+  ctx.strokeStyle = "rgba(160,180,255,.14)"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(ox - 8, oy - 8, s * lv.W + 16, s * lv.H + 16, 18); ctx.stroke();
+  // piese (fundal de sticlă); gemenii au ramă colorată
+  const TW = ["#ff9ff3", "#7cf5c8", "#ffd166", "#9be7ff"];
+  for (let i = 0; i < N; i++) {
     const x = ox + (i % lv.W) * s, y = oy + ((i / lv.W) | 0) * s, tl = lv.tiles[i];
-    let ang = tl.rot * Math.PI / 2; const an = G.anim[i];
-    if (an) { const p = Math.min(1, (now - an.t0) / 140); ang += an.from * (1 - ease(p)); if (p >= 1) delete G.anim[i]; }
-    ctx.save(); ctx.translate(x + s / 2, y + s / 2); ctx.rotate(ang);
-    const col = lit[i] ? P.lit : "#3a4380";
-    ctx.strokeStyle = col; ctx.lineCap = "butt"; ctx.lineWidth = s * 0.17;
-    if (lit[i]) { ctx.shadowColor = P.glow; ctx.shadowBlur = s * 0.35; }
-    ctx.beginPath();
-    for (const [dx, dy, b] of DIRS) if (tl.base & b) { ctx.moveTo(0, 0); ctx.lineTo(dx * s / 2, dy * s / 2); }
-    ctx.stroke(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, s * 0.085, 0, 7); ctx.fill();
-    const deg = [1, 2, 4, 8].filter(b => tl.base & b).length;
+    let flash = 0; if (dmap && dmap[i] < 99) { const k = wave - dmap[i]; if (k > 0 && k < 6) flash = Math.sin(k / 6 * Math.PI); }
+    const gr = ctx.createLinearGradient(x, y, x, y + s);
+    if (lit[i]) { gr.addColorStop(0, `rgba(70,82,170,${0.55 + flash * 0.4})`); gr.addColorStop(1, `rgba(32,38,96,${0.75 + flash * 0.2})`); }
+    else { gr.addColorStop(0, "rgba(38,46,96,.75)"); gr.addColorStop(1, "rgba(20,25,58,.85)"); }
+    ctx.fillStyle = gr; ctx.beginPath(); ctx.roundRect(x + 2.5, y + 2.5, s - 5, s - 5, s * 0.18); ctx.fill();
+    ctx.strokeStyle = tl.locked ? "rgba(190,170,130,.55)" : lit[i] ? `rgba(255,230,170,${0.18 + flash * 0.6})` : "rgba(150,170,255,.10)"; ctx.lineWidth = tl.locked ? 2 : 1; ctx.stroke();
+    ctx.fillStyle = "rgba(255,255,255,.05)"; ctx.beginPath(); ctx.roundRect(x + 4, y + 4, s - 8, (s - 8) * 0.42, s * 0.14); ctx.fill();
+    if (tl.twin !== undefined) { ctx.strokeStyle = TW[tl.tw]; ctx.globalAlpha = 0.75; ctx.lineWidth = 2.5; ctx.setLineDash([s * 0.12, s * 0.08]);
+      ctx.beginPath(); ctx.roundRect(x + 4, y + 4, s - 8, s - 8, s * 0.16); ctx.stroke(); ctx.setLineDash([]); ctx.globalAlpha = 1; }
+    if (tl.locked) { ctx.fillStyle = "rgba(210,190,150,.7)"; for (const [cx, cy] of [[0.18, 0.18], [0.82, 0.18], [0.18, 0.82], [0.82, 0.82]]) { ctx.beginPath(); ctx.arc(x + s * cx, y + s * cy, s * 0.045, 0, 7); ctx.fill(); } }
+  }
+  // conexiuni (canal întunecat, apoi lumina cu flux animat)
+  for (let i = 0; i < N; i++) {
+    const x = ox + (i % lv.W) * s, y = oy + ((i / lv.W) | 0) * s, tl = lv.tiles[i];
+    let ang = tl.rot * Math.PI / 2, sc = 1, sx = 0; const an = G.anim[i];
+    if (an) { const p = Math.min(1, (now - an.t0) / (an.shake ? 260 : 160));
+      if (an.shake) sx = Math.sin(p * Math.PI * 6) * s * 0.06 * (1 - p); else { ang += an.from * (1 - ease(p)); sc = 1 + 0.09 * Math.sin(p * Math.PI); }
+      if (p >= 1) delete G.anim[i]; }
+    ctx.save(); ctx.translate(x + s / 2 + sx, y + s / 2); ctx.rotate(ang); ctx.scale(sc, sc);
+    const seg = () => { ctx.beginPath(); for (const [dx, dy, b] of DIRS) if (tl.base & b) { ctx.moveTo(0, 0); ctx.lineTo(dx * s / 2, dy * s / 2); } };
+    ctx.lineCap = "round"; ctx.strokeStyle = "rgba(5,8,22,.85)"; ctx.lineWidth = s * 0.27; seg(); ctx.stroke();
+    if (lit[i]) {
+      ctx.shadowColor = P.glow; ctx.shadowBlur = s * 0.4; ctx.strokeStyle = P.lit; ctx.lineWidth = s * 0.16; seg(); ctx.stroke();
+      ctx.shadowBlur = 0; ctx.strokeStyle = "rgba(255,255,240,.85)"; ctx.lineWidth = s * 0.05; ctx.setLineDash([s * 0.08, s * 0.16]); ctx.lineDashOffset = -now / 40; seg(); ctx.stroke(); ctx.setLineDash([]);
+    } else { ctx.strokeStyle = "#3d4888"; ctx.lineWidth = s * 0.15; seg(); ctx.stroke(); ctx.strokeStyle = "rgba(255,255,255,.08)"; ctx.lineWidth = s * 0.04; seg(); ctx.stroke(); }
+    ctx.rotate(-ang);
+    const d = deg(tl.base);
     if (i === lv.src) { // felinar
-      ctx.rotate(-ang); ctx.shadowColor = P.glow; ctx.shadowBlur = s * 0.6;
-      ctx.fillStyle = P.lit; ctx.beginPath(); ctx.arc(0, 0, s * 0.26, 0, 7); ctx.fill();
-      ctx.shadowBlur = 0; ctx.fillStyle = "#fff8e1"; ctx.beginPath(); ctx.arc(0, 0, s * 0.12 + Math.sin(now / 300) * s * 0.02, 0, 7); ctx.fill();
-    } else if (deg === 1) { // cristal
-      ctx.rotate(-ang); const c = lit[i] ? P.crystal : "#4a5390", r = s * 0.22;
-      if (lit[i]) { ctx.shadowColor = P.crystal; ctx.shadowBlur = s * 0.5; } else ctx.shadowBlur = 0;
-      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(0, -r * 1.2); ctx.lineTo(r, 0); ctx.lineTo(0, r * 1.2); ctx.lineTo(-r, 0); ctx.closePath(); ctx.fill();
-      ctx.shadowBlur = 0; ctx.fillStyle = "rgba(255,255,255,.45)"; ctx.beginPath(); ctx.moveTo(0, -r * 1.2); ctx.lineTo(r * 0.4, -r * 0.2); ctx.lineTo(0, 0); ctx.closePath(); ctx.fill();
-    } else { ctx.shadowBlur = 0; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, s * 0.1, 0, 7); ctx.fill(); }
+      const fl = 1 + 0.08 * Math.sin(now / 90) + 0.05 * Math.sin(now / 37);
+      const halo = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.75 * fl); halo.addColorStop(0, P.glow + "aa"); halo.addColorStop(1, P.glow + "00"); ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(0, 0, s * 0.75 * fl, 0, 7); ctx.fill();
+      ctx.fillStyle = "#2a2140"; ctx.beginPath(); ctx.roundRect(-s * 0.2, -s * 0.3, s * 0.4, s * 0.08, 3); ctx.fill(); ctx.beginPath(); ctx.roundRect(-s * 0.2, s * 0.22, s * 0.4, s * 0.08, 3); ctx.fill();
+      ctx.fillStyle = "rgba(255,240,200,.25)"; ctx.strokeStyle = "#5a4a70"; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(-s * 0.16, -s * 0.23, s * 0.32, s * 0.46, s * 0.08); ctx.fill(); ctx.stroke();
+      ctx.shadowColor = P.glow; ctx.shadowBlur = s * 0.5; ctx.fillStyle = P.lit; ctx.beginPath(); ctx.ellipse(0, s * 0.03, s * 0.08 * fl, s * 0.14 * fl, 0, 0, 7); ctx.fill();
+      ctx.shadowBlur = 0; ctx.fillStyle = "#fffbe8"; ctx.beginPath(); ctx.ellipse(0, s * 0.06, s * 0.035, s * 0.07, 0, 0, 7); ctx.fill();
+    } else if (d === 1) { // cristal fațetat
+      const r = s * 0.22, on = lit[i], c = on ? P.crystal : "#55609e", bob = on ? Math.sin(now / 400 + i) * s * 0.02 : 0;
+      ctx.translate(0, bob);
+      if (on) { const h = ctx.createRadialGradient(0, 0, 0, 0, 0, s * 0.5); h.addColorStop(0, P.crystal + "66"); h.addColorStop(1, P.crystal + "00"); ctx.fillStyle = h; ctx.beginPath(); ctx.arc(0, 0, s * 0.5, 0, 7); ctx.fill(); }
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(0, -r * 1.25); ctx.lineTo(r, -r * 0.2); ctx.lineTo(r * 0.55, r * 1.1); ctx.lineTo(-r * 0.55, r * 1.1); ctx.lineTo(-r, -r * 0.2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.5)"; ctx.beginPath(); ctx.moveTo(0, -r * 1.25); ctx.lineTo(r * 0.35, -r * 0.2); ctx.lineTo(0, r * 0.2); ctx.lineTo(-r * 0.35, -r * 0.2); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.moveTo(r, -r * 0.2); ctx.lineTo(r * 0.55, r * 1.1); ctx.lineTo(0, r * 0.2); ctx.lineTo(r * 0.35, -r * 0.2); ctx.closePath(); ctx.fill();
+      if (on && Math.sin(now / 260 + i * 1.7) > 0.93) { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(-r * 0.3, -r * 0.6, s * 0.03, 0, 7); ctx.fill(); }
+    } else { ctx.fillStyle = lit[i] ? P.lit : "#46518f"; ctx.beginPath(); ctx.arc(0, 0, s * 0.1, 0, 7); ctx.fill(); }
+    if (tl.twin !== undefined) { ctx.fillStyle = TW[tl.tw]; ctx.strokeStyle = "rgba(0,0,0,.5)"; ctx.lineWidth = 1.5;
+      const tr = Math.max(4, s * 0.085); ctx.beginPath(); ctx.arc(s * 0.32, -s * 0.32, tr, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.beginPath(); ctx.arc(s * 0.32, -s * 0.32, tr * 0.4, 0, 7); ctx.fillStyle = "rgba(0,0,0,.45)"; ctx.fill(); }
     ctx.restore();
   }
+  // legătură vizibilă între gemeni când se rotesc
+  for (const k in G.anim) { const an = G.anim[k]; if (an.link === undefined) continue; const [ax, ay] = FX.center(an.link), [bx, by] = FX.center(+k), p = Math.min(1, (now - an.t0) / 300);
+    ctx.strokeStyle = `rgba(255,220,255,${0.6 * (1 - p)})`; ctx.lineWidth = 2; ctx.setLineDash([4, 6]); ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); ctx.setLineDash([]); }
+  // indicator de tutorial pe nivelul 1
+  if (G.mode === "level" && G.n === 1 && !S.tut && !G.tapped && !G.done) {
+    const need = solveTurns(lv), i = need.findIndex(k => k > 0);
+    if (i >= 0) { const [x, y] = FX.center(i), p = (now % 1200) / 1200;
+      ctx.strokeStyle = `rgba(255,230,160,${1 - p})`; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(x, y, s * (0.3 + p * 0.3), 0, 7); ctx.stroke();
+      ctx.font = `${Math.round(s * 0.42)}px system-ui`; ctx.textAlign = "center"; ctx.fillText("👆", x + s * 0.12, y + s * 0.55 + Math.sin(now / 200) * 4);
+      ctx.fillStyle = "#ffe8b0"; ctx.font = "600 15px system-ui"; ctx.fillText(t("tapHere"), x, y - s * 0.62); } }
+  // unde la atingere
+  FX.rips = FX.rips.filter(r => { const p = (now - r.t0) / 380; if (p >= 1) return false;
+    ctx.strokeStyle = `rgba(200,220,255,${0.5 * (1 - p)})`; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x, r.y, s * (0.2 + p * 0.5), 0, 7); ctx.stroke(); return true; });
+  // particule
+  ctx.globalCompositeOperation = "lighter";
+  FX.parts = FX.parts.filter(q => { q.t += dt; if (q.t >= q.life) return false; q.vy += 90 * dt; q.vx *= 0.98; q.x += q.vx * dt; q.y += q.vy * dt;
+    const a = 1 - q.t / q.life; ctx.fillStyle = q.col; ctx.globalAlpha = a; ctx.beginPath(); ctx.arc(q.x, q.y, q.r * (0.5 + a * 0.5), 0, 7); ctx.fill(); return true; });
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
 }
-renderMenu(); save();
+resize(); renderMenu(); save();
 if (showNews) setTimeout(() => toast(t("whatsNew", { v: VERSION }), 3000), 500);
 requestAnimationFrame(draw);
 Ads.init();

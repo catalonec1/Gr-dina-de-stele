@@ -7,7 +7,8 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
 async function solveByClicks(p) {
   const clicks = await p.evaluate(() => {
     const r = document.getElementById('board').getBoundingClientRect(), out = [];
-    G.lv.tiles.forEach((tl, i) => { const k = minTurns(tl, G.lv.sol[i]);
+    const need = solveTurns(G.lv);
+    G.lv.tiles.forEach((tl, i) => { const k = need[i];
       const x = r.left + geo.ox + (i % G.lv.W + 0.5) * geo.s, y = r.top + geo.oy + (((i / G.lv.W) | 0) + 0.5) * geo.s;
       for (let j = 0; j < k; j++) out.push([x, y]); });
     return out;
@@ -20,7 +21,7 @@ async function solveByClicks(p) {
   const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
   await p.goto(URL); await p.waitForTimeout(200);
-  ok(await p.evaluate(() => VERSION === '1.2' && ['en', 'ro', 'ru'].every(l => ['zen', 'zenT', 'zenS', 'zenHint', 'whatsNew'].every(k => T[l][k]))), 'v1.2: texte noi EN/RO/RU');
+  ok(await p.evaluate(() => VERSION >= '1.2' && ['en', 'ro', 'ru'].every(l => ['zen', 'zenT', 'zenS', 'zenHint', 'whatsNew'].every(k => T[l][k]))), 'v1.2: texte noi EN/RO/RU');
   ok(await p.evaluate(() => document.getElementById('toast').style.opacity !== '1'), 'v1.2: jucător nou fără mesaj Noutăți');
   ok((await p.$eval('#bZen', e => e.textContent)).includes('Mod Zen'), 'v1.2: buton Mod Zen în meniu');
   await p.click('#bZen');
@@ -45,14 +46,14 @@ async function solveByClicks(p) {
   ok(await p.evaluate(() => S.pal === 7), 'v1.2: paleta Ocean se poate alege');
   // reîncărcare: Zen păstrat
   await p.reload(); await p.waitForTimeout(200);
-  ok(await p.evaluate(() => S.zen === 5 && S.pal === 7 && S.seen === '1.2'), 'v1.2: salvare păstrată');
+  ok(await p.evaluate(() => S.zen === 5 && S.pal === 7 && S.seen === VERSION), 'v1.2: salvare păstrată');
   // salvare v1.1 → mesaj Noutăți EN
   const ctx2 = await b.newContext({ viewport: { width: 360, height: 640 }, locale: 'en-US' });
   const p2 = await ctx2.newPage();
   await p2.addInitScript(() => { if (!sessionStorage.m) { sessionStorage.m = 1;
     localStorage.setItem('lumen-links-v1', JSON.stringify({ lang: 'en', sound: true, level: 7, stars: { 1: 3 }, daily: {}, hints: 2, pal: 0, tut: true, rushBest: 4, streak: { n: 1, last: '' } })); } });
   await p2.goto(URL); await p2.waitForTimeout(900);
-  ok(await p2.evaluate(() => document.getElementById('toast').textContent.includes('Zen mode') && S.level === 7 && S.rushBest === 4 && S.zen === 0), 'v1.2: migrare v1.1 + mesaj Noutăți');
+  ok(await p2.evaluate(() => document.getElementById('toast').textContent.includes('5 worlds') && S.level === 7 && S.rushBest === 4 && S.zen === 0), 'v1.2: migrare v1.1 + mesaj Noutăți');
   ok(await p2.evaluate(() => { const r = document.getElementById('bSound').getBoundingClientRect(); return r.bottom <= innerHeight; }), 'v1.2: meniul încape pe ecran 360x640');
   ok(errs.length === 0, 'v1.2: fără erori JS ' + errs.join('|'));
   await b.close();
