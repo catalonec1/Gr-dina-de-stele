@@ -36,6 +36,8 @@ jobs:
         run: node lumen/tests/v11.js
       - name: Teste Paper River
         run: node river/tests/run.js
+      - name: Teste Paper River v1.1
+        run: node river/tests/v11.js
 
   deploy:
     needs: test

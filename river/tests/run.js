@@ -118,7 +118,7 @@ const AUTOPILOT = (secs) => {
   // 8. magazin de bărci
   await p.evaluate(() => { S.coins = 200; save(); });
   await p.click('#bShop');
-  ok(await p.$$eval('.sk', e => e.length) === 6, '6 bărci în magazin');
+  ok(await p.$$eval('.sk', e => e.length) === await p.evaluate(() => SKINS.length) && await p.evaluate(() => SKINS.length) >= 6, '6+ bărci în magazin');
   await p.click('.sk[data-i="1"] button');
   ok(await p.evaluate(() => S.skin === 1 && S.owned.includes(1) && S.coins === 140), 'cumpărare barcă Lotus (60)');
   ok(await p.$eval('.sk[data-i="3"] button', e => e.disabled), 'barca de 300 e blocată fără felinare');
