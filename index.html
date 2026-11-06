@@ -800,6 +800,8 @@ const Ads = {
         else if (remote && remote !== local) { S = load() || S; applyLang(); }
       }
     } catch (e) {}
+    // Basic Launch pe CrazyGames nu permite reclame: bonusul rămâne gratuit până la Full Launch (window.CG_ADS=1)
+    if (!window.CG_ADS) return;
     this.enable({
       gameplay(on) { try { on ? sdk.game.gameplayStart() : sdk.game.gameplayStop(); } catch (e) {} },
       show(type, onStart) {

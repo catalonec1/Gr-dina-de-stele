@@ -104,8 +104,13 @@ async function fresh(b, locale = 'ro-RO', init) {
   await p.waitForFunction(() => document.getElementById('toast').textContent.includes(VERSION), null, { timeout: 5000 }).catch(() => {});
   ok(await p.evaluate(() => document.getElementById('toast').textContent.includes(VERSION)), 'v1.1: mesaj „Noutăți” pentru jucătorii vechi');
   // reclamă în curs: sunetul jucătorului nu se salvează ca oprit
+  // Basic Launch (fără CG_ADS): SDK-ul CrazyGames nu activează reclame, bonusul e gratuit
   p = await fresh(b);
-  await p.evaluate(() => { Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} },
+  await p.evaluate(() => { Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} }, ad: { requestAd() {} } }); });
+  ok(await p.evaluate(() => !Ads.enabled), 'CrazyGames Basic Launch: fără reclame');
+  // Full Launch (CG_ADS=1): reclamă în curs
+  p = await fresh(b);
+  await p.evaluate(() => { window.CG_ADS = 1; Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} },
     ad: { requestAd(type, cb) { cb.adStarted(); window.__fin = cb.adFinished; } } }); });
   await p.click('.row:nth-child(1) .buy');
   ok(await p.evaluate(() => { save(); return JSON.parse(localStorage.getItem(SAVE_KEY)).sound === true && Ads.muted; }), 'v1.1: în timpul reclamei sunetul e oprit fără să strice setarea');
@@ -124,7 +129,7 @@ async function fresh(b, locale = 'ro-RO', init) {
   ok(p.errs.length === 0 && await p.evaluate(() => S.light) > 0, 'merge fără localStorage');
   // SDK reclame simulat: recompensă doar după reclamă, eroare fără recompensă
   p = await fresh(b, 'ro-RO');
-  await p.evaluate(() => { window.__mode = 'ok'; window.__calls = [];
+  await p.evaluate(() => { window.CG_ADS = 1; window.__mode = 'ok'; window.__calls = [];
     Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){ __calls.push('start'); }, gameplayStop(){ __calls.push('stop'); } },
       ad: { requestAd(type, cb) { __calls.push(type); cb.adStarted(); setTimeout(() => __mode === 'ok' ? cb.adFinished() : cb.adError('x'), 50); } } }); });
   ok(await p.evaluate(() => Ads.enabled), 'SDK detectat');
