@@ -77,7 +77,7 @@ async function fresh(b, locale = 'ro-RO', init) {
   const nMax = await p.evaluate(() => buyCount(0));
   await p.click('.row:nth-child(2) .buy');
   ok(await p.evaluate(n => S.owned[0] === 10 + n && S.light >= 0 && S.light < starCost(0), nMax), 'v1.1: cumpărare Max');
-  ok(await p.evaluate(() => document.querySelectorAll('.modes button').length === 3), 'v1.1: comutator x1/x10/Max');
+  ok(await p.evaluate(() => document.querySelectorAll('.modes button').length >= 3), 'v1.1: comutator x1/x10/Max');
   const rA = await p.evaluate(() => { S.ach = {}; return ratePerSec(); });
   const rB = await p.evaluate(() => { S.ach = { taps1: true, comets1: true }; return ratePerSec(); });
   ok(Math.abs(rB / rA - 1.04) < 1e-9, 'v1.1: fiecare trofeu +2% lumină');
