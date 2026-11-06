@@ -97,8 +97,34 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
     ok(c.errs.length === 0, `ceas: fără erori în consolă (${lang})`);
   }
 
+  // Fracții: k < d, numitori pe nivel, fără duplicate, colorare doar în modul „scrie fracția”
+  for (const lang of ['ro', 'en', 'ru']) {
+    const f = await open(`?lang=${lang}&k=frac`);
+    let good = true;
+    const DEN = { easy: [2, 4, 8], medium: [3, 6], hard: [2, 3, 4, 5, 6, 8] };
+    for (const level of ['easy', 'medium', 'hard']) for (const fmode of ['name', 'shade']) {
+      await f.selectOption('#level', level); await f.selectOption('#fmode', fmode);
+      for (let i = 0; i < 5; i++) {
+        await f.click('#new');
+        const r = await f.evaluate(() => {
+          const figs = [...document.querySelectorAll('#out > .fracs figure')];
+          return { fs: window.__last.fracs, n: figs.length,
+            parts: figs.map(g => g.querySelectorAll('svg path, svg rect').length),
+            shaded: figs.map(g => g.querySelectorAll('svg [fill="#c9ced8"]').length) };
+        });
+        const keys = new Set(r.fs.map(x => x.k + '/' + x.d + x.sh));
+        good = good && r.n === 9 && keys.size === 9 &&
+          r.fs.every((x, j) => x.k >= 1 && x.k < x.d && DEN[level].includes(x.d) && (x.sh !== 'grid' || x.d % 2 === 0) &&
+            r.parts[j] === x.d && r.shaded[j] === (fmode === 'name' ? x.k : 0));
+      }
+    }
+    ok(good, `fracții ${lang}: 9 fracții valide, numitori pe nivel, părți = numitor, colorare corectă pe mod`);
+    ok(await f.$$eval('.key .fracs figure', g => g.every(x => /^\d+\d+$/.test(x.querySelector('figcaption').textContent))), `fracții ${lang}: răspunsurile au fracția scrisă`);
+    ok(f.errs.length === 0, `fracții: fără erori în consolă (${lang})`);
+  }
+
   // Mobil: fără scroll orizontal
-  for (const k of ['maze', 'words', 'math', 'clock']) {
+  for (const k of ['maze', 'words', 'math', 'clock', 'frac']) {
     const m = await open(`?k=${k}&lang=ru`, { width: 360, height: 740 });
     if (k === 'words') await m.selectOption('#level', 'hard');
     ok(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `mobil 360px fără scroll orizontal (${k})`);
@@ -112,7 +138,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
 
   // Linkuri către produsele proprii
   const links = await p.$$eval('.cards a', as => as.map(a => a.href));
-  ok(links.length === 6 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
+  ok(links.length === 7 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
 
   await b.close();
   console.log(fails ? `\n${fails} teste au eșuat` : '\nToate testele au trecut');

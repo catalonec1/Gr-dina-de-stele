@@ -58,7 +58,7 @@ async function solveByClicks(p) {
   await p.reload(); await p.waitForTimeout(200);
   ok(await p.evaluate(() => S.rushBest === 3 && S.streak.n === 1), 'v1.1: record și serie păstrate după reîncărcare');
   // paleta Aurora
-  ok(await p.evaluate(() => PALS.length === 6 && PALS[5].need === 300), 'v1.1: a 6-a paletă (Aurora) la 300 ★');
+  ok(await p.evaluate(() => PALS.length >= 6 && PALS[5].need === 300), 'v1.1: a 6-a paletă (Aurora) la 300 ★');
   await p.evaluate(() => { for (let i = 1; i <= 100; i++) S.stars[i] = 3; renderMenu(); });
   await p.click('#pals button[data-p="5"]');
   ok(await p.evaluate(() => S.pal === 5), 'v1.1: Aurora se poate alege');

@@ -63,6 +63,37 @@ await test('simulare 120 s: deterministă, viteza crește și e plafonată', () 
   eq(JSON.stringify(a), JSON.stringify(b));
   assert(FO.speedAt(0) < FO.speedAt(30)); assert(FO.speedAt(1000) <= 3.6);
 });
+
+await test('v1.2: luna încetinește timpul 5 s și dă o scânteie', () => {
+  const r = FO.newRun(); r.t = 20; r.spawnIn = 99;
+  r.items.push({ kind: 'moon', ring: 1, angle: 0.05, drift: 0, ttl: 5 });
+  FO.step(r, 0.016, FO.mulberry32(1));
+  eq(r.moons, 1); eq(r.sparks, 1); assert(r.events.includes('moon') && r.slow > 4.9);
+  FO.step(r, 0.016, FO.mulberry32(1));
+  assert(Math.abs(r.speed - FO.speedAt(r.t) * FO.MOON_SLOW) < 1e-9, 'viteza trebuie înmulțită cu ' + FO.MOON_SLOW);
+  for (let i = 0; i < 330; i++) FO.step(r, 0.016, FO.mulberry32(i));
+  eq(r.slow, 0); assert(Math.abs(r.speed - FO.speedAt(r.t)) < 1e-9, 'viteza revine');
+});
+await test('v1.2: lunile apar doar după 15 s, rar', () => {
+  const rng = FO.mulberry32(9); let early = 0, moon = 0, drops = 0;
+  for (let i = 0; i < 6000; i++) {
+    const r = FO.newRun(); r.t = i < 1500 ? 12 : 40; r.spawnIn = 0; FO.step(r, 0.001, rng);
+    r.items.forEach(it => { if (i < 1500 && it.kind === 'moon') early++; if (i >= 1500 && it.kind !== 'moth') { drops++; if (it.kind === 'moon') moon++; } });
+  }
+  eq(early, 0); assert(moon / drops > 0.02 && moon / drops < 0.08, 'proporție ' + moon / drops);
+});
+await test('v1.2: misiunea „prinde luni”, culori noi, versiune în profil', () => {
+  const p = FO.defaultProfile(), d = new Date('2026-11-07T10:00:00Z');
+  p.missions = { day: FO.todayKey(d), list: [{ k: 'moon', n: 2, prog: 0, claimed: false }, { k: 'runs', n: 3, prog: 0, claimed: false }, { k: 'drops', n: 15, prog: 0, claimed: false }] };
+  const run = FO.newRun(); run.moons = 2; eq(FO.trackMissions(p, run, d).length, 1);
+  const back = FO.parseProfile(JSON.stringify(Object.assign({}, p, { seen: '1.2' })));
+  eq(back.missions.list[0].k, 'moon'); eq(back.seen, '1.2');
+  ['dusk', 'jade'].forEach(id => { const s = FO.skinById(id); assert(s && s.price > 2000 && !s.stars, id); });
+  p.sparks = 3000; eq(FO.buySkin(p, 'dusk'), 'ok'); eq(FO.buySkin(p, 'jade'), 'poor');
+  ['ro', 'en', 'ru'].forEach(l => ['m_moon', 'moon', 'whatsNew'].forEach(k => assert(FO.I18N[l][k], l + ':' + k)));
+  eq(FO.VERSION, '1.2');
+});
+
 // ---------------- v1.1: picături de aur, misiuni zilnice, culori noi ----------------
 await test('v1.1: picătura de aur dă +5 scântei în plus și eveniment', () => {
   const r = FO.newRun(); r.spawnIn = 99;
@@ -448,6 +479,28 @@ if (chromium) {
     await page.click('#btnPlay'); await page.keyboard.press('Space');
     await page.waitForTimeout(200); assert(await page.evaluate(() => window.__fo.run.score > 0));
     eq(errors.length, 0, errors.join('\n')); await ctx.close();
+  });
+
+  await test('v1.2: luna în joc, culorile noi în magazin', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'en' });
+    eq(await page.evaluate(() => window.__fo.profile.seen), '1.2');
+    await page.click('#btnShop');
+    eq(await page.$$eval('#skinGrid .card', c => c.length), FO.SKINS.length);
+    await page.click('#btnShopBack');
+    await page.click('#btnPlay'); await page.waitForTimeout(150);
+    await page.evaluate(() => { const r = window.__fo.run; r.items.push({ kind: 'moon', ring: r.ring, angle: r.angle + 0.05 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForTimeout(400);
+    assert(await page.evaluate(() => window.__fo.run.moons === 1 && window.__fo.run.slow > 0), 'luna trebuia culeasă');
+    await page.screenshot({ path: path.join(outDir, 'v12-moon.png') });
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+  });
+  await test('v1.2: mesaj Noutăți doar pentru jucătorii vechi', async () => {
+    const { page, ctx, errors } = await openPage({ telegram: false, lang: 'en' });
+    await page.evaluate(() => { localStorage.setItem('fo_profile', JSON.stringify({ v: 1, best: 40, sparks: 10, runs: 5, skin: 'amber', owned: ['skin:amber'], lang: 'en', seen: '1.1' })); });
+    await page.reload(); await page.waitForFunction(() => window.__fo);
+    await page.waitForFunction(() => document.getElementById('toast').textContent.includes('1.2'), null, { timeout: 3000 });
+    assert((await page.textContent('#toast')).includes('moon'));
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
   });
 
   await browser.close(); server.close();
