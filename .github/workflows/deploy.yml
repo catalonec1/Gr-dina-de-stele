@@ -40,6 +40,8 @@ jobs:
         run: node river/tests/run.js
       - name: Teste Paper River v1.1
         run: node river/tests/v11.js
+      - name: Teste Hive Bloom
+        run: node hive/tests/run.js
 
   deploy:
     needs: test
@@ -68,6 +70,10 @@ jobs:
         run: |
           mkdir -p dist/web/river
           cp river/index.html river/launch/cover-630x500.png river/launch/icon-512.png dist/web/river/
+      - name: Adaugă Hive Bloom în /hive/
+        run: |
+          mkdir -p dist/web/hive
+          cp hive/index.html hive/launch/cover-630x500.png hive/launch/icon-512.png dist/web/hive/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Fișe gratuite de printat în /printabile/
