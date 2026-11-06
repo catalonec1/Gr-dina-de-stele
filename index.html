@@ -93,16 +93,18 @@ const T = {
     tabDaily: "Zilnic", giftTitle: "Cadoul zilei", giftDesc: "Revino în fiecare zi: seria crește cadoul până în ziua 7.",
     giftBtn: "Ia cadoul", giftTaken: "Revino mâine", streak: "Serie", day: "ziua",
     questsTitle: "Misiunile zilei", claim: "Ia", comet: "Cometă prinsă!",
-    q: { taps: "Atinge cerul de {n} ori", comets: "Prinde {n} comete", stars: "Plantează {n} stele", ups: "Cumpără {n} îmbunătățire" },
+    q: { taps: "Atinge cerul de {n} ori", comets: "Prinde {n} comete", stars: "Plantează {n} stele", ups: "Cumpără {n} îmbunătățire", gold: "Prinde {n} cometă de aur" },
     gold: "Cometă de aur!", max: "Max", trophies: "Trofee", achBonus: "Fiecare trofeu dă +2% lumină pentru totdeauna",
     achGot: "Trofeu nou", statsTitle: "Statistici", st: { taps: "Atingeri", comets: "Comete", gold: "Comete de aur", rebirths: "Renașteri", total: "Lumină totală", time: "Timp de joc" },
-    whatsNew: "Noutăți v{v}: Pulsar și Quasar, trofee, comete de aur, cumpărare x10 / Max",
-    ad: { taps: "Atinge cerul de {n} ori", comets: "Prinde {n} comete", gold: "Prinde {n} cometă de aur", total: "Strânge {n} lumină în total",
+    whatsNew: "Noutăți v{v}: Galaxia spirală, ploi de meteori și 4 trofee noi",
+    shower: "Ploaie de meteori", showerStart: "☄ Ploaie de meteori! Prinde cât mai multe comete",
+    ad: { taps: "Atinge cerul de {n} ori", comets: "Prinde {n} comete", gold: "Prinde {n} comete de aur", total: "Strânge {n} lumină în total",
       rebirths: "Renaște de {n} ori", streak: "Serie zilnică de {n} zile", type: "Plantează: {s}", constel: "Completează {n} constelații" },
     an: { taps1: "Degete ușoare", taps2: "Ploaie de atingeri", taps3: "Mâna galaxiei", comets1: "Vânător de comete", comets2: "Coada cometei",
       comets3: "Îmblânzitor de comete", gold1: "Aur ceresc", total1: "Prima lumină", total2: "Milion de raze", total3: "Miliardar de lumină",
       total4: "Soarele grădinii", rebirths1: "Din nou de la capăt", rebirths2: "Ciclul stelelor", streak7: "O săptămână de stele",
-      type5: "Explozie de lumină", type6: "Inima care bate", type7: "Farul universului", constel1: "Primele linii", constel10: "Cartograf de cer" },
+      type5: "Explozie de lumină", type6: "Inima care bate", type7: "Farul universului", constel1: "Primele linii", constel10: "Cartograf de cer",
+      type8: "Grădinarul galaxiilor", gold5: "Comoara cerului", constel25: "Atlasul stelelor", rebirths10: "Veșnic renăscut" },
     stars: [
       ["Scânteie", "Prima lumină a grădinii"],
       ["Licurici ceresc", "Zboară și strălucește"],
@@ -112,6 +114,7 @@ const T = {
       ["Supernovă", "Strălucește cât o galaxie"],
       ["Pulsar", "Bate ca o inimă de lumină"],
       ["Quasar", "Farul de la marginea universului"],
+      ["Galaxie spirală", "O grădină întreagă într-o singură stea"],
     ],
     ups: {
       tap: ["Palmă de lumină", "Atingerile strâng x2"],
@@ -130,16 +133,18 @@ const T = {
     tabDaily: "Daily", giftTitle: "Daily gift", giftDesc: "Come back every day: your streak grows the gift up to day 7.",
     giftBtn: "Claim gift", giftTaken: "Come back tomorrow", streak: "Streak", day: "day",
     questsTitle: "Today's quests", claim: "Claim", comet: "Comet caught!",
-    q: { taps: "Tap the sky {n} times", comets: "Catch {n} comets", stars: "Plant {n} stars", ups: "Buy {n} upgrade" },
+    q: { taps: "Tap the sky {n} times", comets: "Catch {n} comets", stars: "Plant {n} stars", ups: "Buy {n} upgrade", gold: "Catch {n} golden comet" },
     gold: "Golden comet!", max: "Max", trophies: "Trophies", achBonus: "Each trophy gives +2% light forever",
     achGot: "New trophy", statsTitle: "Stats", st: { taps: "Taps", comets: "Comets", gold: "Golden comets", rebirths: "Rebirths", total: "Total light", time: "Play time" },
-    whatsNew: "New in v{v}: Pulsar and Quasar, trophies, golden comets, buy x10 / Max",
-    ad: { taps: "Tap the sky {n} times", comets: "Catch {n} comets", gold: "Catch {n} golden comet", total: "Gather {n} light in total",
+    whatsNew: "New in v{v}: Spiral galaxy, meteor showers and 4 new trophies",
+    shower: "Meteor shower", showerStart: "☄ Meteor shower! Catch as many comets as you can",
+    ad: { taps: "Tap the sky {n} times", comets: "Catch {n} comets", gold: "Catch {n} golden comets", total: "Gather {n} light in total",
       rebirths: "Rebirth {n} times", streak: "Reach a {n}-day streak", type: "Plant: {s}", constel: "Complete {n} constellations" },
     an: { taps1: "Light fingers", taps2: "Tap storm", taps3: "Hand of the galaxy", comets1: "Comet hunter", comets2: "Comet tail",
       comets3: "Comet tamer", gold1: "Heavenly gold", total1: "First light", total2: "A million rays", total3: "Light billionaire",
       total4: "Sun of the garden", rebirths1: "Back to the start", rebirths2: "Cycle of stars", streak7: "A week of stars",
-      type5: "Burst of light", type6: "Beating heart", type7: "Lighthouse of the universe", constel1: "First lines", constel10: "Sky cartographer" },
+      type5: "Burst of light", type6: "Beating heart", type7: "Lighthouse of the universe", constel1: "First lines", constel10: "Sky cartographer",
+      type8: "Gardener of galaxies", gold5: "Treasure of the sky", constel25: "Star atlas", rebirths10: "Forever reborn" },
     stars: [
       ["Spark", "The garden's first light"],
       ["Sky firefly", "Flies and glows"],
@@ -149,6 +154,7 @@ const T = {
       ["Supernova", "Shines like a galaxy"],
       ["Pulsar", "Beats like a heart of light"],
       ["Quasar", "Lighthouse at the edge of the universe"],
+      ["Spiral galaxy", "A whole garden inside one star"],
     ],
     ups: {
       tap: ["Palm of light", "Taps gather x2"],
@@ -167,16 +173,18 @@ const T = {
     giftTitle: "Подарок дня", giftDesc: "Возвращайся каждый день: серия увеличивает подарок до 7-го дня.",
     giftBtn: "Забрать", giftTaken: "Возвращайся завтра", streak: "Серия", day: "день",
     questsTitle: "Задания дня", claim: "Забрать", comet: "Комета поймана!",
-    q: { taps: "Коснись неба {n} раз", comets: "Поймай комет: {n}", stars: "Посади звёзд: {n}", ups: "Купи улучшение: {n}" },
+    q: { taps: "Коснись неба {n} раз", comets: "Поймай комет: {n}", stars: "Посади звёзд: {n}", ups: "Купи улучшение: {n}", gold: "Поймай золотых комет: {n}" },
     gold: "Золотая комета!", max: "Макс", trophies: "Трофеи", achBonus: "Каждый трофей даёт +2% света навсегда",
     achGot: "Новый трофей", statsTitle: "Статистика", st: { taps: "Касания", comets: "Кометы", gold: "Золотые кометы", rebirths: "Возрождения", total: "Всего света", time: "Время игры" },
-    whatsNew: "Новое в v{v}: Пульсар и Квазар, трофеи, золотые кометы, покупка x10 / Макс",
-    ad: { taps: "Касаний неба: {n}", comets: "Поймано комет: {n}", gold: "Поймай золотую комету", total: "Собери всего света: {n}",
+    whatsNew: "Новое в v{v}: спиральная галактика, метеорные дожди и 4 новых трофея",
+    shower: "Метеорный дождь", showerStart: "☄ Метеорный дождь! Лови как можно больше комет",
+    ad: { taps: "Касаний неба: {n}", comets: "Поймано комет: {n}", gold: "Золотых комет: {n}", total: "Собери всего света: {n}",
       rebirths: "Возрождений: {n}", streak: "Серия дней: {n}", type: "Посади: {s}", constel: "Собери созвездий: {n}" },
     an: { taps1: "Лёгкие пальцы", taps2: "Ливень касаний", taps3: "Рука галактики", comets1: "Охотник за кометами", comets2: "Хвост кометы",
       comets3: "Укротитель комет", gold1: "Небесное золото", total1: "Первый свет", total2: "Миллион лучей", total3: "Миллиардер света",
       total4: "Солнце сада", rebirths1: "Снова с начала", rebirths2: "Круговорот звёзд", streak7: "Неделя звёзд",
-      type5: "Вспышка света", type6: "Бьющееся сердце", type7: "Маяк вселенной", constel1: "Первые линии", constel10: "Картограф неба" },
+      type5: "Вспышка света", type6: "Бьющееся сердце", type7: "Маяк вселенной", constel1: "Первые линии", constel10: "Картограф неба",
+      type8: "Садовник галактик", gold5: "Сокровище неба", constel25: "Звёздный атлас", rebirths10: "Вечно возрождённый" },
     stars: [
       ["Искорка", "Первый свет сада"],
       ["Небесный светлячок", "Летает и светится"],
@@ -186,6 +194,7 @@ const T = {
       ["Сверхновая", "Сияет как галактика"],
       ["Пульсар", "Бьётся как сердце света"],
       ["Квазар", "Маяк на краю вселенной"],
+      ["Спиральная галактика", "Целый сад в одной звезде"],
     ],
     ups: {
       tap: ["Ладонь света", "Касания собирают x2"],
@@ -206,8 +215,9 @@ const STAR_TYPES = [
   { cost: 2000000, rate: 1400,    color: "#ff9a6b" },
   { cost: 3e7,     rate: 7800,    color: "#6bffe9" },
   { cost: 5e8,     rate: 44000,   color: "#ffffff" },
+  { cost: 9e9,     rate: 260000,  color: "#ffb3e6" },
 ];
-const VERSION = "1.1";
+const VERSION = "1.2";
 const COST_GROWTH = 1.15;
 const CONSTELLATION_STEPS = [10, 25, 50, 100, 200]; // fiecare prag dublează tipul
 const REBIRTH_MIN = 1e6;
@@ -231,7 +241,8 @@ const ACHIEVEMENTS = [
   { id: "gold1", k: "gold", n: 1 },
   { id: "total1", k: "total", n: 1e3 }, { id: "total2", k: "total", n: 1e6 }, { id: "total3", k: "total", n: 1e9 }, { id: "total4", k: "total", n: 1e12 },
   { id: "constel1", k: "constel", n: 1 }, { id: "constel10", k: "constel", n: 10 },
-  { id: "type5", k: "type", n: 5 }, { id: "type6", k: "type", n: 6 }, { id: "type7", k: "type", n: 7 },
+  { id: "type5", k: "type", n: 5 }, { id: "type6", k: "type", n: 6 }, { id: "type7", k: "type", n: 7 }, { id: "type8", k: "type", n: 8 },
+  { id: "gold5", k: "gold", n: 5 }, { id: "constel25", k: "constel", n: 25 }, { id: "rebirths10", k: "rebirths", n: 10 },
   { id: "rebirths1", k: "rebirths", n: 1 }, { id: "rebirths2", k: "rebirths", n: 5 },
   { id: "streak7", k: "streak", n: 7 },
 ];
@@ -309,7 +320,7 @@ function buyCount(t) {
 // ---------- Zilnic: cadou cu serie și misiuni ----------
 const QUEST_POOL = [
   { k: "taps", n: 150 }, { k: "taps", n: 300 }, { k: "comets", n: 3 }, { k: "comets", n: 5 },
-  { k: "stars", n: 10 }, { k: "stars", n: 25 }, { k: "ups", n: 1 },
+  { k: "stars", n: 10 }, { k: "stars", n: 25 }, { k: "ups", n: 1 }, { k: "gold", n: 1 },
 ];
 function dayKey(d = new Date()) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function yesterdayKey() { const d = new Date(); d.setDate(d.getDate() - 1); return dayKey(d); }
@@ -349,17 +360,27 @@ function updateBadge() {
 
 // ---------- Comete ----------
 let comet = null, nextComet = performance.now() + 15000;
+// Ploaie de meteori (v1.2): la ~10 min, 30 s cu o cometă la ~2.5 s și șansă de aur 25%
+const SHOWER_EVERY = 600000, SHOWER_LEN = 30000, SHOWER_GAP = 2500, SHOWER_GOLD = 0.25;
+let shower = { until: 0, next: performance.now() + 180000 };
+function inShower(now = performance.now()) { return now < shower.until; }
+function startShower(now = performance.now()) {
+  shower.until = now + SHOWER_LEN; shower.next = now + SHOWER_EVERY;
+  if (!comet) nextComet = now; toast(L().showerStart); blip(700, .3, .05); blip(1050, .4, .04);
+}
+function cometGap(now) { return inShower(now) ? SHOWER_GAP : 40000 + Math.random() * 50000; }
 function spawnComet() {
   const fromLeft = Math.random() < 0.5;
   comet = { x: fromLeft ? -40 : W + 40, y: 110 + Math.random() * H * 0.3,
-    vx: (fromLeft ? 1 : -1) * (2.2 + Math.random() * 1.2), vy: 0.5 + Math.random() * 0.6, trail: [], gold: Math.random() < 0.12 };
+    vx: (fromLeft ? 1 : -1) * (2.2 + Math.random() * 1.2), vy: 0.5 + Math.random() * 0.6, trail: [], gold: Math.random() < (inShower() ? SHOWER_GOLD : 0.12) };
 }
 function updateComet(now) {
+  if (now > shower.next && !document.hidden) startShower(now);
   if (!comet && now > nextComet && !document.hidden) spawnComet();
   if (!comet) return;
   comet.trail.push({ x: comet.x, y: comet.y }); if (comet.trail.length > 22) comet.trail.shift();
   comet.x += comet.vx; comet.y += comet.vy;
-  if (comet.x < -80 || comet.x > W + 80 || comet.y > H) { comet = null; nextComet = now + 40000 + Math.random() * 50000; }
+  if (comet.x < -80 || comet.x > W + 80 || comet.y > H) { comet = null; nextComet = now + cometGap(now); }
 }
 function drawComet() {
   if (!comet) return;
@@ -378,8 +399,8 @@ function tryCatchComet(x, y) {
   burst(comet.x, comet.y, gold ? "#ffd76a" : "#9fe8ff", gold ? 70 : 40);
   floats.push({ x: comet.x, y: comet.y - 10, txt: "+" + fmt(v), life: 1 });
   toast(`☄ ${gold ? L().gold : L().comet} +${fmt(v)}`); blip(1200, .25, .07); blip(900, .35, .05);
-  comet = null; nextComet = performance.now() + 40000 + Math.random() * 50000;
-  S.stats.comets++; if (gold) S.stats.gold++;
+  comet = null; nextComet = performance.now() + cometGap(performance.now());
+  S.stats.comets++; if (gold) { S.stats.gold++; track("gold"); }
   track("comets"); checkAchievements();
   return true;
 }
@@ -502,6 +523,16 @@ function draw(now) {
       glow.addColorStop(0, st.color); glow.addColorStop(1, "rgba(0,0,0,0)");
       cx.fillStyle = glow; cx.beginPath(); cx.arc(p.x, p.y, r * 5, 0, 6.283); cx.fill();
       cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(p.x, p.y, r * 0.6, 0, 6.283); cx.fill();
+      if (t === 8) { // brațe spirale care se rotesc încet
+        cx.strokeStyle = st.color; cx.globalAlpha = 0.55; cx.lineWidth = 1.2;
+        for (let arm = 0; arm < 2; arm++) {
+          cx.beginPath();
+          for (let k = 0; k <= 16; k++) { const a = tt * 0.6 + i + arm * Math.PI + k * 0.32, d = 2 + k * 0.9;
+            k ? cx.lineTo(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d * 0.6) : cx.moveTo(p.x + Math.cos(a) * d, p.y + Math.sin(a) * d * 0.6); }
+          cx.stroke();
+        }
+        cx.globalAlpha = 1;
+      }
     }
     // linii de constelație
     if (constellations(t) > 0 && pts.length > 1) {
@@ -565,7 +596,9 @@ function renderHud() {
   $("light").textContent = fmt(S.light);
   $("rate").textContent = `${fmt(ratePerSec())} ${L().perSec} · ${fmt(tapValue())} ${L().perTap}`;
   const left = S.boostUntil - Date.now();
-  $("boost").textContent = left > 0 ? `${L().boostOn} ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}` : "";
+  const sh = shower.until - performance.now();
+  $("boost").textContent = [left > 0 ? `${L().boostOn} ${Math.floor(left / 60000)}:${String(Math.floor(left / 1000) % 60).padStart(2, "0")}` : "",
+    sh > 0 ? `☄ ${L().shower} 0:${String(Math.ceil(sh / 1000)).padStart(2, "0")}` : ""].filter(Boolean).join(" · ");
   if (S.buyMode === "max") document.querySelectorAll(".buy[data-star]").forEach(b => {
     const t = +b.dataset.star, n = buyCount(t), c = starCostN(t, n);
     b.dataset.cost = c; b.textContent = `x${n} ${fmt(c)}`;
@@ -742,6 +775,10 @@ const Ads = {
         this.usePoki(window.PokiSDK);
       } else if (PLATFORM === "gamedistribution") {
         this.useGD();
+      } else if (PLATFORM === "gamepix") {
+        this.useGamePix(window.GamePix);
+      } else if (PLATFORM === "y8") {
+        this.useY8();
       }
     } catch (e) { this.adapter = null; this.enabled = false; }
   },
@@ -791,6 +828,42 @@ const Ads = {
         },
       });
     }).catch(() => {});
+  },
+  // GamePix SDK v3 (scriptul e pus în <head> de build, înaintea jocului, ca să sincronizeze localStorage)
+  useGamePix(gp) {
+    if (!gp || !gp.ads) return;
+    gp.events.on("pause", () => { this.muted = true; Music.pause(); });
+    gp.events.on("resume", () => { if (!this.busy) { this.muted = false; Music.resume(); } });
+    this.enable({
+      gameplay() {},
+      show(type, onStart) {
+        onStart();
+        return (type === "rewarded" ? gp.ads.reward() : gp.ads.interstitial()).then(r => !!(r && r.success));
+      },
+    });
+  },
+  // Y8 SDK 2.0 (appId și gameId vin din build: window.Y8_APP_ID, window.Y8_GAME_ID)
+  useY8() {
+    if (!window.Y8_APP_ID || !window.Y8_GAME_ID) return;
+    const self = this;
+    addEventListener("y8sdk.ready", () => {
+      const sdk = window.y8.sdk();
+      sdk.init({ appId: window.Y8_APP_ID, autoLogin: false }, { gameId: window.Y8_GAME_ID, preloadAdBreaks: "auto" });
+      self.enable({
+        gameplay() {},
+        show(type, onStart) {
+          return new Promise(res => {
+            let ok = false, done = false; const fin = v => { if (!done) { done = true; res(v); } };
+            const cfg = type === "rewarded"
+              ? { type: "reward", name: "x2-bonus", beforeReward: show => show(), beforeAd: onStart,
+                  adViewed: () => { ok = true; }, adDismissed: () => { ok = false; }, adBreakDone: () => fin(ok) }
+              : { type: "next", name: "next-tier", beforeAd: onStart, adBreakDone: () => fin(true) };
+            Promise.resolve(sdk.showAd(cfg)).catch(() => fin(false));
+          });
+        },
+      });
+    }, { once: true });
+    loadScript("https://cdn.y8.com/minimal-sdk/2-0/y8.min.js").then(() => { if (window.y8 && window.y8.emitReadyEvent) window.y8.emitReadyEvent(); }).catch(() => {});
   },
   request(type, onDone, onFail) {
     if (!this.enabled || this.busy) { onFail && onFail(); return; }

@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Paper River</title>
+<meta name="description" content="Steer a paper boat down an endless river at dusk. Collect lanterns, dodge rocks and logs, unlock new boats.">
+<meta name="theme-color" content="#14213d">
+<style>
+:root{--bg:#0d1630;--panel:#17244a;--line:#2b3d75;--ink:#f1f4ff;--dim:#9aa6d6;--acc:#ffb347}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;z-index:2}
+.screen.on{display:flex}
+button{font:inherit;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 18px;cursor:pointer}
+button:active{transform:scale(.97)}
+button.big{font-size:20px;padding:14px 0;width:min(78vw,300px);margin:6px 0}
+button.pri{background:linear-gradient(180deg,#ffd27a,#ff9f43);color:#3a1d00;border:none;font-weight:700}
+button.ico{padding:8px 12px;min-width:46px;min-height:44px}
+button:disabled{opacity:.45}
+#menu{background:linear-gradient(180deg,rgba(13,22,48,.55),rgba(13,22,48,.2) 60%,rgba(13,22,48,.6))}
+#menu h1{margin:10vh 0 4px;font-size:clamp(38px,10vw,60px);letter-spacing:1px;color:#fff6e5;text-shadow:0 0 24px rgba(255,179,71,.6)}
+#menu .sub{color:#d9e0ff;margin:0 16px 3vh;text-align:center;max-width:420px}
+#menuInfo{color:var(--acc);margin-bottom:12px;font-weight:600}
+.row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;justify-content:center}
+#hud{position:fixed;left:0;right:0;top:0;display:none;align-items:center;justify-content:space-between;padding:10px;z-index:3;pointer-events:none}
+#hud.on{display:flex}
+#hud button{pointer-events:auto}
+#hud .sc{font-weight:800;font-size:24px;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+#hud .ln{font-weight:700;font-size:18px;color:var(--acc);text-shadow:0 2px 6px rgba(0,0,0,.6)}
+#hud .bx{display:flex;flex-direction:column;align-items:flex-start}
+#tut{pointer-events:none;position:fixed;left:50%;bottom:14vh;transform:translateX(-50%);background:rgba(10,16,40,.78);border:1px solid var(--line);padding:10px 16px;border-radius:14px;text-align:center;z-index:3;display:none;max-width:88vw}
+#tut.on{display:block}
+#shop{background:var(--bg)}
+.top{width:100%;display:flex;align-items:center;gap:10px;padding:10px;max-width:520px}
+.top h2{margin:0;font-size:20px;flex:1}
+.top .ln{color:var(--acc);font-weight:700}
+#skins{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:6px 16px 30px;width:min(100%,520px);overflow-y:auto}
+.sk{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:10px;text-align:center}
+.sk.sel{outline:3px solid var(--acc)}
+.sk canvas{position:static;width:96px;height:96px;display:block;margin:0 auto}
+.sk b{display:block;margin:4px 0 8px}
+.sk button{width:100%;padding:8px}
+#overlay{position:fixed;inset:0;background:rgba(5,8,20,.7);display:none;align-items:center;justify-content:center;z-index:5}
+#overlay.on{display:flex}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px 26px;text-align:center;min-width:270px;max-width:90vw}
+.card h3{margin:0 0 8px;font-size:26px}
+.card .big{width:100%}
+.card p{margin:6px 0;color:var(--dim)}
+.card .val{font-size:34px;font-weight:800;color:#fff}
+.nb{color:var(--acc);font-weight:700}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:rgba(23,36,74,.92);padding:8px 14px;border-radius:12px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:9;font-weight:600}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<section id="menu" class="screen on">
+  <h1>Paper River</h1>
+  <div class="sub" data-i="tag"></div>
+  <div id="menuInfo"></div>
+  <button class="big pri" id="bPlay"></button>
+  <button class="big" id="bDaily"></button>
+  <button class="big" id="bShop"></button>
+  <div class="row" style="margin-top:22px">
+    <button class="ico" id="bLang"></button>
+    <button class="ico" id="bSound"></button>
+    <button class="ico" id="bMusic"></button>
+  </div>
+</section>
+<section id="shop" class="screen">
+  <div class="top"><button class="ico" id="bShopBack">‹</button><h2 data-i="boats"></h2><span class="ln" id="shopCoins"></span></div>
+  <div id="skins"></div>
+</section>
+<div id="hud">
+  <div class="bx"><div class="sc" id="hScore">0</div><div class="ln" id="hLan">🏮 0</div></div>
+  <button class="ico" id="bPause">Ⅱ</button>
+</div>
+<div id="tut"></div>
+<div id="overlay"><div class="card" id="card"></div></div>
+<div id="toast"></div>
+<script>
+"use strict";
+// ---------- Texte (RO / EN / RU) ----------
+const T = {
+  en: { tag: "Steer a paper boat down the river at dusk. Collect lanterns, dodge rocks and logs.", play: "Play", daily: "Daily river", dailyBest: "Daily river · best {n} m", boats: "Boats", best: "Best: {n} m", over: "The boat ran aground!", dist: "Distance", lanterns: "Lanterns: +{n} 🏮", newBest: "New record!", again: "Play again", menu: "Menu", revive: "Continue · {n} 🏮", paused: "Paused", resume: "Resume", tut: "Drag left or right to steer. Collect lanterns 🏮, avoid rocks.", tutKeys: "Keyboard: A / D or ← →", shield: "Lotus shield!", magnet: "Lantern magnet!", saved: "The lotus saved you!", buy: "Buy · {n} 🏮", use: "Use", inUse: "Selected", noCoins: "Not enough lanterns", sound: "Sound", music: "Music", lang: "EN",
+    skins: ["Paper", "Lotus", "Sky", "Golden", "Night ink", "Aurora"] },
+  ro: { tag: "Condu o bărcuță de hârtie pe râu, la apus. Adună felinare, ocolește stâncile și buștenii.", play: "Joacă", daily: "Râul zilei", dailyBest: "Râul zilei · record {n} m", boats: "Bărci", best: "Record: {n} m", over: "Barca s-a împotmolit!", dist: "Distanța", lanterns: "Felinare: +{n} 🏮", newBest: "Record nou!", again: "Încă o dată", menu: "Meniu", revive: "Continuă · {n} 🏮", paused: "Pauză", resume: "Continuă", tut: "Trage stânga sau dreapta ca să cârmești. Adună felinare 🏮, ocolește stâncile.", tutKeys: "Tastatură: A / D sau ← →", shield: "Scut de lotus!", magnet: "Magnet de felinare!", saved: "Lotusul te-a salvat!", buy: "Cumpără · {n} 🏮", use: "Alege", inUse: "Aleasă", noCoins: "Nu ai destule felinare", sound: "Sunet", music: "Muzică", lang: "RO",
+    skins: ["Hârtie", "Lotus", "Cer", "Aurie", "Cerneală", "Auroră"] },
+  ru: { tag: "Ведите бумажный кораблик по реке на закате. Собирайте фонарики, обходите камни и брёвна.", play: "Играть", daily: "Река дня", dailyBest: "Река дня · рекорд {n} м", boats: "Кораблики", best: "Рекорд: {n} м", over: "Кораблик сел на мель!", dist: "Расстояние", lanterns: "Фонарики: +{n} 🏮", newBest: "Новый рекорд!", again: "Ещё раз", menu: "Меню", revive: "Продолжить · {n} 🏮", paused: "Пауза", resume: "Продолжить", tut: "Тяните влево или вправо, чтобы рулить. Собирайте фонарики 🏮, обходите камни.", tutKeys: "Клавиатура: A / D или ← →", shield: "Щит лотоса!", magnet: "Магнит фонариков!", saved: "Лотос спас вас!", buy: "Купить · {n} 🏮", use: "Выбрать", inUse: "Выбран", noCoins: "Не хватает фонариков", sound: "Звук", music: "Музыка", lang: "RU",
+    skins: ["Бумага", "Лотос", "Небо", "Золото", "Тушь", "Сияние"] },
+};
+const LANGS = ["en", "ro", "ru"];
+function detectLang() {
+  const l = (navigator.language || "en").slice(0, 2).toLowerCase();
+  return l === "ro" || l === "mo" ? "ro" : l === "ru" ? "ru" : "en";
+}
+const t = (k, v = {}) => String(T[S.lang][k] ?? T.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
+
+// ---------- Salvare ----------
+const KEY = "paper-river-v1";
+let S = { lang: detectLang(), sound: true, music: true, best: 0, coins: 0, owned: [0], skin: 0, daily: {}, tut: false, runs: 0 };
+let Store = null; try { Store = window.localStorage; } catch (e) {}
+try { const d = JSON.parse(Store.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {}
+if (!T[S.lang]) S.lang = "en";
+function save() { try { Store.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- Bărci (cosmetice, cu felinare) ----------
+const SKINS = [
+  { price: 0, hull: "#f4f1e8", sail: "#ffffff", edge: "#b9b3a3" },
+  { price: 60, hull: "#ffc2d6", sail: "#ffe3ee", edge: "#d9779b" },
+  { price: 150, hull: "#9fd8ff", sail: "#e3f4ff", edge: "#4d9bd1" },
+  { price: 300, hull: "#ffd36b", sail: "#fff2c4", edge: "#c8962a" },
+  { price: 500, hull: "#2a2f45", sail: "#ffcf5c", edge: "#11131f" },
+  { price: 800, hull: "#9cf6d4", sail: "#d9b8ff", edge: "#5a7bd8", aurora: true },
+];
+
+// ---------- Lumea: râu procedural, determinist dintr-un seed ----------
+const VW = 360, BOAT_R = 11, VMAX = 300, MAXR = 20, REVIVE = 20;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+function rng(seed) { let a = seed >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let x = a; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; }; }
+function hashStr(s) { let h = 2166136261; for (const ch of s) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+const hash1 = n => { let x = Math.imul((n | 0) ^ 0x9e3779b9, 0x85ebca6b); x ^= x >>> 13; x = Math.imul(x, 0xc2b2ae35); x ^= x >>> 16; return (x >>> 0) / 4294967296; };
+function riverAt(y) { // centrul și semilățimea râului la distanța y
+  return [180 + 28 * Math.sin(y / 520) + 12 * Math.sin(y / 173 + 1.3), 118 + 18 * Math.sin(y / 760 + 0.7)];
+}
+function bankLimits(y, pad) { const [c, w] = riverAt(y); return [Math.max(c - w, 4) + pad, Math.min(c + w, VW - 4) - pad]; }
+const speedAt = d => Math.min(360, 150 + d / 50);
+const spacingAt = d => Math.max(150, 230 - d / 150);
+const gapAt = d => Math.max(36, 62 - d / 300);
+// deplasarea laterală maximă între două șiruri, ca să existe mereu o cale
+const shiftAt = d => 0.8 * VMAX * (spacingAt(d) - 2 * (MAXR + BOAT_R)) / speedAt(d);
+function todayStr(dt = new Date()) { return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0"); }
+const dailySeed = s => hashStr("paper-river:" + s);
+
+// Generează un șir de obstacole la distanța y; întoarce trecerea (gap) și obiectele
+function genRow(R, y, prevGx, first) {
+  const [c, w] = riverAt(y), gh = gapAt(y), sh = shiftAt(y);
+  const [lo, hi] = bankLimits(y, gh);
+  let gx = prevGx + (R() * 2 - 1) * sh;
+  gx = clamp(clamp(gx, prevGx - sh, prevGx + sh), lo, hi);
+  const obs = [], items = [], L = c - w - 10, Rt = c + w + 10, gl = gx - gh, gr = gx + gh;
+  const fill = (a, b) => { // umple [a,b] cu stânci și bușteni, fără goluri prin care să treacă barca
+    let x = a;
+    while (x < b) {
+      if (R() < 0.22 && b - x > 50) { const len = Math.min(b - x, 40 + R() * 50); obs.push({ log: true, x1: x + 9, x2: x + len - 9, y, r: 9 }); x += len + R() * 12; continue; }
+      let r = 13 + R() * (MAXR - 13); if (x + 2 * r > b) r = (b - x) / 2;
+      if (r < 6) break;
+      obs.push({ x: x + r, y, r }); x += 2 * r + R() * 14;
+    }
+  };
+  const sparse = first || R() < 0.3;
+  if (sparse) { // 1–2 stânci izolate, departe de trecere
+    const n = 1 + (R() < 0.5 ? 1 : 0);
+    for (let i = 0; i < n; i++) {
+      const r = 13 + R() * 6, left = R() < 0.5;
+      const a = left ? Math.max(L, 4) + r : gr + r, b = left ? gl - r : Math.min(Rt, VW - 4) - r;
+      if (b > a) obs.push({ x: a + R() * (b - a), y, r });
+    }
+  } else { fill(L, gl); fill(gr, Rt); }
+  const k = R();
+  if (y > 900 && k < 0.05) items.push({ x: gx, y, kind: "lotus" });
+  else if (y > 900 && k < 0.09) items.push({ x: gx, y, kind: "magnet" });
+  else items.push({ x: gx, y, kind: "lan" });
+  if (R() < 0.5) { const sp = spacingAt(y); for (const f of [0.25, 0.5, 0.75]) items.push({ x: prevGx + (gx - prevGx) * f, y: y - sp + sp * f, kind: "lan" }); }
+  return { y, gx, gh, obs, items };
+}
+
+// ---------- Starea partidei ----------
+let G = null;
+function newRun(seed, daily) {
+  G = { seed, daily, R: rng(seed), d: 0, t: 0, speed: speedAt(0), x: 180, vx: 0, tx: null, keyDir: 0, drag: null,
+    rows: [], obs: [], items: [], parts: [], genY: 260, gx: 180, lan: 0, shield: false, magnet: 0, inv: 0,
+    alive: true, paused: false, revived: false, over: false, firstRow: true };
+  genAhead();
+}
+function genAhead() {
+  while (G.genY < G.d + 1400) {
+    const row = genRow(G.R, G.genY, G.gx, G.firstRow); G.firstRow = false;
+    G.rows.push(row); G.obs.push(...row.obs); G.items.push(...row.items);
+    G.gx = row.gx; G.genY += spacingAt(G.genY);
+  }
+}
+const score = () => Math.floor(G.d / 10);
+function hitObs(o, x, y, r) {
+  if (o.log) { const px = clamp(x, o.x1, o.x2); return Math.hypot(x - px, y - o.y) < o.r + r; }
+  return Math.hypot(x - o.x, y - o.y) < o.r * 0.92 + r;
+}
+function step(dt) {
+  if (!G || !G.alive || G.paused) return;
+  G.t += dt; G.speed = speedAt(G.d); G.d += G.speed * dt;
+  genAhead();
+  let want = 0;
+  if (G.keyDir) want = G.keyDir * VMAX; else if (G.tx != null) want = clamp((G.tx - G.x) * 12, -VMAX, VMAX);
+  G.vx += (want - G.vx) * Math.min(1, dt * 16);
+  G.x += G.vx * dt;
+  const [lo, hi] = bankLimits(G.d, BOAT_R);
+  if (G.x < lo) { G.x = lo; G.vx = 0; } if (G.x > hi) { G.x = hi; G.vx = 0; }
+  if (G.tx != null) G.tx = clamp(G.tx, lo, hi);
+  if (G.inv > 0) G.inv -= dt;
+  if (G.magnet > 0) G.magnet -= dt;
+  // trena bărcii
+  if (Math.random() < 0.6) G.parts.push({ x: G.x + (Math.random() - 0.5) * 10, y: G.d - 14, vx: (Math.random() - 0.5) * 20, life: 1, kind: "wake" });
+  for (const p of G.parts) { p.life -= dt * (p.kind === "wake" ? 0.9 : 1.6); p.x += p.vx * dt; if (p.vy) p.y += p.vy * dt; }
+  G.parts = G.parts.filter(p => p.life > 0);
+  // obiecte
+  for (const it of G.items) {
+    if (it.got) continue;
+    if (G.magnet > 0 && it.kind === "lan" && it.y - G.d < 220 && it.y > G.d - 20) { it.x += (G.x - it.x) * Math.min(1, dt * 6); it.y += (G.d - it.y) * Math.min(1, dt * 4); }
+    if (Math.hypot(it.x - G.x, it.y - G.d) < BOAT_R + 13) collect(it);
+  }
+  for (const o of G.obs) {
+    if (o.y < G.d - 40 || o.y > G.d + 40 || o.gone) continue;
+    if (hitObs(o, G.x, G.d, BOAT_R)) { crash(o); if (!G.alive) return; }
+  }
+  const cut = G.d - 320;
+  if (G.obs.length && G.obs[0].y < cut) G.obs = G.obs.filter(o => o.y >= cut);
+  if (G.items.length && G.items[0].y < cut) G.items = G.items.filter(i => i.y >= cut && !i.got);
+  if (G.rows.length && G.rows[0].y < cut) G.rows = G.rows.filter(r => r.y >= cut);
+}
+function burst(x, y, col, n = 10) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 80; G.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, kind: "spark", col }); } }
+function collect(it) {
+  it.got = true;
+  if (it.kind === "lan") { G.lan++; sfx("lan"); burst(it.x, it.y, "#ffb347", 6); }
+  else if (it.kind === "lotus") { G.shield = true; sfx("power"); toast(t("shield")); burst(it.x, it.y, "#ff9fc4", 14); }
+  else { G.magnet = 8; sfx("power"); toast(t("magnet")); burst(it.x, it.y, "#ffe66d", 14); }
+}
+function crash(o) {
+  if (G.inv > 0) return;
+  if (G.shield) { G.shield = false; G.inv = 1.2; o.gone = true; sfx("break"); toast(t("saved")); burst(G.x, G.d, "#ff9fc4", 18); return; }
+  G.alive = false; sfx("crash"); burst(G.x, G.d, "#f4f1e8", 22); shake = 0.4;
+  setTimeout(gameOver, 650);
+}
+function revive() {
+  if (S.coins < REVIVE || G.revived) return;
+  S.coins -= REVIVE; G.revived = true; save();
+  for (const o of G.obs) if (o.y > G.d - 40 && o.y < G.d + 320) o.gone = true;
+  G.alive = true; G.over = false; G.inv = 2; G.vx = 0; G.tx = G.x; hideOverlay(); sfx("power");
+}
+
+// ---------- Ecrane ----------
+const $ = id => document.getElementById(id);
+let mode = "menu"; // menu | play | shop
+function applyLang() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll("[data-i]").forEach(e => e.textContent = t(e.dataset.i));
+  $("bPlay").textContent = t("play"); $("bShop").textContent = "⛵ " + t("boats");
+  const dd = S.daily[todayStr()];
+  $("bDaily").textContent = dd != null ? t("dailyBest", { n: dd }) : "📅 " + t("daily");
+  $("bLang").textContent = "🌐 " + t("lang");
+  $("bSound").textContent = (S.sound ? "🔊 " : "🔇 ") + t("sound");
+  $("bMusic").textContent = (S.music ? "🎵 " : "🎵̸ ") + t("music");
+  $("bSound").setAttribute("aria-pressed", S.sound); $("bMusic").setAttribute("aria-pressed", S.music);
+  $("menuInfo").textContent = (S.best ? t("best", { n: S.best }) + " · " : "") + "🏮 " + S.coins;
+}
+function show(m) {
+  mode = m;
+  $("menu").classList.toggle("on", m === "menu");
+  $("shop").classList.toggle("on", m === "shop");
+  $("hud").classList.toggle("on", m === "play");
+  if (m !== "play") { $("tut").classList.remove("on"); hideOverlay(); }
+  if (m === "menu") { applyLang(); if (!G || !G.alive || G.over) demo(); }
+  if (m === "shop") renderShop();
+}
+function demo() { newRun(12345, false); G.demo = true; }
+function startRun(daily) {
+  ac();
+  const seed = daily ? dailySeed(todayStr()) : (Math.random() * 4294967296) >>> 0;
+  newRun(seed, daily); S.runs++; save();
+  show("play");
+  if (!S.tut) { $("tut").innerHTML = t("tut") + "<br><small style='color:#9aa6d6'>" + t("tutKeys") + "</small>"; $("tut").classList.add("on"); }
+}
+function endTut() { if (!S.tut) { S.tut = true; save(); $("tut").classList.remove("on"); } }
+function hideOverlay() { $("overlay").classList.remove("on"); }
+function card(html) { $("card").innerHTML = html; $("overlay").classList.add("on"); }
+function gameOver() {
+  if (!G || G.alive) return;
+  G.over = true;
+  const sc = score(), nb = sc > S.best;
+  if (nb) S.best = sc;
+  S.coins += G.lan; G.banked = (G.banked || 0) + G.lan; G.lan = 0;
+  let dnb = false;
+  if (G.daily) { const k = todayStr(); if (S.daily[k] == null || sc > S.daily[k]) { S.daily[k] = sc; dnb = true; } }
+  save();
+  const canRev = !G.revived && S.coins >= REVIVE;
+  card(`<h3>${t("over")}</h3><p>${t("dist")}</p><div class="val">${sc} m</div>` +
+    (nb ? `<p class="nb">${t("newBest")}</p>` : `<p>${t("best", { n: S.best })}</p>`) +
+    (G.daily && dnb && !nb ? `<p class="nb">${t("daily")}: ${sc} m</p>` : "") +
+    `<p>${t("lanterns", { n: G.banked })}</p>` +
+    (canRev ? `<button class="big" id="bRevive">${t("revive", { n: REVIVE })}</button>` : "") +
+    `<button class="big pri" id="bAgain">${t("again")}</button><button class="big" id="bMenu">${t("menu")}</button>`);
+  if (canRev) $("bRevive").onclick = () => { sfx("ui"); revive(); };
+  $("bAgain").onclick = () => { sfx("ui"); startRun(G.daily); };
+  $("bMenu").onclick = () => { sfx("ui"); show("menu"); };
+}
+function pause(on) {
+  if (!G || mode !== "play" || !G.alive) return;
+  G.paused = on;
+  if (on) {
+    card(`<h3>${t("paused")}</h3><p>${score()} m · 🏮 ${G.lan}</p><button class="big pri" id="bResume">${t("resume")}</button><button class="big" id="bQuit">${t("menu")}</button>`);
+    $("bResume").onclick = () => pause(false);
+    $("bQuit").onclick = () => { G.alive = false; G.over = true; S.coins += G.lan; G.lan = 0; save(); show("menu"); };
+  } else hideOverlay();
+}
+function toast(msg) { const e = $("toast"); e.textContent = msg; e.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => e.style.opacity = 0, 1500); }
+function renderShop() {
+  $("shopCoins").textContent = "🏮 " + S.coins;
+  const box = $("skins"); box.innerHTML = "";
+  SKINS.forEach((sk, i) => {
+    const own = S.owned.includes(i), d = document.createElement("div");
+    d.className = "sk" + (S.skin === i ? " sel" : ""); d.dataset.i = i;
+    const c = document.createElement("canvas"); c.width = c.height = 192; d.appendChild(c);
+    const x = c.getContext("2d"); x.fillStyle = "#1d3a6b"; x.fillRect(0, 0, 192, 192); x.translate(96, 104); x.scale(4.2, 4.2); drawBoat(x, sk, 0, 0, i === 5 ? 0.5 : 0);
+    const nm = document.createElement("b"); nm.textContent = T[S.lang].skins[i]; d.appendChild(nm);
+    const b = document.createElement("button");
+    if (S.skin === i) { b.textContent = t("inUse"); b.disabled = true; }
+    else if (own) { b.textContent = t("use"); b.onclick = () => { S.skin = i; save(); sfx("ui"); renderShop(); }; }
+    else { b.textContent = t("buy", { n: sk.price }); b.className = "pri"; b.disabled = S.coins < sk.price;
+      b.onclick = () => { if (S.coins < sk.price) return toast(t("noCoins")); S.coins -= sk.price; S.owned.push(i); S.skin = i; save(); sfx("power"); renderShop(); }; }
+    d.appendChild(b); box.appendChild(d);
+  });
+}
+
+// ---------- Desen ----------
+const cv = $("cv"), cx = cv.getContext("2d");
+let DPR = 1, CW = 0, CH = 0, SC = 1, OX = 0, BY = 0, shake = 0;
+function resize() {
+  DPR = Math.min(devicePixelRatio || 1, 2); CW = innerWidth; CH = innerHeight;
+  cv.width = Math.round(CW * DPR); cv.height = Math.round(CH * DPR);
+  SC = Math.min(CW / VW, CH / 540); OX = (CW - VW * SC) / 2; BY = CH * 0.78;
+}
+addEventListener("resize", resize); resize();
+const sx = x => OX + x * SC, sy = y => BY - (y - G.d) * SC;
+const mix = (a, b, f) => a.map((v, i) => Math.round(v + (b[i] - v) * f));
+const rgb = c => `rgb(${c[0]},${c[1]},${c[2]})`;
+// ciclu: apus → noapte → zori, după distanță
+const SKY = [[[54, 46, 92], [38, 82, 110], [70, 105, 72]], [[14, 20, 48], [16, 34, 70], [22, 46, 40]], [[70, 60, 110], [46, 98, 130], [64, 112, 80]]];
+function palette() {
+  const ph = ((G.d / 9000) % 1) * 3, i = Math.floor(ph), f = ph - i, a = SKY[i % 3], b = SKY[(i + 1) % 3];
+  return { water1: mix(a[0], b[0], f), water2: mix(a[1], b[1], f), bank: mix(a[2], b[2], f), night: Math.max(0, 1 - Math.abs(ph - 1) * 1.4) };
+}
+function drawBoat(c, sk, x, y, tilt, time = 0) {
+  c.save(); c.translate(x, y); c.rotate(tilt * 0.35);
+  c.fillStyle = "rgba(0,0,0,.25)"; c.beginPath(); c.ellipse(1.5, 3, 11, 5, 0, 0, 6.283); c.fill();
+  // carena (văzută de sus, ușor în perspectivă)
+  c.fillStyle = sk.hull; c.strokeStyle = sk.edge; c.lineWidth = 0.8;
+  c.beginPath(); c.moveTo(0, -15); c.lineTo(8, -4); c.lineTo(9, 7); c.lineTo(0, 10); c.lineTo(-9, 7); c.lineTo(-8, -4); c.closePath(); c.fill(); c.stroke();
+  c.fillStyle = sk.edge; c.globalAlpha = 0.35; c.beginPath(); c.moveTo(0, -15); c.lineTo(0, 10); c.lineTo(-9, 7); c.lineTo(-8, -4); c.closePath(); c.fill(); c.globalAlpha = 1;
+  // pânza
+  let sail = sk.sail; if (sk.aurora) sail = `hsl(${(time * 60) % 360},85%,78%)`;
+  c.fillStyle = sail; c.strokeStyle = sk.edge; c.beginPath(); c.moveTo(0, -11); c.lineTo(6, 4); c.lineTo(-5, 4); c.closePath(); c.fill(); c.stroke();
+  c.strokeStyle = sk.edge; c.beginPath(); c.moveTo(0, -11); c.lineTo(0, 5); c.stroke();
+  c.restore();
+}
+function drawLantern(c, x, y, s, time, k) {
+  const fl = 0.85 + 0.15 * Math.sin(time * 9 + k * 3.1);
+  const g = c.createRadialGradient(x, y, 0, x, y, 20 * s);
+  g.addColorStop(0, `rgba(255,190,90,${0.55 * fl})`); g.addColorStop(1, "rgba(255,150,40,0)");
+  c.fillStyle = g; c.beginPath(); c.arc(x, y, 20 * s, 0, 6.283); c.fill();
+  c.fillStyle = "#c0392b"; c.beginPath(); c.ellipse(x, y, 6 * s, 7.5 * s, 0, 0, 6.283); c.fill();
+  c.fillStyle = `rgba(255,214,120,${fl})`; c.beginPath(); c.ellipse(x, y, 3.5 * s, 5 * s, 0, 0, 6.283); c.fill();
+  c.fillStyle = "#3b2414"; c.fillRect(x - 3 * s, y - 9 * s, 6 * s, 2 * s); c.fillRect(x - 3 * s, y + 7 * s, 6 * s, 2 * s);
+}
+function draw(time) {
+  const c = cx; c.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!G) return;
+  const P = palette(), s = SC;
+  let ox = 0, oy = 0; if (shake > 0) { ox = (Math.random() - 0.5) * 10 * shake; oy = (Math.random() - 0.5) * 10 * shake; }
+  c.translate(ox, oy);
+  c.fillStyle = rgb(P.bank); c.fillRect(-20, -20, CW + 40, CH + 40);
+  // apa: poligon între maluri
+  const top = G.d + BY / s + 20, bot = G.d - (CH - BY) / s - 20, L = [], Rr = [];
+  for (let y = bot; y <= top; y += 10) { const [cc, w] = riverAt(y); L.push([sx(cc - w), sy(y)]); Rr.push([sx(cc + w), sy(y)]); }
+  const wg = c.createLinearGradient(0, 0, 0, CH); wg.addColorStop(0, rgb(P.water1)); wg.addColorStop(1, rgb(P.water2));
+  c.fillStyle = wg; c.beginPath(); L.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); for (let i = Rr.length - 1; i >= 0; i--) c.lineTo(Rr[i][0], Rr[i][1]); c.closePath(); c.fill();
+  c.strokeStyle = "rgba(255,255,255,.18)"; c.lineWidth = 2;
+  for (const side of [L, Rr]) { c.beginPath(); side.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.stroke(); }
+  // valuri și trestii (deterministe pe distanță)
+  const y0 = Math.floor(bot / 34) * 34;
+  for (let y = y0; y < top; y += 34) {
+    const n = Math.round(y / 34), [cc, w] = riverAt(y);
+    const wx = cc + (hash1(n) - 0.5) * 1.6 * w, ph = Math.sin(time / 600 + n);
+    c.strokeStyle = `rgba(255,255,255,${0.08 + 0.05 * ph})`; c.lineWidth = 1.5;
+    c.beginPath(); c.moveTo(sx(wx - 10), sy(y)); c.quadraticCurveTo(sx(wx), sy(y) - 4 * s, sx(wx + 10), sy(y)); c.stroke();
+    for (const side of [-1, 1]) {
+      const bx = cc + side * (w + 6 + hash1(n * 7 + side) * 30);
+      c.strokeStyle = `rgba(30,60,30,.7)`; c.lineWidth = 1.6 * s;
+      for (let k = 0; k < 3; k++) { const rx = sx(bx + k * 4 * side), ry = sy(y + k * 3); c.beginPath(); c.moveTo(rx, ry); c.lineTo(rx + Math.sin(time / 700 + n + k) * 3 * s, ry - (10 + k * 3) * s); c.stroke(); }
+    }
+    if (P.night > 0.2 && hash1(n * 3) < 0.5) { // licurici
+      const fx = cc + (hash1(n * 5) < 0.5 ? -1 : 1) * (w + 20 + hash1(n * 11) * 40) + Math.sin(time / 500 + n) * 8, fy = y + Math.cos(time / 640 + n) * 8;
+      c.fillStyle = `rgba(220,255,140,${P.night * (0.5 + 0.5 * Math.sin(time / 200 + n))})`; c.beginPath(); c.arc(sx(fx), sy(fy), 2 * s, 0, 6.283); c.fill();
+    }
+  }
+  // trena
+  for (const p of G.parts) if (p.kind === "wake") { c.strokeStyle = `rgba(255,255,255,${p.life * 0.35})`; c.lineWidth = 1.2; c.beginPath(); c.ellipse(sx(p.x), sy(p.y), (3 + (1 - p.life) * 9) * s, (1.5 + (1 - p.life) * 3) * s, 0, 0, 6.283); c.stroke(); }
+  // obstacole
+  for (const o of G.obs) {
+    if (o.gone || o.y < bot || o.y > top) continue;
+    if (o.log) {
+      const x1 = sx(o.x1), x2 = sx(o.x2), y = sy(o.y), r = o.r * s;
+      c.fillStyle = "#6b4426"; c.beginPath(); c.moveTo(x1, y - r); c.lineTo(x2, y - r); c.arc(x2, y, r, -1.571, 1.571); c.lineTo(x1, y + r); c.arc(x1, y, r, 1.571, 4.712); c.fill();
+      c.strokeStyle = "#4a2e18"; c.lineWidth = 1; c.beginPath(); c.moveTo(x1, y - r * 0.3); c.lineTo(x2, y - r * 0.3); c.stroke();
+      c.fillStyle = "#c79a64"; c.beginPath(); c.ellipse(x2, y, r * 0.55, r * 0.8, 0, 0, 6.283); c.fill();
+    } else {
+      const x = sx(o.x), y = sy(o.y), r = o.r * s;
+      c.fillStyle = "rgba(255,255,255,.12)"; c.beginPath(); c.ellipse(x, y + r * 0.3, r * 1.25, r * 0.7, 0, 0, 6.283); c.fill();
+      const g = c.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+      g.addColorStop(0, "#9aa0a8"); g.addColorStop(1, "#40454f"); c.fillStyle = g;
+      c.beginPath(); c.arc(x, y, r, 0, 6.283); c.fill();
+      c.fillStyle = "rgba(70,120,60,.55)"; c.beginPath(); c.arc(x + r * 0.3, y + r * 0.35, r * 0.35, 0, 6.283); c.fill();
+    }
+  }
+  // obiecte
+  G.items.forEach((it, k) => {
+    if (it.got || it.y < bot || it.y > top) return;
+    const x = sx(it.x), y = sy(it.y) + Math.sin(time / 300 + k) * 2;
+    if (it.kind === "lan") drawLantern(c, x, y, s, time / 1000, k);
+    else if (it.kind === "lotus") {
+      c.fillStyle = "rgba(255,160,200,.25)"; c.beginPath(); c.arc(x, y, 18 * s, 0, 6.283); c.fill();
+      for (let a = 0; a < 6; a++) { c.fillStyle = a % 2 ? "#ffb3cf" : "#ff8fb8"; c.save(); c.translate(x, y); c.rotate(a * 1.047 + time / 2000); c.beginPath(); c.ellipse(0, -6 * s, 3.5 * s, 7 * s, 0, 0, 6.283); c.fill(); c.restore(); }
+      c.fillStyle = "#ffe066"; c.beginPath(); c.arc(x, y, 3 * s, 0, 6.283); c.fill();
+    } else {
+      c.fillStyle = "rgba(255,230,110,.25)"; c.beginPath(); c.arc(x, y, 18 * s, 0, 6.283); c.fill();
+      c.fillStyle = "#ffe66d"; c.beginPath();
+      for (let a = 0; a < 10; a++) { const r = (a % 2 ? 4 : 10) * s, an = a * 0.628 - 1.571 + time / 900; c.lineTo(x + Math.cos(an) * r, y + Math.sin(an) * r); }
+      c.closePath(); c.fill();
+    }
+  });
+  // barca
+  if (G.alive || !G.over) {
+    const bx = sx(G.x), by = sy(G.d) + Math.sin(time / 260) * 1.5;
+    c.save(); c.translate(bx, by); c.scale(s * 1.3, s * 1.3);
+    if (G.inv > 0 && Math.floor(time / 90) % 2) c.globalAlpha = 0.45;
+    if (G.alive) drawBoat(c, SKINS[S.skin] || SKINS[0], 0, 0, G.vx / VMAX, time / 1000);
+    c.restore();
+    if (G.shield) { c.strokeStyle = `rgba(255,170,210,${0.6 + 0.3 * Math.sin(time / 150)})`; c.lineWidth = 2; c.beginPath(); c.arc(bx, by, 18 * s, 0, 6.283); c.stroke(); }
+    if (G.magnet > 0) { c.strokeStyle = `rgba(255,230,110,.5)`; c.setLineDash([4, 6]); c.beginPath(); c.arc(bx, by, (30 + (time / 20) % 20) * s, 0, 6.283); c.stroke(); c.setLineDash([]); }
+  }
+  for (const p of G.parts) if (p.kind === "spark") { c.fillStyle = p.col; c.globalAlpha = p.life; c.beginPath(); c.arc(sx(p.x), sy(p.y), 2.2 * s, 0, 6.283); c.fill(); c.globalAlpha = 1; }
+  // vinietă de noapte
+  if (P.night > 0) { const v = c.createRadialGradient(CW / 2, BY, 50, CW / 2, BY, Math.max(CW, CH)); v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, `rgba(0,0,10,${0.55 * P.night})`); c.fillStyle = v; c.fillRect(-20, -20, CW + 40, CH + 40); }
+}
+
+// ---------- Sunet (sintetizat, fără fișiere) ----------
+let AC = null, nextNote = 0, noteI = 0;
+function ac() { if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) {} } if (AC && AC.state === "suspended") AC.resume(); return AC; }
+function tone(f, d, type = "sine", g = 0.1, slide = 0, when = 0) {
+  const a = AC; if (!a) return; const t0 = a.currentTime + when;
+  const o = a.createOscillator(), gn = a.createGain(); o.type = type; o.frequency.setValueAtTime(f, t0);
+  if (slide) o.frequency.exponentialRampToValueAtTime(f * slide, t0 + d);
+  gn.gain.setValueAtTime(0.0001, t0); gn.gain.exponentialRampToValueAtTime(g, t0 + 0.01); gn.gain.exponentialRampToValueAtTime(0.0001, t0 + d);
+  o.connect(gn).connect(a.destination); o.start(t0); o.stop(t0 + d + 0.05);
+}
+function sfx(k) {
+  if (!S.sound || !ac()) return;
+  if (k === "lan") tone(880 + Math.random() * 200, 0.15, "triangle", 0.07, 1.5);
+  else if (k === "power") { tone(523, 0.15, "triangle", 0.08); tone(784, 0.2, "triangle", 0.08, 0, 0.08); tone(1046, 0.3, "triangle", 0.08, 0, 0.16); }
+  else if (k === "crash") { tone(160, 0.5, "sawtooth", 0.08, 0.4); tone(90, 0.6, "square", 0.05, 0.5); }
+  else if (k === "break") tone(300, 0.3, "triangle", 0.09, 0.5);
+  else tone(660, 0.07, "sine", 0.06);
+}
+const PENTA = [261.6, 293.7, 329.6, 392, 440, 523.3, 587.3, 659.3];
+function music() { // arpegiu liniștit, pentatonic
+  if (!S.music || !AC || mode !== "play" || !G || !G.alive || G.paused) return;
+  if (AC.currentTime < nextNote) return;
+  nextNote = AC.currentTime + 0.42; noteI++;
+  const f = PENTA[(noteI * 3 + (noteI >> 3) * 2) % PENTA.length] / (noteI % 4 === 0 ? 2 : 1);
+  tone(f, 0.9, "sine", 0.035);
+}
+
+// ---------- Control ----------
+let drag = null;
+cv.addEventListener("pointerdown", e => { if (mode !== "play" || !G || !G.alive || G.paused) return; ac(); drag = { px: e.clientX, x0: G.x }; G.keyDir = 0; endTut(); });
+addEventListener("pointermove", e => { if (!drag || !G) return; G.tx = drag.x0 + (e.clientX - drag.px) / SC * 1.25; });
+addEventListener("pointerup", () => { drag = null; });
+addEventListener("pointercancel", () => { drag = null; });
+const KL = ["ArrowLeft", "KeyA"], KR = ["ArrowRight", "KeyD"];
+addEventListener("keydown", e => {
+  if (mode === "play" && G) {
+    if (KL.includes(e.code)) { G.keyDir = -1; G.tx = null; endTut(); }
+    else if (KR.includes(e.code)) { G.keyDir = 1; G.tx = null; endTut(); }
+    else if (e.code === "Escape" || e.code === "KeyP") pause(!G.paused);
+  } else if (mode === "menu" && (e.code === "Enter" || e.code === "Space")) startRun(false);
+});
+addEventListener("keyup", e => { if (!G) return; if ((KL.includes(e.code) && G.keyDir < 0) || (KR.includes(e.code) && G.keyDir > 0)) G.keyDir = 0; });
+document.addEventListener("visibilitychange", () => { if (document.hidden) pause(true); });
+$("bPlay").onclick = () => { sfx("ui"); startRun(false); };
+$("bDaily").onclick = () => { sfx("ui"); startRun(true); };
+$("bShop").onclick = () => { sfx("ui"); show("shop"); };
+$("bShopBack").onclick = () => { sfx("ui"); show("menu"); };
+$("bPause").onclick = () => pause(true);
+$("bLang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); applyLang(); };
+$("bSound").onclick = () => { S.sound = !S.sound; save(); applyLang(); sfx("ui"); };
+$("bMusic").onclick = () => { S.music = !S.music; save(); applyLang(); };
+
+// ---------- Bucla ----------
+let last = 0;
+function loop(now) {
+  const dt = Math.min(0.05, (now - (last || now)) / 1000); last = now;
+  if (G && !window.__noLoop) {
+    if (G.demo) { // pe meniu barca merge singură
+      G.d += 90 * dt; genAhead(); const row = G.rows.find(r => r.y > G.d + 30); if (row) G.x += (row.gx - G.x) * Math.min(1, dt * 4);
+      for (const it of G.items) if (!it.got && Math.hypot(it.x - G.x, it.y - G.d) < 24) it.got = true;
+      G.parts.push({ x: G.x + (Math.random() - 0.5) * 10, y: G.d - 14, vx: 0, life: 1, kind: "wake" }); G.parts.forEach(p => p.life -= dt * 0.9); G.parts = G.parts.filter(p => p.life > 0);
+      G.obs = G.obs.filter(o => o.y > G.d - 400); G.items = G.items.filter(i => i.y > G.d - 400); G.rows = G.rows.filter(r => r.y > G.d - 400);
+    } else step(dt);
+    if (shake > 0) shake -= dt;
+  }
+  if (G && mode === "play") { $("hScore").textContent = score() + " m"; $("hLan").textContent = "🏮 " + G.lan + (G.shield ? "  🪷" : ""); }
+  music();
+  draw(now);
+  requestAnimationFrame(loop);
+}
+demo(); show("menu");
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

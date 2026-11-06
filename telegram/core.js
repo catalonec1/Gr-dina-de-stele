@@ -14,6 +14,15 @@
   var BASE_SPEED = 1.5;                    // rad/s
   var MAX_SPEED = 3.6;
   var SAVE_VERSION = 1;
+  var GOLD_CHANCE = 0.08;                  // din picături, după primele 10 s
+  var GOLD_SPARKS = 5;
+  var MISSION_REWARD = 25;
+  var FREE_DAILY = 25;                     // cadoul zilnic fără reclamă (când Adsgram nu e activ)
+  // Misiuni zilnice: 3 pe zi, alese determinist după dată (UTC)
+  var MISSION_POOL = [
+    { k: 'drops', n: 15 }, { k: 'drops', n: 30 }, { k: 'score', n: 150 }, { k: 'score', n: 300 },
+    { k: 'combo', n: 8 }, { k: 'combo', n: 15 }, { k: 'runs', n: 3 }, { k: 'runs', n: 5 }, { k: 'gold', n: 1 }, { k: 'gold', n: 3 }
+  ];
 
   // Magazin: prețuri în scântei (monedă de joc) sau în Telegram Stars (XTR).
   var SKINS = [
@@ -21,6 +30,8 @@
     { id: 'mint',   color: '#7cf5c4', glow: '#2ec4b6', price: 150 },
     { id: 'rose',   color: '#ff8fab', glow: '#fb6f92', price: 300 },
     { id: 'violet', color: '#c8a2ff', glow: '#9d4edd', price: 600 },
+    { id: 'frost',  color: '#e0fbfc', glow: '#98c1d9', price: 1000 },
+    { id: 'sun',    color: '#fff3b0', glow: '#ff9f1c', price: 2000 },
     { id: 'aurora', color: '#9bf6ff', glow: '#4cc9f0', stars: true },
     { id: 'ember',  color: '#ff9e6d', glow: '#f3722c', stars: true }
   ];
@@ -59,6 +70,8 @@
       sparks: 0,
       combo: 0,
       bestCombo: 0,
+      drops: 0,
+      golds: 0,
       items: [],             // {kind:'drop'|'moth', ring, angle, drift, ttl}
       spawnIn: 0.6,
       shield: !!opts.shield,
@@ -75,6 +88,8 @@
   function spawn(run, rng) {
     var mothChance = Math.min(0.55, 0.28 + run.t * 0.006);
     var kind = rng() < mothChance ? 'moth' : 'drop';
+    // v1.1: picătură de aur rară (după 10 s): +5 scântei
+    if (kind === 'drop' && run.t > 10 && rng() < GOLD_CHANCE) kind = 'gold';
     var ring = Math.floor(rng() * RINGS.length);
     var ahead = 1.4 + rng() * (TAU - 2.5);   // ≥80° în față și ≥63° în spate
     var angle = normAngle(run.angle + run.dir * ahead);
@@ -104,11 +119,13 @@
       if (it.ttl <= 0) { run.items.splice(i, 1); continue; }
       if (it.ring !== run.ring) continue;
       var d = angDist(it.angle, run.angle);
-      if (it.kind === 'drop' && d < PICK_ANGLE) {
+      if ((it.kind === 'drop' || it.kind === 'gold') && d < PICK_ANGLE) {
         run.items.splice(i, 1);
         run.combo += 1;
+        run.drops += 1;
         run.bestCombo = Math.max(run.bestCombo, run.combo);
         var gain = 1 + Math.floor(run.combo / 5);
+        if (it.kind === 'gold') { gain += GOLD_SPARKS; run.golds += 1; run.events.push('gold'); }
         run.sparks += gain;
         run.score += 10 * gain;
         run.events.push('pick');
@@ -158,7 +175,8 @@
       owned: ['skin:amber'],
       shields: 0,
       lastDaily: '',
-      lang: ''
+      lang: '',
+      missions: null
     };
   }
 
@@ -178,6 +196,15 @@
     if (typeof raw.skin === 'string' && p.owned.indexOf('skin:' + raw.skin) >= 0) p.skin = raw.skin;
     if (typeof raw.lastDaily === 'string') p.lastDaily = raw.lastDaily.slice(0, 10);
     if (raw.lang === 'ro' || raw.lang === 'en' || raw.lang === 'ru') p.lang = raw.lang;
+    var m = raw.missions;
+    if (m && typeof m.day === 'string' && Array.isArray(m.list) && m.list.length === 3) {
+      var list = m.list.map(function (q) {
+        var base = null;
+        for (var i = 0; i < MISSION_POOL.length; i++) if (q && MISSION_POOL[i].k === q.k && MISSION_POOL[i].n === q.n) base = MISSION_POOL[i];
+        return base ? { k: base.k, n: base.n, prog: Math.min(base.n, num(q.prog)), claimed: !!q.claimed } : null;
+      });
+      if (list.every(Boolean)) p.missions = { day: m.day.slice(0, 10), list: list };
+    }
     return p;
   }
 
@@ -186,6 +213,42 @@
   }
 
   function owns(p, key) { return p.owned.indexOf(key) >= 0; }
+
+  // ---------- Misiuni zilnice ----------
+  function missionsFor(day) {
+    var h = 0;
+    for (var i = 0; i < day.length; i++) h = (h * 31 + day.charCodeAt(i)) >>> 0;
+    var kinds = {}, list = [];
+    for (var j = 0; list.length < 3 && j < 60; j++) {
+      var q = MISSION_POOL[(h + j * 3) % MISSION_POOL.length];
+      if (kinds[q.k]) continue; kinds[q.k] = 1;
+      list.push({ k: q.k, n: q.n, prog: 0, claimed: false });
+    }
+    return list;
+  }
+  function ensureMissions(p, date) {
+    var day = todayKey(date);
+    if (!p.missions || p.missions.day !== day) p.missions = { day: day, list: missionsFor(day) };
+    return p.missions.list;
+  }
+  // Progres după o tură: drops/gold se adună, score/combo sunt recorduri pe tură, runs numără ture.
+  function trackMissions(p, run, date) {
+    var list = ensureMissions(p, date), done = [];
+    list.forEach(function (q) {
+      if (q.prog >= q.n) return;
+      var v = q.k === 'drops' ? q.prog + run.drops : q.k === 'gold' ? q.prog + run.golds :
+        q.k === 'runs' ? q.prog + 1 : q.k === 'score' ? Math.max(q.prog, Math.floor(run.score)) : Math.max(q.prog, run.bestCombo);
+      q.prog = Math.min(q.n, v);
+      if (q.prog >= q.n) done.push(q);
+    });
+    return done;
+  }
+  function claimMission(p, idx, date) {
+    var list = ensureMissions(p, date), q = list[idx];
+    if (!q || q.claimed || q.prog < q.n) return 0;
+    q.claimed = true; p.sparks += MISSION_REWARD;
+    return MISSION_REWARD;
+  }
 
   function finishRun(p, run) {
     var mult = owns(p, 'perk:double') ? 2 : 1;
@@ -241,11 +304,12 @@
   }
 
   function canClaimDaily(p, date) { return p.lastDaily !== todayKey(date); }
-  function claimDaily(p, date) {
+  function claimDaily(p, date, amount) {
     if (!canClaimDaily(p, date)) return 0;
+    amount = amount || 50;
     p.lastDaily = todayKey(date);
-    p.sparks += 50;
-    return 50;
+    p.sparks += amount;
+    return amount;
   }
 
   // ---------- Texte ----------
@@ -265,7 +329,10 @@
       noAd: 'Reclama nu e disponibilă acum.', terms: 'Termeni', support: 'Suport',
       termsText: 'Produsele cumpărate cu Stars sunt digitale și se folosesc doar în acest joc. Probleme cu plata: scrie /paysupport botului. Suportul Telegram nu poate ajuta la cumpărăturile din boți.',
       agree: 'Prin cumpărare ești de acord cu Termenii.', owned: 'Deținut', combo: 'Serie ×{n}',
-      hint: 'Atinge oriunde'
+      hint: 'Atinge oriunde',
+      dailyFree: 'Cadou zilnic +25', missions: 'Misiunile zilei', claim: 'Ia +{n}', gold: 'Picătură de aur! +5',
+      m_drops: 'Culege {n} picături', m_score: 'Fă {n} puncte într-o tură', m_combo: 'Serie de {n}',
+      m_runs: 'Joacă {n} ture', m_gold: 'Picături de aur: {n}', mDone: 'Misiune îndeplinită!'
     },
     en: {
       title: 'Firefly Orbit',
@@ -282,7 +349,10 @@
       noAd: 'No ad available right now.', terms: 'Terms', support: 'Support',
       termsText: 'Items bought with Stars are digital and only usable in this game. Payment issues: send /paysupport to the bot. Telegram support cannot help with purchases made in bots.',
       agree: 'By purchasing you agree to the Terms.', owned: 'Owned', combo: 'Streak ×{n}',
-      hint: 'Tap anywhere'
+      hint: 'Tap anywhere',
+      dailyFree: 'Daily gift +25', missions: "Today's missions", claim: 'Claim +{n}', gold: 'Golden drop! +5',
+      m_drops: 'Catch {n} drops', m_score: 'Score {n} in one run', m_combo: 'Reach a {n} streak',
+      m_runs: 'Play {n} runs', m_gold: 'Golden drops: {n}', mDone: 'Mission complete!'
     },
     ru: {
       title: 'Орбита светлячка',
@@ -299,7 +369,10 @@
       noAd: 'Реклама сейчас недоступна.', terms: 'Условия', support: 'Поддержка',
       termsText: 'Товары за Stars цифровые и используются только в этой игре. Проблемы с оплатой: отправь боту /paysupport. Поддержка Telegram не помогает с покупками в ботах.',
       agree: 'Покупая, ты соглашаешься с Условиями.', owned: 'Есть', combo: 'Серия ×{n}',
-      hint: 'Нажми где угодно'
+      hint: 'Нажми где угодно',
+      dailyFree: 'Подарок дня +25', missions: 'Задания дня', claim: 'Забрать +{n}', gold: 'Золотая капля! +5',
+      m_drops: 'Собери капель: {n}', m_score: 'Набери {n} очков за забег', m_combo: 'Серия ×{n}',
+      m_runs: 'Сыграй забегов: {n}', m_gold: 'Собери золотых капель: {n}', mDone: 'Задание выполнено!'
     }
   };
 
@@ -324,6 +397,8 @@
     defaultProfile: defaultProfile, sanitizeProfile: sanitizeProfile, parseProfile: parseProfile,
     owns: owns, finishRun: finishRun, buySkin: buySkin, equipSkin: equipSkin, skinById: skinById,
     grantStarItem: grantStarItem, todayKey: todayKey, canClaimDaily: canClaimDaily, claimDaily: claimDaily,
-    pickLang: pickLang, tr: tr
+    pickLang: pickLang, tr: tr,
+    MISSION_POOL: MISSION_POOL, MISSION_REWARD: MISSION_REWARD, FREE_DAILY: FREE_DAILY, GOLD_CHANCE: GOLD_CHANCE,
+    missionsFor: missionsFor, ensureMissions: ensureMissions, trackMissions: trackMissions, claimMission: claimMission
   };
 });

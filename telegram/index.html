@@ -60,6 +60,11 @@
   #modal.on { display: flex; }
   #modal .box { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 18px; max-width: 380px; text-align: left; }
   #modal .box p { max-width: none; margin-bottom: 14px; }
+  #menu { justify-content: safe center; overflow-y: auto; }
+  #missions { max-width: 340px; gap: 6px; }
+  #missions .row { padding: 7px 10px; font-size: 14px; }
+  #missions .row.done span { color: var(--muted); text-decoration: line-through; }
+  #missions h3 { margin: 2px 0 0; font-size: 15px; color: var(--muted); font-weight: 600; }
   .lang { display: flex; gap: 6px; }
   .lang button { min-width: 0; padding: 6px 10px; font-size: 13px; border-radius: 8px; }
   .lang button.sel { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
@@ -82,6 +87,7 @@
   <button id="btnShield"></button>
   <button id="btnDaily"></button>
   <button id="btnShop" data-t="shop"></button>
+  <div class="rows" id="missions"></div>
   <div class="lang" id="langs">
     <button data-lang="ro">RO</button><button data-lang="en">EN</button><button data-lang="ru">RU</button>
   </div>
@@ -198,10 +204,27 @@
     bs.textContent = t('useShield', profile.shields);
     bs.style.display = profile.shields > 0 ? '' : 'none';
     var bd = $('btnDaily');
-    bd.style.display = ads ? '' : 'none';
     var canDaily = FO.canClaimDaily(profile);
     bd.disabled = !canDaily;
-    bd.textContent = canDaily ? t('daily') : t('dailyDone');
+    bd.textContent = canDaily ? (ads ? t('daily') : t('dailyFree')) : t('dailyDone');
+    renderMissions();
+  }
+  // ---------- Misiuni zilnice ----------
+  function renderMissions() {
+    var box = $('missions'), list = FO.ensureMissions(profile);
+    box.innerHTML = '';
+    var h = document.createElement('h3'); h.textContent = t('missions'); box.appendChild(h);
+    list.forEach(function (q, i) {
+      var r = document.createElement('div'); r.className = 'row' + (q.claimed ? ' done' : '');
+      var l = document.createElement('span'); l.textContent = t('m_' + q.k, q.n) + (q.claimed ? '' : ' · ' + q.prog + '/' + q.n);
+      var b = document.createElement('button'); b.className = 'small';
+      b.textContent = q.claimed ? '✓' : t('claim', FO.MISSION_REWARD);
+      b.disabled = q.claimed || q.prog < q.n;
+      b.onclick = function () {
+        if (FO.claimMission(profile, i)) { save(); haptic('ok'); toast('+' + FO.MISSION_REWARD + ' ✦'); refreshMenu(); }
+      };
+      r.appendChild(l); r.appendChild(b); box.appendChild(r);
+    });
   }
 
   // ---------- Reclame Adsgram (doar recompensate) ----------
@@ -233,7 +256,10 @@
     raf = requestAnimationFrame(loop);
   }
   function endRun() {
+    run._missionsBefore = JSON.stringify(profile.missions);
     var res = FO.finishRun(profile, run);
+    var done = FO.trackMissions(profile, run);
+    if (done.length) setTimeout(function () { toast(t('mDone')); haptic('ok'); }, 300);
     save();
     $('oScore').textContent = res.score;
     $('oBest').textContent = profile.best;
@@ -273,6 +299,7 @@
       // Anulăm câștigul înregistrat și continuăm aceeași tură.
       var r = run._result;
       profile.sparks -= r.earned; profile.runs -= 1;
+      try { profile.missions = JSON.parse(run._missionsBefore); } catch (e) {}
       save();
       FO.revive(run);
       show(null);
@@ -283,6 +310,11 @@
   };
   $('btnDaily').onclick = function () {
     var b = this; b.disabled = true;
+    if (!ads) { // fără Adsgram: cadou zilnic gratuit, mai mic
+      var got = FO.claimDaily(profile, undefined, FO.FREE_DAILY);
+      if (got) { save(); haptic('ok'); toast('+' + got + ' ✦'); }
+      refreshMenu(); return;
+    }
     showRewarded().then(function (ok) {
       if (ok) { FO.claimDaily(profile); save(); haptic('ok'); toast('+50 ✦'); }
       else toast(t('noAd'));
@@ -431,7 +463,15 @@
       var p = pos(g, it.ring, it.angle);
       var fade = Math.min(1, it.ttl / 1.2);
       ctx.globalAlpha = fade;
-      if (it.kind === 'drop') {
+      if (it.kind === 'gold') {
+        var gr = 17 + Math.sin(time * 6) * 2;
+        var gg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, gr);
+        gg.addColorStop(0, '#ffffff'); gg.addColorStop(.3, 'rgba(255,183,3,.95)'); gg.addColorStop(1, 'rgba(255,140,0,0)');
+        ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(p.x, p.y, gr, 0, FO.TAU); ctx.fill();
+        ctx.strokeStyle = 'rgba(255,240,180,.9)'; ctx.lineWidth = 1.2; ctx.beginPath();
+        for (var k = 0; k < 4; k++) { var a = time * 2 + k * Math.PI / 2; ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(a) * gr * .9, p.y + Math.sin(a) * gr * .9); }
+        ctx.stroke();
+      } else if (it.kind === 'drop') {
         var dg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 14);
         dg.addColorStop(0, '#fff7d6'); dg.addColorStop(.4, 'rgba(255,209,102,.8)'); dg.addColorStop(1, 'rgba(255,209,102,0)');
         ctx.fillStyle = dg; ctx.beginPath(); ctx.arc(p.x, p.y, 14, 0, FO.TAU); ctx.fill();
@@ -472,6 +512,7 @@
       var g = geom(), fp = pos(g, run.ring, run.angle), skin = FO.skinById(profile.skin) || FO.SKINS[0];
       run.events.forEach(function (ev) {
         if (ev === 'pick') { burst(fp.x, fp.y, '#ffd166', 8); haptic('soft'); }
+        if (ev === 'gold') { burst(fp.x, fp.y, '#ffb703', 22); haptic('medium'); toast(t('gold')); }
         if (ev === 'shield') { burst(fp.x, fp.y, '#9bf6ff', 16); haptic('heavy'); }
         if (ev === 'hit') { burst(fp.x, fp.y, skin.glow, 26); haptic('hit'); }
       });
