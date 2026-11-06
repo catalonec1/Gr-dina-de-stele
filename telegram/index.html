@@ -471,6 +471,12 @@
         ctx.strokeStyle = 'rgba(255,240,180,.9)'; ctx.lineWidth = 1.2; ctx.beginPath();
         for (var k = 0; k < 4; k++) { var a = time * 2 + k * Math.PI / 2; ctx.moveTo(p.x, p.y); ctx.lineTo(p.x + Math.cos(a) * gr * .9, p.y + Math.sin(a) * gr * .9); }
         ctx.stroke();
+      } else if (it.kind === 'moon') {
+        var mg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 20);
+        mg.addColorStop(0, 'rgba(220,235,255,.55)'); mg.addColorStop(1, 'rgba(160,190,255,0)');
+        ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(p.x, p.y, 20, 0, FO.TAU); ctx.fill();
+        ctx.fillStyle = '#eef4ff'; ctx.beginPath(); ctx.arc(p.x, p.y, 9, 0, FO.TAU); ctx.fill();
+        ctx.fillStyle = '#0b1026'; ctx.beginPath(); ctx.arc(p.x + 4, p.y - 3, 8, 0, FO.TAU); ctx.fill();
       } else if (it.kind === 'drop') {
         var dg = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, 14);
         dg.addColorStop(0, '#fff7d6'); dg.addColorStop(.4, 'rgba(255,209,102,.8)'); dg.addColorStop(1, 'rgba(255,209,102,0)');
@@ -502,6 +508,9 @@
       ctx.fillRect(p.x - 1.5, p.y - 1.5, 3, 3);
     });
     ctx.globalAlpha = 1;
+    if (run.slow > 0) { // v1.2: lumină de lună cât timp e încetinit
+      ctx.fillStyle = 'rgba(140,170,255,' + (0.1 * Math.min(1, run.slow)) + ')'; ctx.fillRect(0, 0, W, H);
+    }
   }
 
   function loop(now) {
@@ -513,6 +522,7 @@
       run.events.forEach(function (ev) {
         if (ev === 'pick') { burst(fp.x, fp.y, '#ffd166', 8); haptic('soft'); }
         if (ev === 'gold') { burst(fp.x, fp.y, '#ffb703', 22); haptic('medium'); toast(t('gold')); }
+        if (ev === 'moon') { burst(fp.x, fp.y, '#cfe0ff', 18); haptic('medium'); toast(t('moon')); }
         if (ev === 'shield') { burst(fp.x, fp.y, '#9bf6ff', 16); haptic('heavy'); }
         if (ev === 'hit') { burst(fp.x, fp.y, skin.glow, 26); haptic('hit'); }
       });
@@ -539,6 +549,7 @@
     var userLang = tg && tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.language_code;
     lang = profile.lang || FO.pickLang(userLang || navigator.language);
     applyLang();
+    if (profile.seen !== FO.VERSION) { if (profile.runs > 0) setTimeout(function () { toast(t('whatsNew', FO.VERSION)); }, 600); profile.seen = FO.VERSION; save(); }
     initAds();
     syncPurchases();
     raf = requestAnimationFrame(loop);

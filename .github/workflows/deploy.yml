@@ -24,6 +24,8 @@ jobs:
       - run: npm test
       - name: Teste Grădina de stele v1.2
         run: node tests/v12.js
+      - name: Teste Grădina de stele v1.3
+        run: node tests/v13.js
       - name: Teste joc Telegram
         run: node telegram/tests/run.mjs
       - name: Teste fișe gratuite (printabile)
@@ -32,8 +34,12 @@ jobs:
         run: node lumen/tests/run.js
       - name: Teste Lumen Links v1.1
         run: node lumen/tests/v11.js
+      - name: Teste Lumen Links v1.2
+        run: node lumen/tests/v12.js
       - name: Teste Paper River
         run: node river/tests/run.js
+      - name: Teste Paper River v1.1
+        run: node river/tests/v11.js
 
   deploy:
     needs: test

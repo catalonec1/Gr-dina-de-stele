@@ -61,6 +61,7 @@ button:disabled{opacity:.45}
   <div id="menuInfo"></div>
   <button class="big pri" id="bPlay"></button>
   <button class="big" id="bDaily"></button>
+  <button class="big" id="bQuests"></button>
   <button class="big" id="bShop"></button>
   <div class="row" style="margin-top:22px">
     <button class="ico" id="bLang"></button>
@@ -83,12 +84,15 @@ button:disabled{opacity:.45}
 "use strict";
 // ---------- Texte (RO / EN / RU) ----------
 const T = {
-  en: { tag: "Steer a paper boat down the river at dusk. Collect lanterns, dodge rocks and logs.", play: "Play", daily: "Daily river", dailyBest: "Daily river · best {n} m", boats: "Boats", best: "Best: {n} m", over: "The boat ran aground!", dist: "Distance", lanterns: "Lanterns: +{n} 🏮", newBest: "New record!", again: "Play again", menu: "Menu", revive: "Continue · {n} 🏮", paused: "Paused", resume: "Resume", tut: "Drag left or right to steer. Collect lanterns 🏮, avoid rocks.", tutKeys: "Keyboard: A / D or ← →", shield: "Lotus shield!", magnet: "Lantern magnet!", saved: "The lotus saved you!", buy: "Buy · {n} 🏮", use: "Use", inUse: "Selected", noCoins: "Not enough lanterns", sound: "Sound", music: "Music", lang: "EN",
-    skins: ["Paper", "Lotus", "Sky", "Golden", "Night ink", "Aurora"] },
-  ro: { tag: "Condu o bărcuță de hârtie pe râu, la apus. Adună felinare, ocolește stâncile și buștenii.", play: "Joacă", daily: "Râul zilei", dailyBest: "Râul zilei · record {n} m", boats: "Bărci", best: "Record: {n} m", over: "Barca s-a împotmolit!", dist: "Distanța", lanterns: "Felinare: +{n} 🏮", newBest: "Record nou!", again: "Încă o dată", menu: "Meniu", revive: "Continuă · {n} 🏮", paused: "Pauză", resume: "Continuă", tut: "Trage stânga sau dreapta ca să cârmești. Adună felinare 🏮, ocolește stâncile.", tutKeys: "Tastatură: A / D sau ← →", shield: "Scut de lotus!", magnet: "Magnet de felinare!", saved: "Lotusul te-a salvat!", buy: "Cumpără · {n} 🏮", use: "Alege", inUse: "Aleasă", noCoins: "Nu ai destule felinare", sound: "Sunet", music: "Muzică", lang: "RO",
-    skins: ["Hârtie", "Lotus", "Cer", "Aurie", "Cerneală", "Auroră"] },
-  ru: { tag: "Ведите бумажный кораблик по реке на закате. Собирайте фонарики, обходите камни и брёвна.", play: "Играть", daily: "Река дня", dailyBest: "Река дня · рекорд {n} м", boats: "Кораблики", best: "Рекорд: {n} м", over: "Кораблик сел на мель!", dist: "Расстояние", lanterns: "Фонарики: +{n} 🏮", newBest: "Новый рекорд!", again: "Ещё раз", menu: "Меню", revive: "Продолжить · {n} 🏮", paused: "Пауза", resume: "Продолжить", tut: "Тяните влево или вправо, чтобы рулить. Собирайте фонарики 🏮, обходите камни.", tutKeys: "Клавиатура: A / D или ← →", shield: "Щит лотоса!", magnet: "Магнит фонариков!", saved: "Лотос спас вас!", buy: "Купить · {n} 🏮", use: "Выбрать", inUse: "Выбран", noCoins: "Не хватает фонариков", sound: "Звук", music: "Музыка", lang: "RU",
-    skins: ["Бумага", "Лотос", "Небо", "Золото", "Тушь", "Сияние"] },
+  en: { tag: "Steer a paper boat down the river at dusk. Collect lanterns, dodge rocks and logs.", play: "Play", daily: "Daily river", dailyBest: "Daily river · best {n} m", boats: "Boats", best: "Best: {n} m", over: "The boat ran aground!", dist: "Distance", lanterns: "Lanterns: +{n} 🏮", newBest: "New record!", again: "Play again", menu: "Menu", revive: "Continue · {n} 🏮", paused: "Paused", resume: "Resume", tut: "Drag left or right to steer. Collect lanterns 🏮, avoid rocks.", tutKeys: "Keyboard: A / D or ← →", shield: "Lotus shield!", magnet: "Lantern magnet!", saved: "The lotus saved you!", buy: "Buy · {n} 🏮", use: "Use", inUse: "Selected", noCoins: "Not enough lanterns", sound: "Sound", music: "Music", lang: "EN", quests: "Quests", questsTitle: "Today's quests", claim: "Claim +{n} 🏮", done: "Done ✓", close: "Close", goldLan: "Golden lantern +5!", whatsNew: "New in v{v}: daily quests, golden lanterns and 2 new boats",
+    q: { lan: "Collect {n} lanterns", dist: "Sail {n} m in one run", power: "Pick up {n} power-ups", runs: "Play {n} runs", gold: "Find {n} golden lanterns" },
+    skins: ["Paper", "Lotus", "Sky", "Golden", "Night ink", "Aurora", "Crane", "Ember"] },
+  ro: { tag: "Condu o bărcuță de hârtie pe râu, la apus. Adună felinare, ocolește stâncile și buștenii.", play: "Joacă", daily: "Râul zilei", dailyBest: "Râul zilei · record {n} m", boats: "Bărci", best: "Record: {n} m", over: "Barca s-a împotmolit!", dist: "Distanța", lanterns: "Felinare: +{n} 🏮", newBest: "Record nou!", again: "Încă o dată", menu: "Meniu", revive: "Continuă · {n} 🏮", paused: "Pauză", resume: "Continuă", tut: "Trage stânga sau dreapta ca să cârmești. Adună felinare 🏮, ocolește stâncile.", tutKeys: "Tastatură: A / D sau ← →", shield: "Scut de lotus!", magnet: "Magnet de felinare!", saved: "Lotusul te-a salvat!", buy: "Cumpără · {n} 🏮", use: "Alege", inUse: "Aleasă", noCoins: "Nu ai destule felinare", sound: "Sunet", music: "Muzică", lang: "RO", quests: "Misiuni", questsTitle: "Misiunile zilei", claim: "Ia +{n} 🏮", done: "Gata ✓", close: "Închide", goldLan: "Felinar de aur +5!", whatsNew: "Noutăți v{v}: misiuni zilnice, felinare de aur și 2 bărci noi",
+    q: { lan: "Adună {n} felinare", dist: "Navighează {n} m într-o tură", power: "Prinde {n} puteri", runs: "Joacă {n} ture", gold: "Găsește {n} felinare de aur" },
+    skins: ["Hârtie", "Lotus", "Cer", "Aurie", "Cerneală", "Auroră", "Cocor", "Jar"] },
+  ru: { tag: "Ведите бумажный кораблик по реке на закате. Собирайте фонарики, обходите камни и брёвна.", play: "Играть", daily: "Река дня", dailyBest: "Река дня · рекорд {n} м", boats: "Кораблики", best: "Рекорд: {n} м", over: "Кораблик сел на мель!", dist: "Расстояние", lanterns: "Фонарики: +{n} 🏮", newBest: "Новый рекорд!", again: "Ещё раз", menu: "Меню", revive: "Продолжить · {n} 🏮", paused: "Пауза", resume: "Продолжить", tut: "Тяните влево или вправо, чтобы рулить. Собирайте фонарики 🏮, обходите камни.", tutKeys: "Клавиатура: A / D или ← →", shield: "Щит лотоса!", magnet: "Магнит фонариков!", saved: "Лотос спас вас!", buy: "Купить · {n} 🏮", use: "Выбрать", inUse: "Выбран", noCoins: "Не хватает фонариков", sound: "Звук", music: "Музыка", lang: "RU", quests: "Задания", questsTitle: "Задания дня", claim: "Забрать +{n} 🏮", done: "Готово ✓", close: "Закрыть", goldLan: "Золотой фонарик +5!", whatsNew: "Новое в v{v}: ежедневные задания, золотые фонарики и 2 новых кораблика",
+    q: { lan: "Соберите {n} фонариков", dist: "Проплывите {n} м за один заплыв", power: "Подберите усилений: {n}", runs: "Сыграйте заплывов: {n}", gold: "Найдите золотых фонариков: {n}" },
+    skins: ["Бумага", "Лотос", "Небо", "Золото", "Тушь", "Сияние", "Журавль", "Уголёк"] },
 };
 const LANGS = ["en", "ro", "ru"];
 function detectLang() {
@@ -98,11 +102,13 @@ function detectLang() {
 const t = (k, v = {}) => String(T[S.lang][k] ?? T.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
 
 // ---------- Salvare ----------
-const KEY = "paper-river-v1";
-let S = { lang: detectLang(), sound: true, music: true, best: 0, coins: 0, owned: [0], skin: 0, daily: {}, tut: false, runs: 0 };
+const KEY = "paper-river-v1", VERSION = "1.1";
+let S = { lang: detectLang(), sound: true, music: true, best: 0, coins: 0, owned: [0], skin: 0, daily: {}, tut: false, runs: 0, quests: null, seen: null };
 let Store = null; try { Store = window.localStorage; } catch (e) {}
 try { const d = JSON.parse(Store.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {}
 if (!T[S.lang]) S.lang = "en";
+const showNews = S.seen !== null && S.seen !== VERSION || (S.seen === null && S.runs > 0);
+S.seen = VERSION;
 function save() { try { Store.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 // ---------- Bărci (cosmetice, cu felinare) ----------
@@ -113,7 +119,34 @@ const SKINS = [
   { price: 300, hull: "#ffd36b", sail: "#fff2c4", edge: "#c8962a" },
   { price: 500, hull: "#2a2f45", sail: "#ffcf5c", edge: "#11131f" },
   { price: 800, hull: "#9cf6d4", sail: "#d9b8ff", edge: "#5a7bd8", aurora: true },
+  { price: 1100, hull: "#fbfbf6", sail: "#e63946", edge: "#8d99ae" },
+  { price: 1500, hull: "#3d1f14", sail: "#ff7b2e", edge: "#ffb347", ember: true },
 ];
+// ---------- Misiuni zilnice (v1.1): 3 pe zi, alese determinist după dată ----------
+const QUEST_POOL = [
+  { k: "lan", n: 40, r: 15 }, { k: "lan", n: 90, r: 30 }, { k: "dist", n: 600, r: 15 }, { k: "dist", n: 1200, r: 30 },
+  { k: "power", n: 3, r: 20 }, { k: "runs", n: 3, r: 15 }, { k: "gold", n: 2, r: 25 },
+];
+function ensureQuests() {
+  const day = todayStr();
+  if (S.quests && S.quests.day === day) return S.quests;
+  const R = rng(hashStr("quests:" + day)), list = [], kinds = new Set();
+  for (let i = 0; list.length < 3 && i < 60; i++) {
+    const q = QUEST_POOL[Math.floor(R() * QUEST_POOL.length)];
+    if (kinds.has(q.k)) continue; kinds.add(q.k); list.push({ k: q.k, n: q.n, r: q.r, prog: 0, claimed: false });
+  }
+  S.quests = { day, list }; return S.quests;
+}
+function qtrack(k, v, max = false) {
+  const Q = ensureQuests(); let ch = false;
+  for (const q of Q.list) if (q.k === k && q.prog < q.n) { q.prog = Math.min(q.n, max ? Math.max(q.prog, v) : q.prog + v); ch = true; }
+  return ch;
+}
+const questsReady = () => ensureQuests().list.filter(q => q.prog >= q.n && !q.claimed).length;
+function claimQuest(i) {
+  const q = ensureQuests().list[i]; if (!q || q.claimed || q.prog < q.n) return;
+  q.claimed = true; S.coins += q.r; save(); sfx("power"); showQuests(); applyLang();
+}
 
 // ---------- Lumea: râu procedural, determinist dintr-un seed ----------
 const VW = 360, BOAT_R = 11, VMAX = 300, MAXR = 20, REVIVE = 20;
@@ -161,6 +194,7 @@ function genRow(R, y, prevGx, first) {
   const k = R();
   if (y > 900 && k < 0.05) items.push({ x: gx, y, kind: "lotus" });
   else if (y > 900 && k < 0.09) items.push({ x: gx, y, kind: "magnet" });
+  else if (y > 600 && k < 0.13) items.push({ x: gx, y, kind: "gold" });
   else items.push({ x: gx, y, kind: "lan" });
   if (R() < 0.5) { const sp = spacingAt(y); for (const f of [0.25, 0.5, 0.75]) items.push({ x: prevGx + (gx - prevGx) * f, y: y - sp + sp * f, kind: "lan" }); }
   return { y, gx, gh, obs, items };
@@ -206,7 +240,7 @@ function step(dt) {
   // obiecte
   for (const it of G.items) {
     if (it.got) continue;
-    if (G.magnet > 0 && it.kind === "lan" && it.y - G.d < 220 && it.y > G.d - 20) { it.x += (G.x - it.x) * Math.min(1, dt * 6); it.y += (G.d - it.y) * Math.min(1, dt * 4); }
+    if (G.magnet > 0 && (it.kind === "lan" || it.kind === "gold") && it.y - G.d < 220 && it.y > G.d - 20) { it.x += (G.x - it.x) * Math.min(1, dt * 6); it.y += (G.d - it.y) * Math.min(1, dt * 4); }
     if (Math.hypot(it.x - G.x, it.y - G.d) < BOAT_R + 13) collect(it);
   }
   for (const o of G.obs) {
@@ -221,8 +255,10 @@ function step(dt) {
 function burst(x, y, col, n = 10) { for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 80; G.parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 1, kind: "spark", col }); } }
 function collect(it) {
   it.got = true;
-  if (it.kind === "lan") { G.lan++; sfx("lan"); burst(it.x, it.y, "#ffb347", 6); }
-  else if (it.kind === "lotus") { G.shield = true; sfx("power"); toast(t("shield")); burst(it.x, it.y, "#ff9fc4", 14); }
+  if (it.kind === "lan") { G.lan++; G.qlan = (G.qlan || 0) + 1; sfx("lan"); burst(it.x, it.y, "#ffb347", 6); return; }
+  if (it.kind === "gold") { G.lan += 5; G.qlan = (G.qlan || 0) + 5; G.qgold = (G.qgold || 0) + 1; sfx("power"); toast(t("goldLan")); burst(it.x, it.y, "#ffe27a", 16); return; }
+  G.qpow = (G.qpow || 0) + 1;
+  if (it.kind === "lotus") { G.shield = true; sfx("power"); toast(t("shield")); burst(it.x, it.y, "#ff9fc4", 14); }
   else { G.magnet = 8; sfx("power"); toast(t("magnet")); burst(it.x, it.y, "#ffe66d", 14); }
 }
 function crash(o) {
@@ -245,6 +281,7 @@ function applyLang() {
   document.documentElement.lang = S.lang;
   document.querySelectorAll("[data-i]").forEach(e => e.textContent = t(e.dataset.i));
   $("bPlay").textContent = t("play"); $("bShop").textContent = "⛵ " + t("boats");
+  const qr = questsReady(); $("bQuests").textContent = "🎯 " + t("quests") + (qr ? " · " + qr + " ✦" : "");
   const dd = S.daily[todayStr()];
   $("bDaily").textContent = dd != null ? t("dailyBest", { n: dd }) : "📅 " + t("daily");
   $("bLang").textContent = "🌐 " + t("lang");
@@ -271,6 +308,21 @@ function startRun(daily) {
   if (!S.tut) { $("tut").innerHTML = t("tut") + "<br><small style='color:#9aa6d6'>" + t("tutKeys") + "</small>"; $("tut").classList.add("on"); }
 }
 function endTut() { if (!S.tut) { S.tut = true; save(); $("tut").classList.remove("on"); } }
+// progresul misiunilor se adaugă la final de tură (și la continuare, doar diferența)
+function bankQuests() {
+  if (!G || G.demo) return;
+  qtrack("lan", G.qlan || 0); qtrack("power", G.qpow || 0); qtrack("gold", G.qgold || 0); qtrack("dist", score(), true);
+  if (!G.qrun) { G.qrun = true; qtrack("runs", 1); }
+  G.qlan = G.qpow = G.qgold = 0;
+}
+function showQuests() {
+  const Q = ensureQuests(), l = T[S.lang];
+  card(`<h3>🎯 ${t("questsTitle")}</h3>` + Q.list.map((q, i) => `<p style="color:#f1f4ff;margin-top:12px">${(l.q[q.k] || T.en.q[q.k]).replace("{n}", q.n)}</p><p>${Math.min(q.prog, q.n)} / ${q.n}</p>` +
+    (q.claimed ? `<button class="big" disabled>${t("done")}</button>` : `<button class="big${q.prog >= q.n ? " pri" : ""}" data-q="${i}"${q.prog >= q.n ? "" : " disabled"}>${t("claim", { n: q.r })}</button>`)).join("") +
+    `<button class="big" id="bQClose">${t("close")}</button>`);
+  document.querySelectorAll("#card [data-q]").forEach(b => b.onclick = () => claimQuest(+b.dataset.q));
+  $("bQClose").onclick = () => { sfx("ui"); hideOverlay(); };
+}
 function hideOverlay() { $("overlay").classList.remove("on"); }
 function card(html) { $("card").innerHTML = html; $("overlay").classList.add("on"); }
 function gameOver() {
@@ -278,7 +330,7 @@ function gameOver() {
   G.over = true;
   const sc = score(), nb = sc > S.best;
   if (nb) S.best = sc;
-  S.coins += G.lan; G.banked = (G.banked || 0) + G.lan; G.lan = 0;
+  S.coins += G.lan; G.banked = (G.banked || 0) + G.lan; G.lan = 0; bankQuests();
   let dnb = false;
   if (G.daily) { const k = todayStr(); if (S.daily[k] == null || sc > S.daily[k]) { S.daily[k] = sc; dnb = true; } }
   save();
@@ -299,7 +351,7 @@ function pause(on) {
   if (on) {
     card(`<h3>${t("paused")}</h3><p>${score()} m · 🏮 ${G.lan}</p><button class="big pri" id="bResume">${t("resume")}</button><button class="big" id="bQuit">${t("menu")}</button>`);
     $("bResume").onclick = () => pause(false);
-    $("bQuit").onclick = () => { G.alive = false; G.over = true; S.coins += G.lan; G.lan = 0; save(); show("menu"); };
+    $("bQuit").onclick = () => { G.alive = false; G.over = true; S.coins += G.lan; G.lan = 0; bankQuests(); save(); show("menu"); };
   } else hideOverlay();
 }
 function toast(msg) { const e = $("toast"); e.textContent = msg; e.style.opacity = 1; clearTimeout(toast.h); toast.h = setTimeout(() => e.style.opacity = 0, 1500); }
@@ -310,7 +362,7 @@ function renderShop() {
     const own = S.owned.includes(i), d = document.createElement("div");
     d.className = "sk" + (S.skin === i ? " sel" : ""); d.dataset.i = i;
     const c = document.createElement("canvas"); c.width = c.height = 192; d.appendChild(c);
-    const x = c.getContext("2d"); x.fillStyle = "#1d3a6b"; x.fillRect(0, 0, 192, 192); x.translate(96, 104); x.scale(4.2, 4.2); drawBoat(x, sk, 0, 0, i === 5 ? 0.5 : 0);
+    const x = c.getContext("2d"); x.fillStyle = "#1d3a6b"; x.fillRect(0, 0, 192, 192); x.translate(96, 104); x.scale(4.2, 4.2); drawBoat(x, sk, 0, 0, i === 5 ? 0.5 : 0, 1);
     const nm = document.createElement("b"); nm.textContent = T[S.lang].skins[i]; d.appendChild(nm);
     const b = document.createElement("button");
     if (S.skin === i) { b.textContent = t("inUse"); b.disabled = true; }
@@ -348,6 +400,7 @@ function drawBoat(c, sk, x, y, tilt, time = 0) {
   c.fillStyle = sk.edge; c.globalAlpha = 0.35; c.beginPath(); c.moveTo(0, -15); c.lineTo(0, 10); c.lineTo(-9, 7); c.lineTo(-8, -4); c.closePath(); c.fill(); c.globalAlpha = 1;
   // pânza
   let sail = sk.sail; if (sk.aurora) sail = `hsl(${(time * 60) % 360},85%,78%)`;
+  if (sk.ember) sail = `hsl(${20 + 14 * Math.sin(time * 7)},100%,${58 + 8 * Math.sin(time * 11)}%)`;
   c.fillStyle = sail; c.strokeStyle = sk.edge; c.beginPath(); c.moveTo(0, -11); c.lineTo(6, 4); c.lineTo(-5, 4); c.closePath(); c.fill(); c.stroke();
   c.strokeStyle = sk.edge; c.beginPath(); c.moveTo(0, -11); c.lineTo(0, 5); c.stroke();
   c.restore();
@@ -416,6 +469,7 @@ function draw(time) {
     if (it.got || it.y < bot || it.y > top) return;
     const x = sx(it.x), y = sy(it.y) + Math.sin(time / 300 + k) * 2;
     if (it.kind === "lan") drawLantern(c, x, y, s, time / 1000, k);
+    else if (it.kind === "gold") { c.fillStyle = `rgba(255,226,122,${0.25 + 0.15 * Math.sin(time / 120)})`; c.beginPath(); c.arc(x, y, 24 * s, 0, 6.283); c.fill(); drawLantern(c, x, y, s * 1.25, time / 1000, k); c.fillStyle = "#ffe27a"; c.beginPath(); c.ellipse(x, y, 5 * s, 7 * s, 0, 0, 6.283); c.fill(); }
     else if (it.kind === "lotus") {
       c.fillStyle = "rgba(255,160,200,.25)"; c.beginPath(); c.arc(x, y, 18 * s, 0, 6.283); c.fill();
       for (let a = 0; a < 6; a++) { c.fillStyle = a % 2 ? "#ffb3cf" : "#ff8fb8"; c.save(); c.translate(x, y); c.rotate(a * 1.047 + time / 2000); c.beginPath(); c.ellipse(0, -6 * s, 3.5 * s, 7 * s, 0, 0, 6.283); c.fill(); c.restore(); }
@@ -488,6 +542,7 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) pause
 $("bPlay").onclick = () => { sfx("ui"); startRun(false); };
 $("bDaily").onclick = () => { sfx("ui"); startRun(true); };
 $("bShop").onclick = () => { sfx("ui"); show("shop"); };
+$("bQuests").onclick = () => { sfx("ui"); showQuests(); };
 $("bShopBack").onclick = () => { sfx("ui"); show("menu"); };
 $("bPause").onclick = () => pause(true);
 $("bLang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); applyLang(); };
@@ -512,7 +567,8 @@ function loop(now) {
   draw(now);
   requestAnimationFrame(loop);
 }
-demo(); show("menu");
+demo(); show("menu"); save();
+if (showNews) setTimeout(() => toast(t("whatsNew", { v: VERSION })), 600);
 requestAnimationFrame(loop);
 </script>
 </body>

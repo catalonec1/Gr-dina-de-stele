@@ -21,6 +21,8 @@ button:disabled{opacity:.4}
 #menu h1{margin:9vh 0 2px;font-size:clamp(34px,9vw,54px);letter-spacing:1px;background:linear-gradient(90deg,#ffd166,#9be7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
 #menu .sub{color:var(--dim);margin:0 16px 4vh;text-align:center}
 #menuStars{color:var(--acc);margin-bottom:12px}
+#menu{overflow-y:auto}
+@media (max-height:720px){#menu h1{margin-top:4vh}#menu .sub{margin-bottom:2vh}#menu button.big{padding:10px 0;margin:4px 0;font-size:18px}#menu .row{margin-top:20px!important}}
 .row{display:flex;gap:8px;margin-top:14px}
 #hud{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 10px 4px;gap:6px}
 #hud .mid{text-align:center;flex:1}
@@ -55,6 +57,7 @@ button:disabled{opacity:.4}
     <button class="big" id="bLevels" data-i="levels"></button>
     <button class="big" id="bDaily"></button>
     <button class="big" id="bRush"></button>
+    <button class="big" id="bZen"></button>
     <div id="pals"></div>
     <div class="row" style="margin-top:28px">
       <button class="ico" id="bLang"></button>
@@ -82,9 +85,9 @@ button:disabled{opacity:.4}
 "use strict";
 // ---------- Texte ----------
 const T = {
-  en: { tag: "Rotate the tiles and lead the lantern light to every crystal.", play: "Play", cont: "Continue · level {n}", levels: "Levels", daily: "Daily puzzle", dailyDone: "Daily puzzle ✓", level: "Level {n}", dailyT: "Daily {d}", moves: "Moves: {m} · par {p}", solved: "Solved!", next: "Next level", menu: "Menu", again: "Play again", hint: "Hint", noHints: "No hints left. Solve a level to earn one.", watch: "Watch ad: +3 hints", gotHints: "+3 hints", locked: "Unlock with {n} ★", lang: "EN", palette: "Colors", total: "{n} ★ collected", dailyBonus: "Daily bonus: +2 hints", tut: "Tap a tile to rotate it. Light every crystal.", rush: "Time rush", rushT: "Rush · {n} solved", time: "Time {s}s · par {p}", rushEnd: "Time's up!", rushScore: "Puzzles solved: {n}", rushBest: "Best: {n}", newBest: "New record!", streak: "Streak: {n} days" },
-  ro: { tag: "Rotește piesele și du lumina felinarului la fiecare cristal.", play: "Joacă", cont: "Continuă · nivelul {n}", levels: "Niveluri", daily: "Puzzle-ul zilei", dailyDone: "Puzzle-ul zilei ✓", level: "Nivelul {n}", dailyT: "Ziua {d}", moves: "Mutări: {m} · țintă {p}", solved: "Rezolvat!", next: "Nivelul următor", menu: "Meniu", again: "Încă o dată", hint: "Indiciu", noHints: "Nu mai ai indicii. Rezolvă un nivel ca să primești unul.", watch: "Reclamă: +3 indicii", gotHints: "+3 indicii", locked: "Se deblochează la {n} ★", lang: "RO", palette: "Culori", total: "{n} ★ adunate", dailyBonus: "Bonusul zilei: +2 indicii", tut: "Atinge o piesă ca s-o rotești. Aprinde toate cristalele.", rush: "Contra cronometru", rushT: "Cronometru · {n} rezolvate", time: "Timp {s}s · țintă {p}", rushEnd: "Timpul a expirat!", rushScore: "Puzzle-uri rezolvate: {n}", rushBest: "Record: {n}", newBest: "Record nou!", streak: "Serie: {n} zile" },
-  ru: { tag: "Поворачивайте плитки и ведите свет фонаря к каждому кристаллу.", play: "Играть", cont: "Продолжить · уровень {n}", levels: "Уровни", daily: "Головоломка дня", dailyDone: "Головоломка дня ✓", level: "Уровень {n}", dailyT: "День {d}", moves: "Ходы: {m} · цель {p}", solved: "Готово!", next: "Следующий уровень", menu: "Меню", again: "Ещё раз", hint: "Подсказка", noHints: "Подсказок нет. Пройдите уровень, чтобы получить одну.", watch: "Реклама: +3 подсказки", gotHints: "+3 подсказки", locked: "Открывается за {n} ★", lang: "RU", palette: "Цвета", total: "Собрано {n} ★", dailyBonus: "Бонус дня: +2 подсказки", tut: "Нажмите на плитку, чтобы повернуть. Зажгите все кристаллы.", rush: "На время", rushT: "На время · решено {n}", time: "Время {s}с · цель {p}", rushEnd: "Время вышло!", rushScore: "Решено головоломок: {n}", rushBest: "Рекорд: {n}", newBest: "Новый рекорд!", streak: "Серия: {n} дн." },
+  en: { tag: "Rotate the tiles and lead the lantern light to every crystal.", play: "Play", cont: "Continue · level {n}", levels: "Levels", daily: "Daily puzzle", dailyDone: "Daily puzzle ✓", level: "Level {n}", dailyT: "Daily {d}", moves: "Moves: {m} · par {p}", solved: "Solved!", next: "Next level", menu: "Menu", again: "Play again", hint: "Hint", noHints: "No hints left. Solve a level to earn one.", watch: "Watch ad: +3 hints", gotHints: "+3 hints", locked: "Unlock with {n} ★", lang: "EN", palette: "Colors", total: "{n} ★ collected", dailyBonus: "Daily bonus: +2 hints", tut: "Tap a tile to rotate it. Light every crystal.", rush: "Time rush", rushT: "Rush · {n} solved", time: "Time {s}s · par {p}", rushEnd: "Time's up!", rushScore: "Puzzles solved: {n}", rushBest: "Best: {n}", newBest: "New record!", streak: "Streak: {n} days", zen: "Zen mode", zenT: "Zen · {n} solved", zenS: "No timer, no moves count · 5 solved = +1 hint", zenHint: "Zen: +1 hint", whatsNew: "New in v{v}: Zen mode and 2 new color palettes" },
+  ro: { tag: "Rotește piesele și du lumina felinarului la fiecare cristal.", play: "Joacă", cont: "Continuă · nivelul {n}", levels: "Niveluri", daily: "Puzzle-ul zilei", dailyDone: "Puzzle-ul zilei ✓", level: "Nivelul {n}", dailyT: "Ziua {d}", moves: "Mutări: {m} · țintă {p}", solved: "Rezolvat!", next: "Nivelul următor", menu: "Meniu", again: "Încă o dată", hint: "Indiciu", noHints: "Nu mai ai indicii. Rezolvă un nivel ca să primești unul.", watch: "Reclamă: +3 indicii", gotHints: "+3 indicii", locked: "Se deblochează la {n} ★", lang: "RO", palette: "Culori", total: "{n} ★ adunate", dailyBonus: "Bonusul zilei: +2 indicii", tut: "Atinge o piesă ca s-o rotești. Aprinde toate cristalele.", rush: "Contra cronometru", rushT: "Cronometru · {n} rezolvate", time: "Timp {s}s · țintă {p}", rushEnd: "Timpul a expirat!", rushScore: "Puzzle-uri rezolvate: {n}", rushBest: "Record: {n}", newBest: "Record nou!", streak: "Serie: {n} zile", zen: "Mod Zen", zenT: "Zen · {n} rezolvate", zenS: "Fără cronometru, fără mutări numărate · 5 rezolvate = +1 indiciu", zenHint: "Zen: +1 indiciu", whatsNew: "Noutăți v{v}: modul Zen și 2 palete noi de culori" },
+  ru: { tag: "Поворачивайте плитки и ведите свет фонаря к каждому кристаллу.", play: "Играть", cont: "Продолжить · уровень {n}", levels: "Уровни", daily: "Головоломка дня", dailyDone: "Головоломка дня ✓", level: "Уровень {n}", dailyT: "День {d}", moves: "Ходы: {m} · цель {p}", solved: "Готово!", next: "Следующий уровень", menu: "Меню", again: "Ещё раз", hint: "Подсказка", noHints: "Подсказок нет. Пройдите уровень, чтобы получить одну.", watch: "Реклама: +3 подсказки", gotHints: "+3 подсказки", locked: "Открывается за {n} ★", lang: "RU", palette: "Цвета", total: "Собрано {n} ★", dailyBonus: "Бонус дня: +2 подсказки", tut: "Нажмите на плитку, чтобы повернуть. Зажгите все кристаллы.", rush: "На время", rushT: "На время · решено {n}", time: "Время {s}с · цель {p}", rushEnd: "Время вышло!", rushScore: "Решено головоломок: {n}", rushBest: "Рекорд: {n}", newBest: "Новый рекорд!", streak: "Серия: {n} дн.", zen: "Режим дзен", zenT: "Дзен · решено {n}", zenS: "Без таймера и подсчёта ходов · 5 решённых = +1 подсказка", zenHint: "Дзен: +1 подсказка", whatsNew: "Новое в v{v}: режим дзен и 2 новые палитры" },
 };
 const LANGS = ["en", "ro", "ru"];
 const PLATFORM = window.GAME_PLATFORM || "web";
@@ -96,12 +99,14 @@ function detectLang() {
 const t = (k, v = {}) => (T[S.lang][k] || T.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
 
 // ---------- Salvare ----------
-const KEY = "lumen-links-v1";
-let S = { lang: detectLang(), sound: true, level: 1, stars: {}, daily: {}, hints: 3, pal: 0, tut: false, rushBest: 0, streak: { n: 0, last: "" } };
+const KEY = "lumen-links-v1", VERSION = "1.2";
+let S = { lang: detectLang(), sound: true, level: 1, stars: {}, daily: {}, hints: 3, pal: 0, tut: false, rushBest: 0, streak: { n: 0, last: "" }, zen: 0, seen: null };
 // Store = localStorage; pe CrazyGames se înlocuiește cu Data Module din SDK (salvare legată de cont)
 let Store = null; try { Store = window.localStorage; } catch (e) {}
 function load() { try { const d = JSON.parse(Store.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {} }
 load();
+// mesaj „Noutăți” doar pentru jucătorii care aveau deja o salvare
+const showNews = S.seen !== VERSION && (S.seen !== null || S.level > 1 || S.tut); S.seen = VERSION;
 let muted = false; // mut cerut de platformă (CrazyGames)
 function save() { try { const o = Object.assign({}, S); delete o.soundWas; Store.setItem(KEY, JSON.stringify(o)); } catch (e) {} }
 const totalStars = () => Object.values(S.stars).reduce((a, b) => a + b, 0) + Object.keys(S.daily).length * 3;
@@ -114,6 +119,8 @@ const PALS = [
   { need: 120, lit: "#b8a1ff", glow: "#7b5cff", crystal: "#7cf5c8" },
   { need: 200, lit: "#e9ecff", glow: "#9be7ff", crystal: "#ffd166" },
   { need: 300, lit: "#9dffb0", glow: "#3ddc97", crystal: "#c77dff" }, // Aurora (v1.1)
+  { need: 400, lit: "#ffb26b", glow: "#ff5e3a", crystal: "#ffe9a8" }, // Jar (v1.2)
+  { need: 550, lit: "#6be4ff", glow: "#2f80ed", crystal: "#b8f5d0" }, // Ocean (v1.2)
 ];
 const pal = () => PALS[S.pal] || PALS[0];
 
@@ -176,6 +183,8 @@ const yesterday = () => { const d = new Date(); d.setDate(d.getDate() - 1); retu
 // Contra cronometru (v1.1): 120 s, puzzle-uri 4x4 apoi 5x5 de la al 4-lea; fiecare rezolvare dă +10 s
 const RUSH_TIME = 120, RUSH_BONUS = 10;
 const rushSize = k => k < 3 ? 4 : 5;
+// Mod Zen (v1.2): puzzle-uri fără sfârșit, fără cronometru; mărimea crește încet; la 5 rezolvate +1 indiciu
+const zenSize = k => k < 4 ? 5 : k < 12 ? 6 : 7;
 const dailySeed = d => d.split("-").reduce((a, x) => a * 100 + +x, 0) ^ 0x1234567;
 
 // ---------- Sunet (WebAudio, fără fișiere) ----------
@@ -276,6 +285,15 @@ function startRush() {
   G = { mode: "rush", k: 0, end: performance.now() + RUSH_TIME * 1000, seed: (Math.random() * 1e9) | 0, hintsUsed: 0 };
   nextRush(); show("game"); renderHud();
 }
+function startZen() {
+  G = { mode: "zen", k: 0, seed: (Math.random() * 1e9) | 0, hintsUsed: 0 };
+  nextZen(); show("game"); renderHud(); toast(t("zenS"), 2600);
+}
+function nextZen() {
+  const s = zenSize(G.k);
+  Object.assign(G, { lv: genLevel(G.seed + G.k * 104729, s, s), moves: 0, hist: [], anim: {}, done: false });
+  G.litPrev = litSet(G.lv).filter(Boolean).length; resize();
+}
 function nextRush() {
   const s = rushSize(G.k);
   Object.assign(G, { lv: genLevel(G.seed + G.k * 7919, s, s), moves: 0, hist: [], anim: {}, done: false });
@@ -338,6 +356,12 @@ function win() {
     G.k++; G.end += RUSH_BONUS * 1000; sfx.win(); toast("+" + RUSH_BONUS + "s", 900);
     nextRush(); renderHud(); return;
   }
+  if (G.mode === "zen") { // după o pauză scurtă, următorul puzzle
+    G.done = true; G.k++; S.zen = (S.zen || 0) + 1; sfx.win();
+    if (S.zen % 5 === 0) { S.hints = Math.min(S.hints + 1, 99); toast(t("zenHint"), 1200); }
+    S.tut = true; save(); renderHud();
+    setTimeout(() => { if (G && G.mode === "zen" && G.done) { nextZen(); renderHud(); } }, 700); return;
+  }
   G.done = true; sfx.win(); if (Ads.a && Ads.a.happy) Ads.a.happy();
   let st = 3, title;
   if (G.mode === "level") {
@@ -372,8 +396,8 @@ function toast(msg, ms = 2200) { const e = $("toast"); e.textContent = msg; e.st
 // ---------- UI ----------
 function renderHud() {
   if (!G) return;
-  $("hTitle").textContent = G.mode === "level" ? t("level", { n: G.n }) : G.mode === "rush" ? t("rushT", { n: G.k }) : t("dailyT", { d: G.d });
-  $("hMoves").textContent = G.mode === "rush" ? t("time", { s: rushLeft(), p: G.lv.par }) : t("moves", { m: G.moves, p: G.lv.par });
+  $("hTitle").textContent = G.mode === "level" ? t("level", { n: G.n }) : G.mode === "rush" ? t("rushT", { n: G.k }) : G.mode === "zen" ? t("zenT", { n: G.k }) : t("dailyT", { d: G.d });
+  $("hMoves").textContent = G.mode === "rush" ? t("time", { s: rushLeft(), p: G.lv.par }) : G.mode === "zen" ? "∞ · " + (S.zen || 0) + " ✦" : t("moves", { m: G.moves, p: G.lv.par });
   $("bHint").textContent = "💡" + S.hints;
   $("bUndo").disabled = !G.hist.length;
 }
@@ -383,6 +407,7 @@ function renderMenu() {
   const sk = S.streak && (S.streak.last === today() || S.streak.last === yesterday()) ? S.streak.n : 0;
   $("bDaily").textContent = (S.daily[today()] ? t("dailyDone") : t("daily")) + (sk > 1 ? " 🔥" + sk : "");
   $("bRush").textContent = "⏱ " + t("rush") + (S.rushBest ? " · " + S.rushBest : "");
+  $("bZen").textContent = "🌙 " + t("zen") + (S.zen ? " · " + S.zen : "");
   $("bLang").textContent = "🌐 " + t("lang");
   $("bSound").textContent = S.sound ? "🔊" : "🔇";
   const ts = totalStars(); $("menuStars").textContent = t("total", { n: ts });
@@ -401,13 +426,14 @@ $("bPlay").onclick = () => startLevel(S.level);
 $("bLevels").onclick = () => { renderLevels(); show("levels"); };
 $("bDaily").onclick = startDaily;
 $("bRush").onclick = startRush;
+$("bZen").onclick = startZen;
 $("bLang").onclick = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); renderMenu(); };
 $("bSound").onclick = () => { S.sound = !S.sound; save(); renderMenu(); };
 document.querySelectorAll("[data-back]").forEach(b => b.onclick = toMenu);
 $("bBack").onclick = toMenu;
 $("bUndo").onclick = undo;
 $("bHint").onclick = hint;
-$("bRestart").onclick = () => G && (G.mode === "level" ? startLevel(G.n) : G.mode === "rush" ? startRush() : startDaily());
+$("bRestart").onclick = () => G && (G.mode === "level" ? startLevel(G.n) : G.mode === "rush" ? startRush() : G.mode === "zen" ? startZen() : startDaily());
 addEventListener("keydown", e => { if (e.key === "z" && (e.ctrlKey || e.metaKey)) undo(); if (e.key === "Escape") { closeOverlay(); toMenu(); } });
 
 // ---------- Desen ----------
@@ -470,7 +496,8 @@ function draw(now) {
     ctx.restore();
   }
 }
-renderMenu();
+renderMenu(); save();
+if (showNews) setTimeout(() => toast(t("whatsNew", { v: VERSION }), 3000), 500);
 requestAnimationFrame(draw);
 Ads.init();
 </script>
