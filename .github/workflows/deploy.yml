@@ -34,6 +34,8 @@ jobs:
         run: node lumen/tests/run.js
       - name: Teste Lumen Links v1.1
         run: node lumen/tests/v11.js
+      - name: Teste Lumen Links v1.2
+        run: node lumen/tests/v12.js
       - name: Teste Paper River
         run: node river/tests/run.js
       - name: Teste Paper River v1.1
