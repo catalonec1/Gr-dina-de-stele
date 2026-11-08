@@ -90,6 +90,8 @@ jobs:
           cp putt/index.html putt/launch/cover-630x500.png putt/launch/icon-512.png dist/web/putt/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
+      - name: Pagini extensii Pocket (suport + confidențialitate)
+        run: cp -r extensions dist/web/
       - name: Fișe gratuite de printat în /printabile/
         run: |
           mkdir -p dist/web/printabile
