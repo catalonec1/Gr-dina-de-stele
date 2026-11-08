@@ -44,6 +44,8 @@ jobs:
         run: node river/tests/v11.js
       - name: Teste Hive Bloom
         run: node hive/tests/run.js
+      - name: Teste Pebble Putt
+        run: node putt/tests/run.js
 
   deploy:
     needs: test
@@ -76,6 +78,10 @@ jobs:
         run: |
           mkdir -p dist/web/hive
           cp hive/index.html hive/launch/cover-630x500.png hive/launch/icon-512.png dist/web/hive/
+      - name: Adaugă Pebble Putt în /putt/
+        run: |
+          mkdir -p dist/web/putt
+          cp putt/index.html putt/launch/cover-630x500.png putt/launch/icon-512.png dist/web/putt/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Fișe gratuite de printat în /printabile/
