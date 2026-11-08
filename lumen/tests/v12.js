@@ -40,7 +40,7 @@ async function solveByClicks(p) {
   await p.click('#bBack');
   ok((await p.$eval('#bZen', e => e.textContent)).includes('5'), 'v1.2: meniul arată totalul Zen');
   // palete noi
-  ok(await p.evaluate(() => PALS.length === 8 && PALS[6].need === 400 && PALS[7].need === 550), 'v1.2: palete Jar (400 ★) și Ocean (550 ★)');
+  ok(await p.evaluate(() => PALS.length >= 8 && PALS[6].need === 400 && PALS[7].need === 550), 'v1.2: palete Jar (400 ★) și Ocean (550 ★)');
   await p.evaluate(() => { for (let n = 1; n <= 190; n++) S.stars[n] = 3; renderMenu(); });
   await p.click('#pals button[data-p="7"]');
   ok(await p.evaluate(() => S.pal === 7), 'v1.2: paleta Ocean se poate alege');

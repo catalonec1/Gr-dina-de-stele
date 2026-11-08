@@ -91,7 +91,16 @@ await test('v1.2: misiunea „prinde luni”, culori noi, versiune în profil', 
   ['dusk', 'jade'].forEach(id => { const s = FO.skinById(id); assert(s && s.price > 2000 && !s.stars, id); });
   p.sparks = 3000; eq(FO.buySkin(p, 'dusk'), 'ok'); eq(FO.buySkin(p, 'jade'), 'poor');
   ['ro', 'en', 'ru'].forEach(l => ['m_moon', 'moon', 'whatsNew'].forEach(k => assert(FO.I18N[l][k], l + ':' + k)));
-  eq(FO.VERSION, '1.2');
+  assert(FO.VERSION >= '1.2');
+});
+
+await test('v1.3: culoarea Brad (6000), versiune nouă', () => {
+  const s = FO.skinById('pine'); assert(s && s.price === 6000 && !s.stars);
+  const p = FO.defaultProfile(); p.sparks = 5999; eq(FO.buySkin(p, 'pine'), 'poor');
+  p.sparks = 6000; eq(FO.buySkin(p, 'pine'), 'ok'); assert(FO.equipSkin(p, 'pine')); eq(p.skin, 'pine');
+  const back = FO.parseProfile(JSON.stringify(p)); eq(back.skin, 'pine');
+  ['ro', 'en', 'ru'].forEach(l => assert(FO.I18N[l].whatsNew.includes('6000'), l));
+  eq(FO.VERSION, '1.3');
 });
 
 // ---------------- v1.1: picături de aur, misiuni zilnice, culori noi ----------------
@@ -483,7 +492,7 @@ if (chromium) {
 
   await test('v1.2: luna în joc, culorile noi în magazin', async () => {
     const { page, ctx, errors } = await openPage({ lang: 'en' });
-    eq(await page.evaluate(() => window.__fo.profile.seen), '1.2');
+    eq(await page.evaluate(() => window.__fo.profile.seen), FO.VERSION);
     await page.click('#btnShop');
     eq(await page.$$eval('#skinGrid .card', c => c.length), FO.SKINS.length);
     await page.click('#btnShopBack');
@@ -494,12 +503,12 @@ if (chromium) {
     await page.screenshot({ path: path.join(outDir, 'v12-moon.png') });
     eq(errors.length, 0, errors.join(' | ')); await ctx.close();
   });
-  await test('v1.2: mesaj Noutăți doar pentru jucătorii vechi', async () => {
+  await test('v1.2+: mesaj Noutăți doar pentru jucătorii vechi', async () => {
     const { page, ctx, errors } = await openPage({ telegram: false, lang: 'en' });
     await page.evaluate(() => { localStorage.setItem('fo_profile', JSON.stringify({ v: 1, best: 40, sparks: 10, runs: 5, skin: 'amber', owned: ['skin:amber'], lang: 'en', seen: '1.1' })); });
     await page.reload(); await page.waitForFunction(() => window.__fo);
-    await page.waitForFunction(() => document.getElementById('toast').textContent.includes('1.2'), null, { timeout: 3000 });
-    assert((await page.textContent('#toast')).includes('moon'));
+    await page.waitForFunction(() => document.getElementById('toast').textContent.includes(window.__fo ? FO.VERSION : '1.3') || document.getElementById('toast').textContent.includes('1.3'), null, { timeout: 3000 });
+    assert((await page.textContent('#toast')).includes('Pine'));
     eq(errors.length, 0, errors.join(' | ')); await ctx.close();
   });
 

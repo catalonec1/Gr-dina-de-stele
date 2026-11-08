@@ -136,11 +136,16 @@ const BOT = (maxMoves) => {
   // 8. magazin de teme
   await p.evaluate(() => { S.coins = 300; save(); });
   await p.click('#bShop');
-  ok(await p.$$eval('.sk', e => e.length) === 6, '6 teme în magazin');
+  ok(await p.$$eval('.sk', e => e.length) === 7, '7 teme în magazin (v1.1: Iarnă)');
   await p.click('.sk[data-i="1"] button');
   ok(await p.evaluate(() => S.skin === 1 && S.owned.includes(1) && S.coins === 220), 'cumpărare temă Levănțică (80)');
   ok(await p.$eval('.sk[data-i="3"] button', e => e.disabled), 'tema de 400 e blocată fără miere');
   await p.click('.sk[data-i="0"] button'); ok(await p.evaluate(() => S.skin === 0), 'alegerea altei teme deținute');
+  await p.evaluate(() => { S.coins = 1300; save(); renderShop(); });
+  await p.click('.sk[data-i="6"] button');
+  ok(await p.evaluate(() => S.skin === 6 && SKINS[6].snow && S.coins === 0 && VERSION === '1.1' && S.seen === VERSION), 'v1.1: tema Iarnă (1300 🍯) cu ninsoare, versiune salvată');
+  ok(await p.evaluate(() => { const fr = []; for (let i = 0; i < 3; i++) draw(1000 + i * 500); return true; }), 'v1.1: desenarea temei Iarnă fără erori');
+  await p.click('.sk[data-i="0"] button');
   await p.click('#bShopBack');
 
   // 9. stupul zilei: același seed pentru toată ziua, record separat

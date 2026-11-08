@@ -84,15 +84,15 @@ button:disabled{opacity:.45}
 "use strict";
 // ---------- Texte (RO / EN / RU) ----------
 const T = {
-  en: { tag: "Steer a paper boat down the river at dusk. Collect lanterns, dodge rocks and logs.", play: "Play", daily: "Daily river", dailyBest: "Daily river · best {n} m", boats: "Boats", best: "Best: {n} m", over: "The boat ran aground!", dist: "Distance", lanterns: "Lanterns: +{n} 🏮", newBest: "New record!", again: "Play again", menu: "Menu", revive: "Continue · {n} 🏮", paused: "Paused", resume: "Resume", tut: "Drag left or right to steer. Collect lanterns 🏮, avoid rocks.", tutKeys: "Keyboard: A / D or ← →", shield: "Lotus shield!", magnet: "Lantern magnet!", saved: "The lotus saved you!", buy: "Buy · {n} 🏮", use: "Use", inUse: "Selected", noCoins: "Not enough lanterns", sound: "Sound", music: "Music", lang: "EN", quests: "Quests", questsTitle: "Today's quests", claim: "Claim +{n} 🏮", done: "Done ✓", close: "Close", goldLan: "Golden lantern +5!", whatsNew: "New in v{v}: daily quests, golden lanterns and 2 new boats",
+  en: { tag: "Steer a paper boat down the river at dusk. Collect lanterns, dodge rocks and logs.", play: "Play", daily: "Daily river", dailyBest: "Daily river · best {n} m", boats: "Boats", best: "Best: {n} m", over: "The boat ran aground!", dist: "Distance", lanterns: "Lanterns: +{n} 🏮", newBest: "New record!", again: "Play again", menu: "Menu", revive: "Continue · {n} 🏮", paused: "Paused", resume: "Resume", tut: "Drag left or right to steer. Collect lanterns 🏮, avoid rocks.", tutKeys: "Keyboard: A / D or ← →", shield: "Lotus shield!", magnet: "Lantern magnet!", saved: "The lotus saved you!", buy: "Buy · {n} 🏮", use: "Use", inUse: "Selected", noCoins: "Not enough lanterns", sound: "Sound", music: "Music", lang: "EN", quests: "Quests", questsTitle: "Today's quests", claim: "Claim +{n} 🏮", done: "Done ✓", close: "Close", goldLan: "Golden lantern +5!", whatsNew: "New in v{v}: the Ice boat with a frosty sparkle",
     q: { lan: "Collect {n} lanterns", dist: "Sail {n} m in one run", power: "Pick up {n} power-ups", runs: "Play {n} runs", gold: "Find {n} golden lanterns" },
-    skins: ["Paper", "Lotus", "Sky", "Golden", "Night ink", "Aurora", "Crane", "Ember"] },
-  ro: { tag: "Condu o bărcuță de hârtie pe râu, la apus. Adună felinare, ocolește stâncile și buștenii.", play: "Joacă", daily: "Râul zilei", dailyBest: "Râul zilei · record {n} m", boats: "Bărci", best: "Record: {n} m", over: "Barca s-a împotmolit!", dist: "Distanța", lanterns: "Felinare: +{n} 🏮", newBest: "Record nou!", again: "Încă o dată", menu: "Meniu", revive: "Continuă · {n} 🏮", paused: "Pauză", resume: "Continuă", tut: "Trage stânga sau dreapta ca să cârmești. Adună felinare 🏮, ocolește stâncile.", tutKeys: "Tastatură: A / D sau ← →", shield: "Scut de lotus!", magnet: "Magnet de felinare!", saved: "Lotusul te-a salvat!", buy: "Cumpără · {n} 🏮", use: "Alege", inUse: "Aleasă", noCoins: "Nu ai destule felinare", sound: "Sunet", music: "Muzică", lang: "RO", quests: "Misiuni", questsTitle: "Misiunile zilei", claim: "Ia +{n} 🏮", done: "Gata ✓", close: "Închide", goldLan: "Felinar de aur +5!", whatsNew: "Noutăți v{v}: misiuni zilnice, felinare de aur și 2 bărci noi",
+    skins: ["Paper", "Lotus", "Sky", "Golden", "Night ink", "Aurora", "Crane", "Ember", "Ice"] },
+  ro: { tag: "Condu o bărcuță de hârtie pe râu, la apus. Adună felinare, ocolește stâncile și buștenii.", play: "Joacă", daily: "Râul zilei", dailyBest: "Râul zilei · record {n} m", boats: "Bărci", best: "Record: {n} m", over: "Barca s-a împotmolit!", dist: "Distanța", lanterns: "Felinare: +{n} 🏮", newBest: "Record nou!", again: "Încă o dată", menu: "Meniu", revive: "Continuă · {n} 🏮", paused: "Pauză", resume: "Continuă", tut: "Trage stânga sau dreapta ca să cârmești. Adună felinare 🏮, ocolește stâncile.", tutKeys: "Tastatură: A / D sau ← →", shield: "Scut de lotus!", magnet: "Magnet de felinare!", saved: "Lotusul te-a salvat!", buy: "Cumpără · {n} 🏮", use: "Alege", inUse: "Aleasă", noCoins: "Nu ai destule felinare", sound: "Sunet", music: "Muzică", lang: "RO", quests: "Misiuni", questsTitle: "Misiunile zilei", claim: "Ia +{n} 🏮", done: "Gata ✓", close: "Închide", goldLan: "Felinar de aur +5!", whatsNew: "Noutăți v{v}: barca de Gheață, cu sclipiri de chiciură",
     q: { lan: "Adună {n} felinare", dist: "Navighează {n} m într-o tură", power: "Prinde {n} puteri", runs: "Joacă {n} ture", gold: "Găsește {n} felinare de aur" },
-    skins: ["Hârtie", "Lotus", "Cer", "Aurie", "Cerneală", "Auroră", "Cocor", "Jar"] },
-  ru: { tag: "Ведите бумажный кораблик по реке на закате. Собирайте фонарики, обходите камни и брёвна.", play: "Играть", daily: "Река дня", dailyBest: "Река дня · рекорд {n} м", boats: "Кораблики", best: "Рекорд: {n} м", over: "Кораблик сел на мель!", dist: "Расстояние", lanterns: "Фонарики: +{n} 🏮", newBest: "Новый рекорд!", again: "Ещё раз", menu: "Меню", revive: "Продолжить · {n} 🏮", paused: "Пауза", resume: "Продолжить", tut: "Тяните влево или вправо, чтобы рулить. Собирайте фонарики 🏮, обходите камни.", tutKeys: "Клавиатура: A / D или ← →", shield: "Щит лотоса!", magnet: "Магнит фонариков!", saved: "Лотос спас вас!", buy: "Купить · {n} 🏮", use: "Выбрать", inUse: "Выбран", noCoins: "Не хватает фонариков", sound: "Звук", music: "Музыка", lang: "RU", quests: "Задания", questsTitle: "Задания дня", claim: "Забрать +{n} 🏮", done: "Готово ✓", close: "Закрыть", goldLan: "Золотой фонарик +5!", whatsNew: "Новое в v{v}: ежедневные задания, золотые фонарики и 2 новых кораблика",
+    skins: ["Hârtie", "Lotus", "Cer", "Aurie", "Cerneală", "Auroră", "Cocor", "Jar", "Gheață"] },
+  ru: { tag: "Ведите бумажный кораблик по реке на закате. Собирайте фонарики, обходите камни и брёвна.", play: "Играть", daily: "Река дня", dailyBest: "Река дня · рекорд {n} м", boats: "Кораблики", best: "Рекорд: {n} м", over: "Кораблик сел на мель!", dist: "Расстояние", lanterns: "Фонарики: +{n} 🏮", newBest: "Новый рекорд!", again: "Ещё раз", menu: "Меню", revive: "Продолжить · {n} 🏮", paused: "Пауза", resume: "Продолжить", tut: "Тяните влево или вправо, чтобы рулить. Собирайте фонарики 🏮, обходите камни.", tutKeys: "Клавиатура: A / D или ← →", shield: "Щит лотоса!", magnet: "Магнит фонариков!", saved: "Лотос спас вас!", buy: "Купить · {n} 🏮", use: "Выбрать", inUse: "Выбран", noCoins: "Не хватает фонариков", sound: "Звук", music: "Музыка", lang: "RU", quests: "Задания", questsTitle: "Задания дня", claim: "Забрать +{n} 🏮", done: "Готово ✓", close: "Закрыть", goldLan: "Золотой фонарик +5!", whatsNew: "Новое в v{v}: Ледяной кораблик с инеем",
     q: { lan: "Соберите {n} фонариков", dist: "Проплывите {n} м за один заплыв", power: "Подберите усилений: {n}", runs: "Сыграйте заплывов: {n}", gold: "Найдите золотых фонариков: {n}" },
-    skins: ["Бумага", "Лотос", "Небо", "Золото", "Тушь", "Сияние", "Журавль", "Уголёк"] },
+    skins: ["Бумага", "Лотос", "Небо", "Золото", "Тушь", "Сияние", "Журавль", "Уголёк", "Лёд"] },
 };
 const LANGS = ["en", "ro", "ru"];
 function detectLang() {
@@ -102,7 +102,7 @@ function detectLang() {
 const t = (k, v = {}) => String(T[S.lang][k] ?? T.en[k]).replace(/\{(\w+)\}/g, (_, x) => v[x]);
 
 // ---------- Salvare ----------
-const KEY = "paper-river-v1", VERSION = "1.1";
+const KEY = "paper-river-v1", VERSION = "1.2";
 let S = { lang: detectLang(), sound: true, music: true, best: 0, coins: 0, owned: [0], skin: 0, daily: {}, tut: false, runs: 0, quests: null, seen: null };
 let Store = null; try { Store = window.localStorage; } catch (e) {}
 try { const d = JSON.parse(Store.getItem(KEY)); if (d) S = Object.assign(S, d); } catch (e) {}
@@ -121,6 +121,7 @@ const SKINS = [
   { price: 800, hull: "#9cf6d4", sail: "#d9b8ff", edge: "#5a7bd8", aurora: true },
   { price: 1100, hull: "#fbfbf6", sail: "#e63946", edge: "#8d99ae" },
   { price: 1500, hull: "#3d1f14", sail: "#ff7b2e", edge: "#ffb347", ember: true },
+  { price: 2000, hull: "#e8f6ff", sail: "#bfe6ff", edge: "#5fa8d3", frost: true }, // Gheață (v1.2)
 ];
 // ---------- Misiuni zilnice (v1.1): 3 pe zi, alese determinist după dată ----------
 const QUEST_POOL = [
@@ -403,6 +404,7 @@ function drawBoat(c, sk, x, y, tilt, time = 0) {
   if (sk.ember) sail = `hsl(${20 + 14 * Math.sin(time * 7)},100%,${58 + 8 * Math.sin(time * 11)}%)`;
   c.fillStyle = sail; c.strokeStyle = sk.edge; c.beginPath(); c.moveTo(0, -11); c.lineTo(6, 4); c.lineTo(-5, 4); c.closePath(); c.fill(); c.stroke();
   c.strokeStyle = sk.edge; c.beginPath(); c.moveTo(0, -11); c.lineTo(0, 5); c.stroke();
+  if (sk.frost) { c.fillStyle = "#ffffff"; for (let i = 0; i < 4; i++) { const a = time * 2 + i * 1.57, r = 11 + 2 * Math.sin(time * 3 + i); c.globalAlpha = 0.5 + 0.5 * Math.sin(time * 5 + i * 2); c.fillRect(Math.cos(a) * r - 1, Math.sin(a) * r - 1, 2, 2); } c.globalAlpha = 1; }
   c.restore();
 }
 function drawLantern(c, x, y, s, time, k) {
