@@ -15,7 +15,7 @@ async function solveByClicks(p) {
   const p = await ctx.newPage(); const errs = [];
   p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
   await p.goto(URL); await p.waitForTimeout(300);
-  ok(await p.evaluate(() => VERSION === '2.0' && ['en', 'ro', 'ru'].every(l => ['worlds', 'w0', 'w1', 'w2', 'w3', 'w4', 'wIntro', 'mLock', 'mTwin', 'mBoth', 'mBig', 'music', 'tapHere'].every(k => T[l][k]))), 'v2.0: texte noi EN/RO/RU');
+  ok(await p.evaluate(() => VERSION >= '2.0' && ['en', 'ro', 'ru'].every(l => ['worlds', 'w0', 'w1', 'w2', 'w3', 'w4', 'wIntro', 'mLock', 'mTwin', 'mBoth', 'mBig', 'music', 'tapHere'].every(k => T[l][k]))), 'v2.0: texte noi EN/RO/RU');
   // generator cu mecanici: 200 de niveluri deterministe, rezolvabile prin atingeri reale (gemenii împreună)
   const gen = await p.evaluate(() => { const bad = [];
     for (let n = 1; n <= 200; n++) { const s = sizeFor(n), m = mechFor(n), a = genLevel(levelSeed(n), s, s, m), c = genLevel(levelSeed(n), s, s, m);

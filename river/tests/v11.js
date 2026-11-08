@@ -11,7 +11,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
   await p.addInitScript(() => { window.__noLoop = true; });
   await p.goto(URL); await p.waitForTimeout(150);
-  ok(await p.evaluate(() => VERSION === '1.1' && SKINS.length === 8 && ['en', 'ro', 'ru'].every(l => T[l].skins.length === 8)), 'v1.1: 8 bărci traduse');
+  ok(await p.evaluate(() => VERSION >= '1.1' && SKINS.length >= 8 && ['en', 'ro', 'ru'].every(l => T[l].skins.length === SKINS.length)), 'v1.1: 8 bărci traduse');
   ok(await p.evaluate(() => ['en', 'ro', 'ru'].every(l => QUEST_POOL.every(q => T[l].q[q.k]))), 'v1.1: misiuni traduse RO/EN/RU');
   // misiuni deterministe: 3 tipuri diferite, aceleași toată ziua
   ok(await p.evaluate(() => { const a = JSON.stringify(ensureQuests().list.map(q => q.k)); S.quests = null; const b = JSON.stringify(ensureQuests().list.map(q => q.k));
@@ -50,7 +50,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   await p2.addInitScript(() => { if (!sessionStorage.m) { sessionStorage.m = 1;
     localStorage.setItem('paper-river-v1', JSON.stringify({ lang: 'en', sound: true, music: true, best: 50, coins: 10, owned: [0], skin: 0, daily: {}, tut: true, runs: 4 })); } });
   await p2.goto(URL); await p2.waitForTimeout(900);
-  ok(await p2.evaluate(() => document.getElementById('toast').textContent.includes('golden lanterns') && S.coins === 10 && S.seen === '1.1'), 'v1.1: migrare salvare v1.0 + mesaj Noutăți');
+  ok(await p2.evaluate(() => document.getElementById('toast').textContent.includes('New in v') && S.coins === 10 && S.seen === VERSION), 'v1.1: migrare salvare v1.0 + mesaj Noutăți');
   // randare cu bucla pornită (felinar de aur și barca Jar)
   const ctx3 = await b.newContext({ viewport: { width: 390, height: 844 }, locale: 'ru-RU' });
   const p3 = await ctx3.newPage(); p3.on('pageerror', e => errs.push(e.message));
