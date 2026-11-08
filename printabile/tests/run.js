@@ -123,8 +123,32 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
     ok(f.errs.length === 0, `fracții: fără erori în consolă (${lang})`);
   }
 
+
+  // Modele (ce urmează?): reguli corecte pe nivel, 6 rânduri, 2 căsuțe goale, răspunsuri în cheie
+  const RULES = { easy: ['AB'], medium: ['AAB', 'ABB'], hard: ['ABC', 'AABB'] };
+  const PER = { AB: [0, 1], AAB: [0, 0, 1], ABB: [0, 1, 1], ABC: [0, 1, 2], AABB: [0, 0, 1, 1] };
+  for (const lang of ['ro', 'en', 'ru']) {
+    const f = await open(`?lang=${lang}&k=pat`);
+    let good = true;
+    for (const level of ['easy', 'medium', 'hard']) {
+      await f.selectOption('#level', level);
+      for (let i = 0; i < 5; i++) {
+        await f.click('#new');
+        const r = await f.evaluate(() => ({ ps: window.__last.pats,
+          slots: document.querySelectorAll('#out > .pats .slot').length,
+          keyShapes: [...document.querySelectorAll('.key .pats .row')].map(x => x.querySelectorAll('svg').length) }));
+        good = good && r.ps.length === 6 && r.slots === 12 && r.keyShapes.every(n => n === 8) &&
+          r.ps.every(p => RULES[level].includes(p.rule) && new Set(p.shown).size === new Set(PER[p.rule]).size &&
+            [...p.shown, ...p.next].every((s, j, all) => s === all[j % PER[p.rule].length]) &&
+            PER[p.rule].every((k, j) => PER[p.rule].every((k2, j2) => (k === k2) === (p.shown[j] === p.shown[j2]))));
+      }
+    }
+    ok(good, `modele ${lang}: 6 rânduri, regula nivelului respectată, 2 căsuțe goale, cheia are răspunsul`);
+    ok(f.errs.length === 0, `modele: fără erori în consolă (${lang})`);
+  }
+
   // Mobil: fără scroll orizontal
-  for (const k of ['maze', 'words', 'math', 'clock', 'frac']) {
+  for (const k of ['maze', 'words', 'math', 'clock', 'frac', 'pat']) {
     const m = await open(`?k=${k}&lang=ru`, { width: 360, height: 740 });
     if (k === 'words') await m.selectOption('#level', 'hard');
     ok(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `mobil 360px fără scroll orizontal (${k})`);
@@ -138,7 +162,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
 
   // Linkuri către produsele proprii
   const links = await p.$$eval('.cards a', as => as.map(a => a.href));
-  ok(links.length === 7 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
+  ok(links.length === 8 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
 
   await b.close();
   console.log(fails ? `\n${fails} teste au eșuat` : '\nToate testele au trecut');

@@ -47,6 +47,11 @@ button:focus-visible,select:focus-visible{outline:3px solid #f2b705;outline-offs
 .fracs figure small{justify-self:start;color:var(--muted)}
 .fracs svg{width:100%;max-width:150px;height:auto}
 .fracs figcaption{font:600 20px/1.1 ui-monospace,Menlo,monospace;display:grid;justify-items:center}
+.pats{display:grid;gap:18px;max-width:680px;margin:0 auto}
+.pats .row{display:flex;align-items:center;gap:6px}
+.pats .row small{flex:none;width:22px;color:var(--muted)}
+.pats svg{flex:1 1 0;min-width:0;max-width:62px;height:auto}
+.pats .slot{flex:1 1 0;min-width:0;max-width:62px;aspect-ratio:1;border:2px dashed #1d2433;border-radius:8px;box-sizing:border-box}
 .fracs figcaption i{font-style:normal;border-top:2px solid currentColor;padding:0 6px}
 .key{font-size:13px;color:var(--muted)}
 .promo{margin-top:22px;display:grid;gap:10px}
@@ -84,6 +89,7 @@ footer{margin-top:24px;color:var(--muted);font-size:13px}
   <button role="tab" data-k="math" id="tab-math"></button>
   <button role="tab" data-k="clock" id="tab-clock"></button>
   <button role="tab" data-k="frac" id="tab-frac"></button>
+  <button role="tab" data-k="pat" id="tab-pat"></button>
 </div>
 <div class="panel">
   <div class="controls" id="controls"></div>
@@ -102,6 +108,7 @@ footer{margin-top:24px;color:var(--muted);font-size:13px}
     <a id="p-free" href="https://payhip.com/b/HfnBT"><b>Free sample pack</b><small></small></a>
     <a id="p-clock" href="https://payhip.com/b/HPF3W"><b>Telling Time</b><small></small></a>
     <a id="p-frac" href="https://payhip.com/b/ufZr8"><b>Fractions</b><small></small></a>
+    <a id="p-shape" href="https://payhip.com/b/d8vrF"><b>Shapes &amp; Patterns</b><small></small></a>
   </div>
 </section>
 <footer id="t-foot"></footer>
@@ -109,33 +116,36 @@ footer{margin-top:24px;color:var(--muted);font-size:13px}
 <script>
 'use strict';
 const T={
- ro:{title:'Fișe gratuite de printat',sub:'Labirinturi, cuvinte ascunse, matematică, ceasul și fracții pentru copii. Alegi nivelul, apeși „Altă fișă” și printezi sau salvezi ca PDF. Gratuit, fără cont.',
+ ro:{title:'Fișe gratuite de printat',sub:'Labirinturi, cuvinte ascunse, matematică, ceasul, fracții și modele cu forme pentru copii. Alegi nivelul, apeși „Altă fișă” și printezi sau salvezi ca PDF. Gratuit, fără cont.',
   maze:'Labirint',words:'Cuvinte ascunse',math:'Matematică',level:'Nivel',easy:'Ușor',medium:'Mediu',hard:'Greu',theme:'Temă',op:'Operație',range:'Numere până la',
   add:'Adunare',subt:'Scădere',mix:'Amestec',newb:'Altă fișă',print:'Printează / PDF',name:'Nume: ____________',
   mazeT:'Ajută racheta să ajungă la stea!',wordsT:'Găsește cuvintele',mathT:'Calculează',key:'Răspunsuri',
-  more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',clockP:'Fișe cu ceasul, 20 de pagini (PDF)',fracP:'Fișe cu fracții, 16 pagini (PDF)',
+  more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',clockP:'Fișe cu ceasul, 20 de pagini (PDF)',fracP:'Fișe cu fracții, 16 pagini (PDF)',shapeP:'Forme și modele, 4–7 ani (PDF)',
   foot:'Fișele sunt generate în browser; poți să le printezi liber pentru acasă sau pentru clasă.',
   themes:{space:'Spațiu',animals:'Animale',fruits:'Fructe'},
   clock:'Ceasul',clockRead:'Cât este ceasul? Scrie ora.',clockDraw:'Desenează acele ceasului.',mode:'Exercițiu',readM:'Citește ceasul',drawM:'Desenează acele',lvClock:{easy:'Ore fixe și jumătăți',medium:'Sferturi',hard:'Din 5 în 5 minute'},
-  frac:'Fracții',fracName:'Ce fracție este colorată? Scrie fracția.',fracShade:'Colorează fracția.',nameM:'Scrie fracția',shadeM:'Colorează',lvFrac:{easy:'Jumătăți și sferturi',medium:'Treimi și șesimi',hard:'De la 2 la 8 părți'}},
- en:{title:'Free printable worksheets',sub:'Mazes, word searches, math, telling time and fractions for kids. Pick a level, press “New sheet” and print or save as PDF. Free, no account.',
+  frac:'Fracții',fracName:'Ce fracție este colorată? Scrie fracția.',fracShade:'Colorează fracția.',nameM:'Scrie fracția',shadeM:'Colorează',lvFrac:{easy:'Jumătăți și sferturi',medium:'Treimi și șesimi',hard:'De la 2 la 8 părți'},
+  pat:'Modele',patT:'Ce urmează? Desenează următoarele două forme.',lvPat:{easy:'AB',medium:'AAB și ABB',hard:'ABC și AABB'}},
+ en:{title:'Free printable worksheets',sub:'Mazes, word searches, math, telling time, fractions and shape patterns for kids. Pick a level, press “New sheet” and print or save as PDF. Free, no account.',
   maze:'Maze',words:'Word search',math:'Math',level:'Level',easy:'Easy',medium:'Medium',hard:'Hard',theme:'Theme',op:'Operation',range:'Numbers up to',
   add:'Addition',subt:'Subtraction',mix:'Mixed',newb:'New sheet',print:'Print / PDF',name:'Name: ____________',
   mazeT:'Help the rocket reach the star!',wordsT:'Find the words',mathT:'Solve',key:'Answer key',
-  more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',clockP:'Telling time workbook, 20 pages (PDF)',fracP:'Fractions workbook, 16 pages (PDF)',
+  more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',clockP:'Telling time workbook, 20 pages (PDF)',fracP:'Fractions workbook, 16 pages (PDF)',shapeP:'Shapes & patterns, ages 4–7 (PDF)',
   foot:'Sheets are generated in your browser; print them freely for home or classroom use.',
   themes:{space:'Space',animals:'Animals',fruits:'Fruits'},
   clock:'Clock',clockRead:'What time is it? Write the time.',clockDraw:'Draw the clock hands.',mode:'Exercise',readM:'Read the clock',drawM:'Draw the hands',lvClock:{easy:'O’clock and half past',medium:'Quarter past / to',hard:'Every 5 minutes'},
-  frac:'Fractions',fracName:'What fraction is shaded? Write the fraction.',fracShade:'Shade the fraction.',nameM:'Write the fraction',shadeM:'Shade',lvFrac:{easy:'Halves and quarters',medium:'Thirds and sixths',hard:'2 to 8 parts'}},
+  frac:'Fractions',fracName:'What fraction is shaded? Write the fraction.',fracShade:'Shade the fraction.',nameM:'Write the fraction',shadeM:'Shade',lvFrac:{easy:'Halves and quarters',medium:'Thirds and sixths',hard:'2 to 8 parts'},
+  pat:'Patterns',patT:'What comes next? Draw the next two shapes.',lvPat:{easy:'AB',medium:'AAB and ABB',hard:'ABC and AABB'}},
  ru:{title:'Бесплатные листы для печати',sub:'Лабиринты, поиск слов, математика, часы и дроби для детей. Выберите уровень, нажмите «Новый лист» и распечатайте или сохраните в PDF. Бесплатно, без регистрации.',
   maze:'Лабиринт',words:'Поиск слов',math:'Математика',level:'Уровень',easy:'Лёгкий',medium:'Средний',hard:'Сложный',theme:'Тема',op:'Действие',range:'Числа до',
   add:'Сложение',subt:'Вычитание',mix:'Смешанные',newb:'Новый лист',print:'Печать / PDF',name:'Имя: ____________',
   mazeT:'Помоги ракете добраться до звезды!',wordsT:'Найди слова',mathT:'Реши примеры',key:'Ответы',
-  more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',clockP:'Тетрадь «Часы», 20 страниц (PDF)',fracP:'Тетрадь «Дроби», 16 страниц (PDF)',
+  more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',clockP:'Тетрадь «Часы», 20 страниц (PDF)',fracP:'Тетрадь «Дроби», 16 страниц (PDF)',shapeP:'Фигуры и узоры, 4–7 лет (PDF)',
   foot:'Листы создаются в браузере; их можно свободно печатать для дома или класса.',
   themes:{space:'Космос',animals:'Животные',fruits:'Фрукты'},
   clock:'Часы',clockRead:'Который час? Запиши время.',clockDraw:'Нарисуй стрелки часов.',mode:'Задание',readM:'Определи время',drawM:'Нарисуй стрелки',lvClock:{easy:'Ровно и половина',medium:'Четверти',hard:'Каждые 5 минут'},
-  frac:'Дроби',fracName:'Какая часть закрашена? Запиши дробь.',fracShade:'Закрась дробь.',nameM:'Запиши дробь',shadeM:'Закрась',lvFrac:{easy:'Половины и четверти',medium:'Трети и шестые',hard:'От 2 до 8 частей'}}};
+  frac:'Дроби',fracName:'Какая часть закрашена? Запиши дробь.',fracShade:'Закрась дробь.',nameM:'Запиши дробь',shadeM:'Закрась',lvFrac:{easy:'Половины и четверти',medium:'Трети и шестые',hard:'От 2 до 8 частей'},
+  pat:'Узоры',patT:'Что дальше? Нарисуй две следующие фигуры.',lvPat:{easy:'AB',medium:'AAB и ABB',hard:'ABC и AABB'}}};
 const WORDS={
  ro:{space:['STEA','LUNA','SOARE','PLANETA','RACHETA','COMETA','GALAXIE','ORBITA','MARTE','SATELIT','ASTRONAUT','CRATER'],
      animals:['PISICA','CAINE','LEU','URS','VULPE','IEPURE','CAL','VACA','OAIE','LUP','BUFNITA','ARICI'],
@@ -224,6 +234,20 @@ function fracSVG(f,shade){const st='stroke="#1d2433" stroke-width="1.6"',on='#c9
   return `<svg viewBox="0 0 100 100" role="img" aria-label="${shade?f.k+'/'+f.d:''}">${p}</svg>`}
 const fracCap=(f,show)=>`<figcaption><span>${show?f.k:'__'}</span><i>${show?f.d:'__'}</i></figcaption>`;
 
+// Modele: șir de 6 forme după o regulă (AB, AAB...), copilul desenează următoarele 2
+const PAT_SHAPES=['circle','triangle','square','star','heart','hexagon'];
+const PAT_RULES={AB:[0,1],AAB:[0,0,1],ABB:[0,1,1],ABC:[0,1,2],AABB:[0,0,1,1]};
+function makePats(level,count,r){const rules={easy:['AB'],medium:['AAB','ABB'],hard:['ABC','AABB']}[level]||['AB'];const out=[];
+  for(let i=0;i<count;i++){const rule=rules[ri(r,rules.length)],sh=shuffle(r,PAT_SHAPES.slice()).slice(0,3),seq=PAT_RULES[rule].map(k=>sh[k]);
+    out.push({rule,shown:[0,1,2,3,4,5].map(j=>seq[j%seq.length]),next:[6,7].map(j=>seq[j%seq.length])});}return out}
+function shapeSVG(k){const st='fill="none" stroke="#1d2433" stroke-width="3" stroke-linejoin="round"';let b='';
+  if(k==='circle')b=`<circle cx="30" cy="30" r="22" ${st}/>`;
+  else if(k==='triangle')b=`<path d="M30 7 L54 51 L6 51 Z" ${st}/>`;
+  else if(k==='square')b=`<rect x="9" y="9" width="42" height="42" ${st}/>`;
+  else if(k==='star'){const p=[];for(let i=0;i<10;i++){const a=Math.PI/2+i*Math.PI/5,rr=i%2?10:24;p.push((30+rr*Math.cos(a)).toFixed(1)+' '+(32-rr*Math.sin(a)).toFixed(1))}b=`<path d="M${p.join(' L')} Z" ${st}/>`}
+  else if(k==='heart')b=`<path d="M30 52 C6 36 8 12 30 22 C52 12 54 36 30 52 Z" ${st}/>`;
+  else{const p=[];for(let i=0;i<6;i++){const a=i*Math.PI/3;p.push((30+23*Math.cos(a)).toFixed(1)+' '+(30+23*Math.sin(a)).toFixed(1))}b=`<path d="M${p.join(' L')} Z" ${st}/>`}
+  return `<svg viewBox="0 0 60 60" data-s="${k}" role="img" aria-label="${k}">${b}</svg>`}
 function makeMath(op,max,count,r){const out=[];
   for(let i=0;i<count;i++){const o=op==='mix'?(r()<.5?'+':'−'):(op==='add'?'+':'−');
     if(o==='+'){const a=ri(r,max+1),b=ri(r,max-a+1);out.push({a,b,o,res:a+b})}
@@ -233,7 +257,7 @@ function makeMath(op,max,count,r){const out=[];
 // Stare și interfață
 const qs=new URLSearchParams(location.search);
 let lang=(qs.get('lang')||(navigator.language||'ro').slice(0,2)).toLowerCase();if(!T[lang])lang='en';
-let kind=['maze','words','math','clock','frac'].includes(qs.get('k'))?qs.get('k'):'maze';
+let kind=['maze','words','math','clock','frac','pat'].includes(qs.get('k'))?qs.get('k'):'maze';
 let seed=+qs.get('seed')||Math.floor(Math.random()*1e9);
 const opt={level:'medium',theme:'space',op:'add',range:'20',mode:'read',fmode:'name'};
 for(const k in opt){const v=qs.get(k);if(v&&/^[a-z0-9]+$/.test(v))opt[k]=v}
@@ -242,6 +266,7 @@ function sel(id,label,vals){return `<label>${label}<select id="${id}">${vals.map
 function controls(){const t=T[lang];let h='';
   if(kind==='clock')h+=sel('level',t.level,[['easy',t.lvClock.easy],['medium',t.lvClock.medium],['hard',t.lvClock.hard]])+sel('mode',t.mode,[['read',t.readM],['draw',t.drawM]]);
   else if(kind==='frac')h+=sel('level',t.level,[['easy',t.lvFrac.easy],['medium',t.lvFrac.medium],['hard',t.lvFrac.hard]])+sel('fmode',t.mode,[['name',t.nameM],['shade',t.shadeM]]);
+  else if(kind==='pat')h+=sel('level',t.level,[['easy',t.lvPat.easy],['medium',t.lvPat.medium],['hard',t.lvPat.hard]]);
   else if(kind!=='math')h+=sel('level',t.level,[['easy',t.easy],['medium',t.medium],['hard',t.hard]]);
   if(kind==='words')h+=sel('theme',t.theme,Object.entries(t.themes));
   if(kind==='math')h+=sel('op',t.op,[['add',t.add],['sub',t.subt],['mix',t.mix]])+sel('range',t.range,[['10','10'],['20','20'],['100','100']]);
@@ -268,16 +293,19 @@ function render(){const t=T[lang],r=rng(seed);let html='',key='';
     $('sheet-title').textContent=nm?t.fracName:t.fracShade;
     html=`<div class="fracs">${fs.map((f,i)=>`<figure><small>${i+1})</small>${fracSVG(f,nm)}${fracCap(f,!nm)}</figure>`).join('')}</div>`;
     key=`<div class="fracs">${fs.map((f,i)=>`<figure><small>${i+1})</small>${fracSVG(f,true)}${fracCap(f,true)}</figure>`).join('')}</div>`;window.__last={kind,fracs:fs,fmode:opt.fmode};}
+  else if(kind==='pat'){const ps=makePats(opt.level,6,r);$('sheet-title').textContent=t.patT;
+    const row=(p,i,ans)=>`<div class="row"><small>${i+1})</small>${p.shown.map(shapeSVG).join('')}${ans?p.next.map(shapeSVG).join(''):'<span class="slot"></span><span class="slot"></span>'}</div>`;
+    html=`<div class="pats">${ps.map((p,i)=>row(p,i,false)).join('')}</div>`;key=`<div class="pats">${ps.map((p,i)=>row(p,i,true)).join('')}</div>`;window.__last={kind,pats:ps};}
   else{const m=makeMath(opt.op,+opt.range,24,r);$('sheet-title').textContent=t.mathT;
     html=`<div class="math">${m.map(p=>`<div>${p.a} ${p.o} ${p.b} = ____</div>`).join('')}</div>`;
     key=`<div class="math">${m.map(p=>`<div>${p.a} ${p.o} ${p.b} = ${p.res}</div>`).join('')}</div>`;window.__last={kind,math:m};}
   $('out').innerHTML=html+`<div class="key print-only"><b>${t.key}</b>${key}</div>`;
   const u=new URL(location.href);u.searchParams.set('lang',lang);u.searchParams.set('k',kind);u.searchParams.set('seed',seed);for(const k in opt)u.searchParams.set(k,opt[k]);history.replaceState(null,'',u);}
-function applyLang(){const t=T[lang];document.documentElement.lang=lang;document.title=t.title+' · '+t.maze+', '+t.words+', '+t.math+', '+t.clock+', '+t.frac;
+function applyLang(){const t=T[lang];document.documentElement.lang=lang;document.title=t.title+' · '+t.maze+', '+t.words+', '+t.math+', '+t.clock+', '+t.frac+', '+t.pat;
   $('t-title').textContent=t.title;$('t-sub').textContent=t.sub;$('t-name').textContent=t.name;$('t-more').textContent=t.more;$('t-foot').textContent=t.foot;
-  for(const k of ['maze','words','math','clock','frac']){const b=$('tab-'+k);b.textContent=t[k];b.setAttribute('aria-selected',k===kind)}
+  for(const k of ['maze','words','math','clock','frac','pat']){const b=$('tab-'+k);b.textContent=t[k];b.setAttribute('aria-selected',k===kind)}
   document.querySelectorAll('.langs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
-  const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP,'p-clock':t.clockP,'p-frac':t.fracP};
+  const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP,'p-clock':t.clockP,'p-frac':t.fracP,'p-shape':t.shapeP};
   for(const id in P){const a=$(id);a.querySelector('small').textContent=P[id];
     try{const u=new URL(a.href);if(u.hostname.endsWith('github.io')){u.searchParams.set('utm_source','printabile');a.href=u}}catch(e){}
     a.target='_blank';a.rel='noopener';}
