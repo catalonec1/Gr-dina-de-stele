@@ -94,13 +94,20 @@ await test('v1.2: misiunea „prinde luni”, culori noi, versiune în profil', 
   assert(FO.VERSION >= '1.2');
 });
 
+await test('v1.4: culoarea Liliac (8000), misiuni grele, versiune nouă', () => {
+  const s = FO.skinById('lilac'); assert(s && s.price === 8000 && !s.stars);
+  const p = FO.defaultProfile(); p.sparks = 7999; eq(FO.buySkin(p, 'lilac'), 'poor');
+  p.sparks = 8000; eq(FO.buySkin(p, 'lilac'), 'ok'); assert(FO.equipSkin(p, 'lilac')); eq(p.skin, 'lilac'); eq(p.sparks, 0);
+  assert(FO.MISSION_POOL.some(m => m.k === 'score' && m.n === 500) && FO.MISSION_POOL.some(m => m.k === 'moon' && m.n === 4) && FO.MISSION_POOL.some(m => m.k === 'combo' && m.n === 25));
+  ['ro', 'en', 'ru'].forEach(l => assert(FO.I18N[l].whatsNew.includes('8000'), l));
+  eq(FO.VERSION, '1.4');
+});
 await test('v1.3: culoarea Brad (6000), versiune nouă', () => {
   const s = FO.skinById('pine'); assert(s && s.price === 6000 && !s.stars);
   const p = FO.defaultProfile(); p.sparks = 5999; eq(FO.buySkin(p, 'pine'), 'poor');
   p.sparks = 6000; eq(FO.buySkin(p, 'pine'), 'ok'); assert(FO.equipSkin(p, 'pine')); eq(p.skin, 'pine');
   const back = FO.parseProfile(JSON.stringify(p)); eq(back.skin, 'pine');
-  ['ro', 'en', 'ru'].forEach(l => assert(FO.I18N[l].whatsNew.includes('6000'), l));
-  eq(FO.VERSION, '1.3');
+  assert(FO.VERSION >= '1.3');
 });
 
 // ---------------- v1.1: picături de aur, misiuni zilnice, culori noi ----------------
@@ -508,7 +515,7 @@ if (chromium) {
     await page.evaluate(() => { localStorage.setItem('fo_profile', JSON.stringify({ v: 1, best: 40, sparks: 10, runs: 5, skin: 'amber', owned: ['skin:amber'], lang: 'en', seen: '1.1' })); });
     await page.reload(); await page.waitForFunction(() => window.__fo);
     await page.waitForFunction(() => document.getElementById('toast').textContent.includes(window.__fo ? FO.VERSION : '1.3') || document.getElementById('toast').textContent.includes('1.3'), null, { timeout: 3000 });
-    assert((await page.textContent('#toast')).includes('Pine'));
+    assert((await page.textContent('#toast')).includes('Lilac'));
     eq(errors.length, 0, errors.join(' | ')); await ctx.close();
   });
 

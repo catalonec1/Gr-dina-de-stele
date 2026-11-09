@@ -18,13 +18,14 @@
   var GOLD_SPARKS = 5;
   var MISSION_REWARD = 25;
   var FREE_DAILY = 25;
-  var VERSION = '1.3';
+  var VERSION = '1.4';
   var MOON_CHANCE = 0.05;                  // v1.2: lună (din picături, după 15 s): încetinește timpul
   var MOON_TIME = 5, MOON_SLOW = 0.6;                     // cadoul zilnic fără reclamă (când Adsgram nu e activ)
   // Misiuni zilnice: 3 pe zi, alese determinist după dată (UTC)
   var MISSION_POOL = [
     { k: 'drops', n: 15 }, { k: 'drops', n: 30 }, { k: 'score', n: 150 }, { k: 'score', n: 300 },
-    { k: 'combo', n: 8 }, { k: 'combo', n: 15 }, { k: 'runs', n: 3 }, { k: 'runs', n: 5 }, { k: 'gold', n: 1 }, { k: 'gold', n: 3 }, { k: 'moon', n: 2 }
+    { k: 'combo', n: 8 }, { k: 'combo', n: 15 }, { k: 'runs', n: 3 }, { k: 'runs', n: 5 }, { k: 'gold', n: 1 }, { k: 'gold', n: 3 }, { k: 'moon', n: 2 },
+    { k: 'score', n: 500 }, { k: 'combo', n: 25 }, { k: 'moon', n: 4 } // v1.4: misiuni grele
   ];
 
   // Magazin: prețuri în scântei (monedă de joc) sau în Telegram Stars (XTR).
@@ -38,6 +39,7 @@
     { id: 'dusk',   color: '#ffb4a2', glow: '#e5989b', price: 3000 },
     { id: 'jade',   color: '#b5e48c', glow: '#52b69a', price: 4500 },
     { id: 'pine',   color: '#e9fff2', glow: '#74c69d', price: 6000 }, // v1.3: brad de iarnă
+    { id: 'lilac',  color: '#f1e4ff', glow: '#b392f0', price: 8000 }, // v1.4: liliac de cristal
     { id: 'aurora', color: '#9bf6ff', glow: '#4cc9f0', stars: true },
     { id: 'ember',  color: '#ff9e6d', glow: '#f3722c', stars: true }
   ];
@@ -346,7 +348,7 @@
       dailyFree: 'Cadou zilnic +25', missions: 'Misiunile zilei', claim: 'Ia +{n}', gold: 'Picătură de aur! +5',
       m_drops: 'Culege {n} picături', m_score: 'Fă {n} puncte într-o tură', m_combo: 'Serie de {n}',
       m_runs: 'Joacă {n} ture', m_gold: 'Picături de aur: {n}', mDone: 'Misiune îndeplinită!',
-      m_moon: 'Prinde {n} luni', moon: 'Lună! Timpul curge mai încet', whatsNew: 'Noutăți v{n}: culoarea de iarnă Brad (6000 scântei)'
+      m_moon: 'Prinde {n} luni', moon: 'Lună! Timpul curge mai încet', whatsNew: 'Noutăți v{n}: culoarea Liliac de cristal (8000 scântei) și 3 misiuni zilnice mai grele'
     },
     en: {
       title: 'Firefly Orbit',
@@ -367,7 +369,7 @@
       dailyFree: 'Daily gift +25', missions: "Today's missions", claim: 'Claim +{n}', gold: 'Golden drop! +5',
       m_drops: 'Catch {n} drops', m_score: 'Score {n} in one run', m_combo: 'Reach a {n} streak',
       m_runs: 'Play {n} runs', m_gold: 'Golden drops: {n}', mDone: 'Mission complete!',
-      m_moon: 'Catch {n} moons', moon: 'Moon! Time slows down', whatsNew: 'New in v{n}: the winter Pine color (6000 sparks)'
+      m_moon: 'Catch {n} moons', moon: 'Moon! Time slows down', whatsNew: 'New in v{n}: the Crystal Lilac color (8000 sparks) and 3 tougher daily missions'
     },
     ru: {
       title: 'Орбита светлячка',
@@ -388,7 +390,7 @@
       dailyFree: 'Подарок дня +25', missions: 'Задания дня', claim: 'Забрать +{n}', gold: 'Золотая капля! +5',
       m_drops: 'Собери капель: {n}', m_score: 'Набери {n} очков за забег', m_combo: 'Серия ×{n}',
       m_runs: 'Сыграй забегов: {n}', m_gold: 'Собери золотых капель: {n}', mDone: 'Задание выполнено!',
-      m_moon: 'Поймай лун: {n}', moon: 'Луна! Время замедляется', whatsNew: 'Новое в v{n}: зимний цвет «Ель» (6000 искр)'
+      m_moon: 'Поймай лун: {n}', moon: 'Луна! Время замедляется', whatsNew: 'Новое в v{n}: цвет «Хрустальная сирень» (8000 искр) и 3 сложных ежедневных задания'
     }
   };
 

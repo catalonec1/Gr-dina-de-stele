@@ -96,7 +96,7 @@ const T = {
     q: { taps: "Atinge cerul de {n} ori", comets: "Prinde {n} comete", stars: "Plantează {n} stele", ups: "Cumpără {n} îmbunătățire", gold: "Prinde {n} cometă de aur" },
     gold: "Cometă de aur!", max: "Max", trophies: "Trofee", achBonus: "Fiecare trofeu dă +2% lumină pentru totdeauna",
     achGot: "Trofeu nou", statsTitle: "Statistici", st: { taps: "Atingeri", comets: "Comete", gold: "Comete de aur", rebirths: "Renașteri", total: "Lumină totală", time: "Timp de joc" },
-    whatsNew: "Noutăți v{v}: 3 trofee noi de iarnă (30 de trofee, fiecare +2% lumină)",
+    whatsNew: "Noutăți v{v}: 2 îmbunătățiri „Cer senin” noi și 3 trofee noi (33 de trofee, fiecare +2% lumină)",
     shower: "Ploaie de meteori", showerStart: "☄ Ploaie de meteori! Prinde cât mai multe comete",
     ad: { taps: "Atinge cerul de {n} ori", comets: "Prinde {n} comete", gold: "Prinde {n} comete de aur", total: "Strânge {n} lumină în total",
       rebirths: "Renaște de {n} ori", streak: "Serie zilnică de {n} zile", type: "Plantează: {s}", constel: "Completează {n} constelații" },
@@ -106,7 +106,8 @@ const T = {
       type5: "Explozie de lumină", type6: "Inima care bate", type7: "Farul universului", constel1: "Primele linii", constel10: "Cartograf de cer",
       type8: "Grădinarul galaxiilor", gold5: "Comoara cerului", constel25: "Atlasul stelelor", rebirths10: "Veșnic renăscut",
       type9: "Păstorul roiurilor", taps4: "Degetul neobosit", comets4: "Stăpânul cozilor de foc", gold25: "Visteria cerului",
-      constel50: "Harta cerului de iarnă", rebirths25: "Fenixul stelar", streak30: "O lună de stele" },
+      constel50: "Harta cerului de iarnă", rebirths25: "Fenixul stelar", streak30: "O lună de stele",
+      total5: "Lumina eternă", comets5: "Furtuna de comete", gold50: "Tezaurul galaxiei" },
     stars: [
       ["Scânteie", "Prima lumină a grădinii"],
       ["Licurici ceresc", "Zboară și strălucește"],
@@ -139,7 +140,7 @@ const T = {
     q: { taps: "Tap the sky {n} times", comets: "Catch {n} comets", stars: "Plant {n} stars", ups: "Buy {n} upgrade", gold: "Catch {n} golden comet" },
     gold: "Golden comet!", max: "Max", trophies: "Trophies", achBonus: "Each trophy gives +2% light forever",
     achGot: "New trophy", statsTitle: "Stats", st: { taps: "Taps", comets: "Comets", gold: "Golden comets", rebirths: "Rebirths", total: "Total light", time: "Play time" },
-    whatsNew: "New in v{v}: 3 new winter trophies (30 trophies, each +2% light)",
+    whatsNew: "New in v{v}: 2 new “Clear sky” upgrades and 3 new trophies (33 trophies, each +2% light)",
     shower: "Meteor shower", showerStart: "☄ Meteor shower! Catch as many comets as you can",
     ad: { taps: "Tap the sky {n} times", comets: "Catch {n} comets", gold: "Catch {n} golden comets", total: "Gather {n} light in total",
       rebirths: "Rebirth {n} times", streak: "Reach a {n}-day streak", type: "Plant: {s}", constel: "Complete {n} constellations" },
@@ -149,7 +150,8 @@ const T = {
       type5: "Burst of light", type6: "Beating heart", type7: "Lighthouse of the universe", constel1: "First lines", constel10: "Sky cartographer",
       type8: "Gardener of galaxies", gold5: "Treasure of the sky", constel25: "Star atlas", rebirths10: "Forever reborn",
       type9: "Shepherd of clusters", taps4: "Tireless finger", comets4: "Master of fiery tails", gold25: "Treasury of the sky",
-      constel50: "Winter sky map", rebirths25: "Star phoenix", streak30: "A month of stars" },
+      constel50: "Winter sky map", rebirths25: "Star phoenix", streak30: "A month of stars",
+      total5: "Eternal light", comets5: "Comet storm", gold50: "Galaxy treasury" },
     stars: [
       ["Spark", "The garden's first light"],
       ["Sky firefly", "Flies and glows"],
@@ -182,7 +184,7 @@ const T = {
     q: { taps: "Коснись неба {n} раз", comets: "Поймай комет: {n}", stars: "Посади звёзд: {n}", ups: "Купи улучшение: {n}", gold: "Поймай золотых комет: {n}" },
     gold: "Золотая комета!", max: "Макс", trophies: "Трофеи", achBonus: "Каждый трофей даёт +2% света навсегда",
     achGot: "Новый трофей", statsTitle: "Статистика", st: { taps: "Касания", comets: "Кометы", gold: "Золотые кометы", rebirths: "Возрождения", total: "Всего света", time: "Время игры" },
-    whatsNew: "Новое в v{v}: 3 новых зимних трофея (30 трофеев, каждый +2% света)",
+    whatsNew: "Новое в v{v}: 2 новых улучшения «Ясное небо» и 3 новых трофея (33 трофея, каждый +2% света)",
     shower: "Метеорный дождь", showerStart: "☄ Метеорный дождь! Лови как можно больше комет",
     ad: { taps: "Касаний неба: {n}", comets: "Поймано комет: {n}", gold: "Золотых комет: {n}", total: "Собери всего света: {n}",
       rebirths: "Возрождений: {n}", streak: "Серия дней: {n}", type: "Посади: {s}", constel: "Собери созвездий: {n}" },
@@ -192,7 +194,8 @@ const T = {
       type5: "Вспышка света", type6: "Бьющееся сердце", type7: "Маяк вселенной", constel1: "Первые линии", constel10: "Картограф неба",
       type8: "Садовник галактик", gold5: "Сокровище неба", constel25: "Звёздный атлас", rebirths10: "Вечно возрождённый",
       type9: "Пастух скоплений", taps4: "Неутомимый палец", comets4: "Повелитель огненных хвостов", gold25: "Небесная казна",
-      constel50: "Карта зимнего неба", rebirths25: "Звёздный феникс", streak30: "Месяц звёзд" },
+      constel50: "Карта зимнего неба", rebirths25: "Звёздный феникс", streak30: "Месяц звёзд",
+      total5: "Вечный свет", comets5: "Кометная буря", gold50: "Сокровищница галактики" },
     stars: [
       ["Искорка", "Первый свет сада"],
       ["Небесный светлячок", "Летает и светится"],
@@ -227,7 +230,7 @@ const STAR_TYPES = [
   { cost: 9e9,     rate: 260000,  color: "#ffb3e6" },
   { cost: 1.8e11,  rate: 1.5e6,   color: "#ffcf5a" },
 ];
-const VERSION = "1.4";
+const VERSION = "1.5";
 const COST_GROWTH = 1.15;
 const CONSTELLATION_STEPS = [10, 25, 50, 100, 200]; // fiecare prag dublează tipul
 const REBIRTH_MIN = 1e6;
@@ -240,7 +243,7 @@ function buildUpgrades() {
   [100, 2500, 60000, 1.5e6, 4e7, 1e9, 2.5e10].forEach((c, i) => list.push({ id: "tap" + i, kind: "tap", cost: c }));
   STAR_TYPES.forEach((s, t) => [s.cost * 12, s.cost * 120, s.cost * 2500].forEach((c, i) =>
     list.push({ id: `type${t}_${i}`, kind: "type", type: t, cost: c, needOwned: [1, 10, 25][i] })));
-  [5e4, 5e6, 5e8, 5e10].forEach((c, i) => list.push({ id: "global" + i, kind: "global", cost: c }));
+  [5e4, 5e6, 5e8, 5e10, 5e12, 5e14].forEach((c, i) => list.push({ id: "global" + i, kind: "global", cost: c }));
   return list.sort((a, b) => a.cost - b.cost);
 }
 const UPGRADES = buildUpgrades();
@@ -257,6 +260,7 @@ const ACHIEVEMENTS = [
   { id: "streak7", k: "streak", n: 7 },
   { id: "type9", k: "type", n: 9 }, { id: "taps4", k: "taps", n: 50000 }, { id: "comets4", k: "comets", n: 100 }, { id: "gold25", k: "gold", n: 25 },
   { id: "constel50", k: "constel", n: 50 }, { id: "rebirths25", k: "rebirths", n: 25 }, { id: "streak30", k: "streak", n: 30 }, // v1.4
+  { id: "total5", k: "total", n: 1e15 }, { id: "comets5", k: "comets", n: 250 }, { id: "gold50", k: "gold", n: 50 }, // v1.5
 ];
 const ACH_BONUS = 0.02;
 function freshStats() { return { taps: 0, comets: 0, gold: 0, rebirths: 0, total: 0, time: 0 }; }
