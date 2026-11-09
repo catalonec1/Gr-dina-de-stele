@@ -58,6 +58,8 @@ jobs:
         run: node hive/tests/run.js
       - name: Teste Pebble Putt
         run: node putt/tests/run.js
+      - name: Teste Cozy Quilt
+        run: node quilt/tests/run.js
 
   deploy:
     needs: test
@@ -94,6 +96,10 @@ jobs:
         run: |
           mkdir -p dist/web/putt
           cp putt/index.html putt/launch/cover-630x500.png putt/launch/icon-512.png dist/web/putt/
+      - name: Adaugă Cozy Quilt în /quilt/
+        run: |
+          mkdir -p dist/web/quilt
+          cp quilt/index.html quilt/launch/cover-630x500.png quilt/launch/icon-512.png dist/web/quilt/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Pagini extensii Pocket (suport + confidențialitate)
