@@ -147,8 +147,30 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
     ok(f.errs.length === 0, `modele: fără erori în consolă (${lang})`);
   }
 
+  // Descompunere: parte + parte = întreg, interval pe nivel, un singur cerc gol, fără duplicate
+  for (const lang of ['ro', 'en', 'ru']) {
+    const f = await open(`?lang=${lang}&k=bond`);
+    let good = true;
+    const RANGE = { easy: [3, 10], medium: [11, 20], hard: [11, 20] };
+    for (const level of ['easy', 'medium', 'hard']) {
+      await f.selectOption('#level', level);
+      for (let i = 0; i < 5; i++) {
+        await f.click('#new');
+        const r = await f.evaluate(() => ({ bs: window.__last.bonds,
+          texts: [...document.querySelectorAll('#out > .bonds svg')].map(s => s.querySelectorAll('text').length),
+          keyTexts: [...document.querySelectorAll('.key .bonds svg')].map(s => s.querySelectorAll('text').length) }));
+        const keys = new Set(r.bs.map(o => o.w + '/' + o.a + o.h));
+        good = good && r.bs.length === 9 && keys.size === 9 && r.texts.every(n => n === 2) && r.keyTexts.every(n => n === 3) &&
+          r.bs.every(o => o.a + o.b === o.w && o.a >= 0 && o.b >= 0 && o.w >= RANGE[level][0] && o.w <= RANGE[level][1] &&
+            (level === 'hard' ? ['w', 'a', 'b'] : ['a', 'b']).includes(o.h));
+      }
+    }
+    ok(good, `descompunere ${lang}: 9 scheme corecte, interval pe nivel, un cerc gol, cheia completă`);
+    ok(f.errs.length === 0, `descompunere: fără erori în consolă (${lang})`);
+  }
+
   // Mobil: fără scroll orizontal
-  for (const k of ['maze', 'words', 'math', 'clock', 'frac', 'pat']) {
+  for (const k of ['maze', 'words', 'math', 'clock', 'frac', 'pat', 'bond']) {
     const m = await open(`?k=${k}&lang=ru`, { width: 360, height: 740 });
     if (k === 'words') await m.selectOption('#level', 'hard');
     ok(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `mobil 360px fără scroll orizontal (${k})`);
@@ -162,7 +184,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
 
   // Linkuri către produsele proprii
   const links = await p.$$eval('.cards a', as => as.map(a => a.href));
-  ok(links.length === 8 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
+  ok(links.length === 9 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
 
   await b.close();
   console.log(fails ? `\n${fails} teste au eșuat` : '\nToate testele au trecut');
