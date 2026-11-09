@@ -18,11 +18,11 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }) {
 
   // 1. trasee valide
   const v = await p.evaluate(() => LEVELS.map((L, i) => { const C = compile(L); return { i, n: LEVELS.length, ballFree: !solidAt(C, L.ball[0], L.ball[1], 0), holeFree: !solidAt(C, L.hole[0], L.hole[1], null), par: L.par }; }));
-  ok(v.length === 30, '30 de trasee în 3 lumi');
+  ok(v.length === 40, '40 de trasee în 4 lumi (v1.1: Lacul înghețat)');
   ok(v.every(x => x.ballFree && x.holeFree), 'mingea și gaura nu sunt în pereți');
   ok(v.every(x => x.par >= 2 && x.par <= 5), 'par între 2 și 5');
   const tips = await p.evaluate(() => LEVELS.filter(L => L.tip).map(L => L.tip));
-  ok(['aim', 'wall', 'bump', 'sand', 'water', 'slope', 'portal', 'move', 'boost'].every(k => tips.includes(k)), 'fiecare mecanică nouă are un sfat la prima apariție');
+  ok(['aim', 'wall', 'bump', 'sand', 'water', 'slope', 'portal', 'move', 'boost', 'ice'].every(k => tips.includes(k)), 'fiecare mecanică nouă are un sfat la prima apariție');
 
   // 2. fizică
   const ph = await p.evaluate(() => {
@@ -44,6 +44,10 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }) {
   ok(ph.tele, 'portalul albastru duce la cel portocaliu');
   ok(ph.bumped && ph.vAfter > 55, 'ciuperca respinge mingea mai repede (' + Math.round(ph.vAfter) + ')');
   ok(ph.sink, 'o lovitură blândă intră în gaură');
+  // v1.1: gheața alunecă mult mai departe decât iarba
+  const ice = await p.evaluate(() => { const g = simShot(compile({ ball: [50, 150], hole: [90, 10] }), 50, 150, 0, -Math.PI / 2, 0.25), i = simShot(compile({ ball: [50, 150], hole: [90, 10], ic: [[4, 4, 92, 152]] }), 50, 150, 0, -Math.PI / 2, 0.25); return { g: 150 - g.y, i: 150 - i.y, stop: !i.moving }; });
+  ok(ice.i > ice.g * 1.6 && ice.stop, 'v1.1: pe gheață pietricica alunecă mai departe (' + Math.round(ice.g) + ' vs ' + Math.round(ice.i) + ') și tot se oprește');
+  ok(await p.evaluate(() => ['en', 'ro', 'ru'].every(l => T[l].tips.ice && T[l].whatsNew && T[l].worlds.length === 4 && T[l].skinNames.length === SKINS.length) && WORLDS.length === 4 && KEYS.length === 4), 'v1.1: texte RO/EN/RU, lume, muzică și pietricele noi');
 
   // 3. jucabilitate: botul exact termină fiecare traseu în par; botul imprecis rămâne aproape
   const res = await p.evaluate(() => LEVELS.map((L, i) => {
@@ -51,7 +55,7 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }) {
     for (let s = 1; s <= 5; s++) ns.push(__bot(i, { noise: 1, rng: rnd(s * 131 + i) }).strokes);
     ns.sort((a, b) => a - b); return { i: i + 1, par: L.par, ex, med: ns[2] };
   }));
-  const bad = res.filter(r => r.ex > r.par); ok(!bad.length, 'botul precis termină toate cele 30 de trasee în par ' + (bad.length ? JSON.stringify(bad) : ''));
+  const bad = res.filter(r => r.ex > r.par); ok(!bad.length, 'botul precis termină toate cele 40 de trasee în par ' + (bad.length ? JSON.stringify(bad) : ''));
   const hard = res.filter(r => r.med > r.par + 2); ok(!hard.length, 'cu imprecizie umană, mediana rămâne ≤ par+2 ' + (hard.length ? JSON.stringify(hard) : ''));
   ok(res.slice(0, 10).reduce((a, r) => a + r.par, 0) < res.slice(20).reduce((a, r) => a + r.par, 0) + 3, 'dificultatea nu scade spre final');
 
@@ -104,12 +108,12 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }) {
 
   // 7. ecrane
   await p.evaluate(() => show('levels')); await p.waitForTimeout(100);
-  ok(await p.$$eval('.lv', e => e.length) === 30, 'ecranul de trasee are 30 de butoane');
+  ok(await p.$$eval('.lv', e => e.length) === 40 && await p.$$eval('.world', e => e.length) === 4, 'ecranul de trasee are 40 de butoane în 4 lumi');
   ok(await p.$eval('[data-lv="5"]', e => e.disabled), 'traseele neatinse sunt blocate');
   ok(!(await p.$eval('[data-lv="2"]', e => e.disabled)), 'traseul următor e deschis');
-  await p.evaluate(() => { for (let i = 0; i < 30; i++) { S.done[i] = 1; S.stars[i] = 3; } save(); show('skins'); });
-  ok(await p.$$eval('.sk:not([disabled])', e => e.length) === 8, 'toate pietricelele se deblochează cu 90 de stele');
-  await p.click('[data-sk="7"]'); ok(await p.evaluate(() => S.skin === 7), 'alegerea pietricelei');
+  await p.evaluate(() => { for (let i = 0; i < 40; i++) { S.done[i] = 1; S.stars[i] = 3; } save(); show('skins'); });
+  ok(await p.$$eval('.sk:not([disabled])', e => e.length) === 10, 'toate cele 10 pietricele se deblochează cu 120 de stele');
+  await p.click('[data-sk="9"]'); ok(await p.evaluate(() => S.skin === 9), 'alegerea pietricelei Auroră (v1.1)');
   await p.evaluate(() => show('settings'));
   await p.click('#sSound'); ok(await p.evaluate(() => S.sound === false), 'sunet oprit');
   await p.click('#sReset'); await p.click('#sReset'); ok(await p.evaluate(() => totalStars() === 0), 'resetare cu confirmare');
@@ -117,10 +121,14 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }) {
   // 8. toate traseele se desenează fără erori, pe telefon și desktop
   for (const vp of [{ width: 390, height: 844 }, { width: 1280, height: 720 }, { width: 480, height: 800 }]) {
     const q = await fresh(b, 'en-US', vp);
-    const r = await q.evaluate(async () => { const o = []; for (let i = 0; i < 30; i++) { startLevel(i); await new Promise(r => setTimeout(r, 30)); o.push(OX >= 0 && OY + 160 * SC <= innerHeight + 1 && SC > 2); } return o; });
+    const r = await q.evaluate(async () => { const o = []; for (let i = 0; i < LEVELS.length; i++) { startLevel(i); await new Promise(r => setTimeout(r, 30)); o.push(OX >= 0 && OY + 160 * SC <= innerHeight + 1 && SC > 2); } return o; });
     ok(r.every(Boolean) && !q.errs.length, 'toate traseele încap și se desenează la ' + vp.width + 'x' + vp.height + (q.errs.length ? ' ' + q.errs[0] : ''));
     ok(await q.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'fără scroll orizontal la ' + vp.width);
   }
+  // v1.1: mesajul „Noutăți” apare doar pentru jucătorii care au mai jucat
+  { const q = await fresh(b, 'ro-RO'); await q.evaluate(() => { localStorage.setItem('pebble-putt-v1', JSON.stringify({ lang: 'ro', done: [1, 1], stars: [3, 2] })); }); await q.reload(); await q.waitForTimeout(1300);
+    ok(await q.evaluate(() => document.getElementById('toast').textContent.includes('Lacul înghețat') && JSON.parse(localStorage.getItem('pebble-putt-v1')).seen === VERSION), 'v1.1: mesaj Noutăți pentru jucătorii vechi');
+    const n = await fresh(b, 'ro-RO'); await n.waitForTimeout(1300); ok(await n.evaluate(() => !document.getElementById('toast').classList.contains('on')), 'v1.1: fără mesaj Noutăți la prima pornire'); }
   ok(!p.errs.length, 'nicio eroare în consolă' + (p.errs.length ? ': ' + p.errs[0] : ''));
   await b.close();
   console.log(fails ? fails + ' teste picate' : 'Toate testele trec');
