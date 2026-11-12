@@ -1,0 +1,16 @@
+import assert from 'node:assert';
+import worker, { normalize } from '../src/index.js';
+const call = async (path, init = {}, env = {}) => { const r = await worker.fetch(new Request('https://x.dev' + path, init), env); return [r.status, await r.json()]; };
+assert.equal(normalize('942'), 'ORA-00942'); assert.equal(normalize('ora-1'), 'ORA-00001'); assert.equal(normalize('PLS 201'), 'PLS-00201'); assert.equal(normalize('x'), null);
+let [s, b] = await call('/errors/ORA-1'); assert.equal(s, 200); assert.equal(b.code, 'ORA-00001');
+[s] = await call('/errors/abc'); assert.equal(s, 400);
+[s] = await call('/errors/ORA-99998'); assert.equal(s, 404);
+[s, b] = await call('/search?q=deadlock'); assert.equal(s, 200); assert.ok(b.results.some(e => e.code === 'ORA-00060'));
+[s, b] = await call('/errors?prefix=PLS&size=5'); assert.equal(b.items.length, 5); assert.equal(b.total, 30);
+[s, b] = await call('/explain', { method: 'POST', body: JSON.stringify({ text: 'ORA-06512: at line 5\nORA-01403: no data found\nORA-06512 again ORA-99999' }) });
+assert.equal(s, 200); assert.equal(b.primary, 'ORA-06512'); assert.deepEqual(b.unknown, ['ORA-99999']);
+[s] = await call('/explain', { method: 'POST', body: 'nope' }); assert.equal(s, 400);
+[s] = await call('/errors/942', {}, { RAPIDAPI_PROXY_SECRET: 'k' }); assert.equal(s, 403);
+[s] = await call('/errors/942', { headers: { 'x-rapidapi-proxy-secret': 'k' } }, { RAPIDAPI_PROXY_SECRET: 'k' }); assert.equal(s, 200);
+[s, b] = await call('/health'); assert.equal(b.errors, 251);
+console.log('all tests passed');

@@ -1,0 +1,5 @@
+name = "oracle-error-explainer"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+workers_dev = true
+# Secret (not in git): npx wrangler secret put RAPIDAPI_PROXY_SECRET

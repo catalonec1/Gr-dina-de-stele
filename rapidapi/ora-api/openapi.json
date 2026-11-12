@@ -1,0 +1,26 @@
+{
+  "openapi": "3.0.3",
+  "info": { "title": "Oracle Error Explainer", "version": "1.0.0",
+    "description": "Plain-English cause and fix for Oracle ORA- and PL/SQL PLS- error codes. Look up one code, search by words, or paste a whole error stack / log and get every code explained. 251 curated errors, written by an Oracle PL/SQL developer." },
+  "servers": [ { "url": "https://oracle-error-explainer.WORKERS_SUBDOMAIN.workers.dev" } ],
+  "paths": {
+    "/errors/{code}": { "get": { "summary": "Explain one error code", "operationId": "getError",
+      "parameters": [ { "name": "code", "in": "path", "required": true, "schema": { "type": "string" }, "example": "ORA-00942", "description": "ORA-00942, ORA-942, 942 or PLS-00201" } ],
+      "responses": { "200": { "description": "Error found", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }, "400": { "description": "Invalid code" }, "404": { "description": "Not in catalog" } } } },
+    "/errors": { "get": { "summary": "List error codes", "operationId": "listErrors",
+      "parameters": [ { "name": "prefix", "in": "query", "schema": { "type": "string", "enum": ["ORA","PLS"] } },
+        { "name": "page", "in": "query", "schema": { "type": "integer", "default": 1 } },
+        { "name": "size", "in": "query", "schema": { "type": "integer", "default": 50, "maximum": 100 } } ],
+      "responses": { "200": { "description": "Page of codes" } } } },
+    "/search": { "get": { "summary": "Search errors by words", "operationId": "searchErrors",
+      "parameters": [ { "name": "q", "in": "query", "required": true, "schema": { "type": "string" }, "example": "table does not exist" },
+        { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 10, "maximum": 50 } } ],
+      "responses": { "200": { "description": "Matches" } } } },
+    "/explain": { "post": { "summary": "Explain every ORA/PLS code found in an error stack or log", "operationId": "explainText",
+      "requestBody": { "required": true, "content": { "application/json": { "schema": { "type": "object", "required": ["text"], "properties": { "text": { "type": "string", "maxLength": 100000 } } },
+        "example": { "text": "ORA-01403: no data found\nORA-06512: at \"HR.GET_EMP\", line 12" } } } },
+      "responses": { "200": { "description": "Explanations in order of first appearance" } } } }
+  },
+  "components": { "schemas": { "Error": { "type": "object", "properties": {
+    "code": { "type": "string" }, "title": { "type": "string" }, "cause": { "type": "string" }, "action": { "type": "string" }, "url": { "type": "string" } } } } }
+}
