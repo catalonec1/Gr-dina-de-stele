@@ -7,5 +7,5 @@ window.FO_CONFIG = {
   // ID-ul blocului de reclamă recompensată din partner.adsgram.ai, ex. "12345"
   ADSGRAM_BLOCK_ID: '',
   // v1.6: true după ce Worker-ul cu produsele noi (teme, ghid, niveluri) e publicat pe Cloudflare
-  STARS_V2: false
+  STARS_V2: true
 };
