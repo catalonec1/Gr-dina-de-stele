@@ -68,6 +68,8 @@ jobs:
         run: node quilt/tests/run.js
       - name: Teste Otter Glide
         run: node glide/tests/run.js
+      - name: Teste site erori ORA
+        run: node ora/tests/run.js
 
   deploy:
     needs: test
@@ -120,6 +122,8 @@ jobs:
         run: |
           mkdir -p dist/web/printabile
           cp printabile/index.html dist/web/printabile/
+      - name: Site de referință erori ORA în /ora/
+        run: node ora/build.js dist/web/ora
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
