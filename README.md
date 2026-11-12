@@ -11,6 +11,7 @@ Joc idle HTML5 într-un singur fișier (`index.html`), în RO / EN / RU.
 - **Hive Bloom** (puzzle hexagonal de unire: 3 piese egale → nivelul următor, 🌱→🌟; RO/EN/RU): `hive/` → https://catalonec1.github.io/Gr-dina-de-stele/hive/ · teste: `node hive/tests/run.js` · capturi: `node hive/tools/shots.js`
 - **Pebble Putt** (minigolf-puzzle: 30 de trasee în 3 lumi, nisip, apă, ciuperci, portaluri, pereți mobili; RO/EN/RU): `putt/` → https://catalonec1.github.io/Gr-dina-de-stele/putt/ · teste: `node putt/tests/run.js` · capturi: `node putt/tools/shots.js`
 - **Cozy Quilt** (puzzle cu petice: 60 de pilote în 4 lumi, rotire, nasturi, oglindire, Pilota zilei; RO/EN/RU): `quilt/` → https://catalonec1.github.io/Gr-dina-de-stele/quilt/ · teste: `node quilt/tests/run.js` · capturi: `node quilt/tools/shots.js`
+- **Otter Glide** (puzzle cu alunecare pe gheață: 60 de iazuri în 4 lumi, pești, nămeți, gheață crăpată, Iazul zilei; RO/EN/RU): `glide/` → https://catalonec1.github.io/Gr-dina-de-stele/glide/ · teste: `node glide/tests/run.js` · capturi: `node glide/tools/shots.js`
 
 ## Versiuni
 - **v1.2** (2026-11-06): a 9-a stea, Galaxia spirală (cu brațe animate și 3 îmbunătățiri), ploi de meteori la ~10 min (30 s de comete dese, 25% aur), misiune zilnică nouă „prinde o cometă de aur”, 4 trofee noi (23 în total). Teste: `node tests/v12.js`.

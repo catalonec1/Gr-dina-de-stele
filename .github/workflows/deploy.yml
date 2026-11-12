@@ -66,6 +66,8 @@ jobs:
         run: node putt/tests/run.js
       - name: Teste Cozy Quilt
         run: node quilt/tests/run.js
+      - name: Teste Otter Glide
+        run: node glide/tests/run.js
 
   deploy:
     needs: test
@@ -106,6 +108,10 @@ jobs:
         run: |
           mkdir -p dist/web/quilt
           cp quilt/index.html quilt/launch/cover-630x500.png quilt/launch/icon-512.png dist/web/quilt/
+      - name: Adaugă Otter Glide în /glide/
+        run: |
+          mkdir -p dist/web/glide
+          cp glide/index.html glide/launch/cover-630x500.png glide/launch/icon-512.png dist/web/glide/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Pagini extensii Pocket (suport + confidențialitate)
