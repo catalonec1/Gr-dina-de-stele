@@ -115,6 +115,7 @@ footer{margin-top:24px;color:var(--muted);font-size:13px}
     <a id="p-frac" href="https://payhip.com/b/ufZr8"><b>Fractions</b><small></small></a>
     <a id="p-shape" href="https://payhip.com/b/d8vrF"><b>Shapes &amp; Patterns</b><small></small></a>
     <a id="p-bond" href="https://payhip.com/b/iZsau"><b>Number Bonds</b><small></small></a>
+    <a id="p-cmp" href="https://payhip.com/b/e0M8H"><b>Comparing Numbers</b><small></small></a>
   </div>
 </section>
 <footer id="t-foot"></footer>
@@ -126,7 +127,7 @@ const T={
   maze:'Labirint',words:'Cuvinte ascunse',math:'Matematică',level:'Nivel',easy:'Ușor',medium:'Mediu',hard:'Greu',theme:'Temă',op:'Operație',range:'Numere până la',
   add:'Adunare',subt:'Scădere',mix:'Amestec',newb:'Altă fișă',print:'Printează / PDF',name:'Nume: ____________',
   mazeT:'Ajută racheta să ajungă la stea!',wordsT:'Găsește cuvintele',mathT:'Calculează',key:'Răspunsuri',
-  more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',clockP:'Fișe cu ceasul, 20 de pagini (PDF)',fracP:'Fișe cu fracții, 16 pagini (PDF)',shapeP:'Forme și modele, 4–7 ani (PDF)',bondP:'Descompunerea numerelor, 5–8 ani (PDF)',
+  more:'Mai multe de la noi',game:'Joc gratuit în browser',books:'Cărți de activități pe Amazon',mathP:'Pachet de fișe de matematică (PDF)',abcP:'Fișe de scris literele (PDF)',freeP:'Pachet de probă gratuit',clockP:'Fișe cu ceasul, 20 de pagini (PDF)',fracP:'Fișe cu fracții, 16 pagini (PDF)',shapeP:'Forme și modele, 4–7 ani (PDF)',bondP:'Descompunerea numerelor, 5–8 ani (PDF)',cmpP:'Compararea numerelor, 5–8 ani (PDF)',
   foot:'Fișele sunt generate în browser; poți să le printezi liber pentru acasă sau pentru clasă.',
   themes:{space:'Spațiu',animals:'Animale',fruits:'Fructe'},
   clock:'Ceasul',clockRead:'Cât este ceasul? Scrie ora.',clockDraw:'Desenează acele ceasului.',mode:'Exercițiu',readM:'Citește ceasul',drawM:'Desenează acele',lvClock:{easy:'Ore fixe și jumătăți',medium:'Sferturi',hard:'Din 5 în 5 minute'},
@@ -137,7 +138,7 @@ const T={
   maze:'Maze',words:'Word search',math:'Math',level:'Level',easy:'Easy',medium:'Medium',hard:'Hard',theme:'Theme',op:'Operation',range:'Numbers up to',
   add:'Addition',subt:'Subtraction',mix:'Mixed',newb:'New sheet',print:'Print / PDF',name:'Name: ____________',
   mazeT:'Help the rocket reach the star!',wordsT:'Find the words',mathT:'Solve',key:'Answer key',
-  more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',clockP:'Telling time workbook, 20 pages (PDF)',fracP:'Fractions workbook, 16 pages (PDF)',shapeP:'Shapes & patterns, ages 4–7 (PDF)',bondP:'Number bonds, ages 5–8 (PDF)',
+  more:'More from us',game:'Free browser game',books:'Activity books on Amazon',mathP:'Math worksheet pack (PDF)',abcP:'Alphabet tracing pack (PDF)',freeP:'Free sample pack',clockP:'Telling time workbook, 20 pages (PDF)',fracP:'Fractions workbook, 16 pages (PDF)',shapeP:'Shapes & patterns, ages 4–7 (PDF)',bondP:'Number bonds, ages 5–8 (PDF)',cmpP:'Comparing numbers, ages 5–8 (PDF)',
   foot:'Sheets are generated in your browser; print them freely for home or classroom use.',
   themes:{space:'Space',animals:'Animals',fruits:'Fruits'},
   clock:'Clock',clockRead:'What time is it? Write the time.',clockDraw:'Draw the clock hands.',mode:'Exercise',readM:'Read the clock',drawM:'Draw the hands',lvClock:{easy:'O’clock and half past',medium:'Quarter past / to',hard:'Every 5 minutes'},
@@ -148,7 +149,7 @@ const T={
   maze:'Лабиринт',words:'Поиск слов',math:'Математика',level:'Уровень',easy:'Лёгкий',medium:'Средний',hard:'Сложный',theme:'Тема',op:'Действие',range:'Числа до',
   add:'Сложение',subt:'Вычитание',mix:'Смешанные',newb:'Новый лист',print:'Печать / PDF',name:'Имя: ____________',
   mazeT:'Помоги ракете добраться до звезды!',wordsT:'Найди слова',mathT:'Реши примеры',key:'Ответы',
-  more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',clockP:'Тетрадь «Часы», 20 страниц (PDF)',fracP:'Тетрадь «Дроби», 16 страниц (PDF)',shapeP:'Фигуры и узоры, 4–7 лет (PDF)',bondP:'Состав числа, 5–8 лет (PDF)',
+  more:'Ещё от нас',game:'Бесплатная игра в браузере',books:'Книги с заданиями на Amazon',mathP:'Набор листов по математике (PDF)',abcP:'Прописи букв (PDF)',freeP:'Бесплатный пробный набор',clockP:'Тетрадь «Часы», 20 страниц (PDF)',fracP:'Тетрадь «Дроби», 16 страниц (PDF)',shapeP:'Фигуры и узоры, 4–7 лет (PDF)',bondP:'Состав числа, 5–8 лет (PDF)',cmpP:'Сравнение чисел, 5–8 лет (PDF)',
   foot:'Листы создаются в браузере; их можно свободно печатать для дома или класса.',
   themes:{space:'Космос',animals:'Животные',fruits:'Фрукты'},
   clock:'Часы',clockRead:'Который час? Запиши время.',clockDraw:'Нарисуй стрелки часов.',mode:'Задание',readM:'Определи время',drawM:'Нарисуй стрелки',lvClock:{easy:'Ровно и половина',medium:'Четверти',hard:'Каждые 5 минут'},
@@ -323,7 +324,7 @@ function applyLang(){const t=T[lang];document.documentElement.lang=lang;document
   $('t-title').textContent=t.title;$('t-sub').textContent=t.sub;$('t-name').textContent=t.name;$('t-more').textContent=t.more;$('t-foot').textContent=t.foot;
   for(const k of ['maze','words','math','clock','frac','pat','bond']){const b=$('tab-'+k);b.textContent=t[k];b.setAttribute('aria-selected',k===kind)}
   document.querySelectorAll('.langs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.l===lang));
-  const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP,'p-clock':t.clockP,'p-frac':t.fracP,'p-shape':t.shapeP,'p-bond':t.bondP};
+  const P={'p-game':t.game,'p-books':t.books,'p-math':t.mathP,'p-abc':t.abcP,'p-free':t.freeP,'p-clock':t.clockP,'p-frac':t.fracP,'p-shape':t.shapeP,'p-bond':t.bondP,'p-cmp':t.cmpP};
   for(const id in P){const a=$(id);a.querySelector('small').textContent=P[id];
     try{const u=new URL(a.href);if(u.hostname.endsWith('github.io')){u.searchParams.set('utm_source','printabile');a.href=u}}catch(e){}
     a.target='_blank';a.rel='noopener';}
