@@ -66,6 +66,12 @@
   #missions .row.done span { color: var(--muted); text-decoration: line-through; }
   #missions h3 { margin: 2px 0 0; font-size: 15px; color: var(--muted); font-weight: 600; }
   .lang { display: flex; gap: 6px; }
+  #levels { justify-content: flex-start; overflow-y: auto; }
+  .lvls { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; max-width: 380px; }
+  .lvls button { min-width: 0; padding: 10px 6px; font-size: 13px; display: flex; flex-direction: column; gap: 3px; }
+  .lvls button b { font-size: 18px; }
+  .lvls button.done { border-color: var(--accent); }
+  .theme { width: 54px; height: 34px; border-radius: 8px; border: 1px solid var(--line); }
   .lang button { min-width: 0; padding: 6px 10px; font-size: 13px; border-radius: 8px; }
   .lang button.sel { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 </style>
@@ -84,6 +90,7 @@
     <span class="pill">✦ <b id="mSparks">0</b></span>
   </div>
   <button id="btnPlay" class="primary" data-t="play"></button>
+  <button id="btnLevels" data-t="levels"></button>
   <button id="btnShield"></button>
   <button id="btnDaily"></button>
   <button id="btnShop" data-t="shop"></button>
@@ -107,10 +114,20 @@
   <button id="btnOverMenu" data-t="back"></button>
 </section>
 
+<section id="levels" class="screen">
+  <h2 data-t="levels"></h2>
+  <p class="note" id="lvlFree"></p>
+  <div class="lvls" id="lvlGrid"></div>
+  <div class="rows" id="lvlStars"></div>
+  <button id="btnLevelsBack" data-t="back"></button>
+</section>
+
 <section id="shop" class="screen">
   <h2 data-t="shop"></h2>
   <span class="pill">✦ <b id="sSparks">0</b></span>
   <div class="grid" id="skinGrid"></div>
+  <h2 data-t="themes" style="font-size:18px;margin-top:6px"></h2>
+  <div class="grid" id="themeGrid"></div>
   <h2 id="starsHead" data-t="starsTitle" style="font-size:18px;margin-top:6px"></h2>
   <div class="rows" id="starRows"></div>
   <p class="note" id="starsNote" data-t="agree"></p>
@@ -192,10 +209,10 @@
 
   // ---------- Ecrane ----------
   function show(id) {
-    ['menu', 'over', 'shop'].forEach(function (s) { $(s).classList.toggle('on', s === id); });
+    ['menu', 'over', 'shop', 'levels'].forEach(function (s) { $(s).classList.toggle('on', s === id); });
     $('hud').classList.toggle('on', id === null);
     $('hint').style.display = 'none';
-    if (tg && tg.BackButton) { try { id === 'shop' ? tg.BackButton.show() : tg.BackButton.hide(); } catch (e) {} }
+    if (tg && tg.BackButton) { try { id === 'shop' || id === 'levels' ? tg.BackButton.show() : tg.BackButton.hide(); } catch (e) {} }
   }
   function refreshMenu() {
     $('mBest').textContent = profile.best;
@@ -245,9 +262,13 @@
   }
 
   // ---------- Joc ----------
-  function startRun(withShield) {
+  var curLevel = -1;   // v1.6: indexul nivelului jucat, -1 = modul fără sfârșit
+  function startRun(withShield, lvl) {
     if (withShield && profile.shields > 0) { profile.shields -= 1; save(); }
-    run = FO.newRun({ shield: !!withShield });
+    curLevel = typeof lvl === 'number' ? lvl : -1;
+    var L = FO.LEVELS[curLevel];
+    rng = FO.mulberry32(L ? L.seed : (Date.now() & 0xffffffff));
+    run = FO.newRun({ shield: !!withShield, goal: L ? { k: L.k, n: L.n } : null });
     particles = [];
     show(null);
     $('hint').style.display = '';
@@ -265,9 +286,18 @@
     $('oBest').textContent = profile.best;
     $('oRecord').textContent = res.record ? t('newRecord') : '';
     $('oEarned').textContent = t('earned', res.earned);
+    $('btnAgain').textContent = t('again');
+    if (curLevel >= 0) {
+      if (run.won) {
+        var got = FO.completeLevel(profile, curLevel); save();
+        $('oRecord').textContent = got ? t('lvlWin', got) : t('lvlWinAgain');
+        var nx = curLevel + 1;
+        $('btnAgain').textContent = FO.LEVELS[nx] && FO.levelState(profile, nx) === 'ok' ? t('next') : t('levels');
+      } else { $('oRecord').textContent = t('lvlFail'); $('btnAgain').textContent = t('retry'); }
+    }
     var br = $('btnRevive');
     br.textContent = t('revive');
-    br.style.display = ads && !run.continued ? '' : 'none';
+    br.style.display = ads && !run.continued && !run.won ? '' : 'none';
     br.disabled = false;
     show('over');
     run._result = res;
@@ -284,7 +314,15 @@
 
   $('btnPlay').onclick = function () { startRun(false); };
   $('btnShield').onclick = function () { startRun(true); };
-  $('btnAgain').onclick = function () { startRun(false); };
+  $('btnAgain').onclick = function () {
+    if (curLevel < 0) return startRun(false);
+    if (!run.won) return startRun(false, curLevel);
+    var nx = curLevel + 1;
+    if (FO.LEVELS[nx] && FO.levelState(profile, nx) === 'ok') startRun(false, nx);
+    else { renderLevels(); show('levels'); }
+  };
+  $('btnLevels').onclick = function () { renderLevels(); show('levels'); };
+  $('btnLevelsBack').onclick = function () { refreshMenu(); show('menu'); };
   $('btnOverMenu').onclick = function () { refreshMenu(); show('menu'); };
   $('btnShop').onclick = function () { renderShop(); show('shop'); };
   $('btnShopBack').onclick = function () { refreshMenu(); show('menu'); };
@@ -322,6 +360,44 @@
     });
   };
 
+  // ---------- v1.6: niveluri ----------
+  function renderLevels() {
+    $('lvlFree').textContent = t('lvlFree', FO.FREE_LEVELS);
+    var g = $('lvlGrid'); g.innerHTML = '';
+    FO.LEVELS.forEach(function (L, i) {
+      var st = FO.levelState(profile, i);
+      var b = document.createElement('button');
+      b.className = i < profile.level ? 'done' : '';
+      var n = document.createElement('b'); n.textContent = (i < profile.level ? '✓ ' : st === 'ok' ? '' : st === 'stars' ? '⭐ ' : '🔒 ') + (i + 1);
+      var d = document.createElement('span'); d.textContent = t('g_' + L.k, L.n);
+      b.appendChild(n); b.appendChild(d);
+      b.onclick = function () {
+        if (st === 'ok') startRun(false, i);
+        else if (st === 'stars') { if (starsV2()) buyStars('levels_pack'); else toast(t('lvlFree', FO.FREE_LEVELS)); }
+        else toast(t('lvlNeed'));
+      };
+      g.appendChild(b);
+    });
+    var rows = $('lvlStars'); rows.innerHTML = '';
+    if (starsV2() && !FO.owns(profile, 'levels:all')) rows.appendChild(starRow('levels_pack'));
+  }
+  var STAR_LABELS = { aurora_pack: 'packAurora', double_sparks: 'packDouble', shield_pack: 'packShield',
+    theme_pack: 'packTheme', guide_perk: 'packGuide', levels_pack: 'packLevels' };
+  function starRow(id) {
+    var item = FO.STAR_ITEMS[id];
+    var r = document.createElement('div'); r.className = 'row';
+    var l = document.createElement('span'); l.textContent = t(STAR_LABELS[id]);
+    var b = document.createElement('button'); b.className = 'small';
+    var permanentOwned = id !== 'shield_pack' && item.grants.every(function (gk) { return FO.owns(profile, gk); });
+    b.textContent = permanentOwned ? t('owned') : t('stars', item.stars);
+    b.disabled = permanentOwned || !starsEnabled();
+    b.setAttribute('data-item', id);
+    b.onclick = function () { buyStars(id); };
+    r.appendChild(l); r.appendChild(b);
+    return r;
+  }
+  function starsV2() { return starsEnabled() && !!CFG.STARS_V2; }
+
   // ---------- Magazin ----------
   function renderShop() {
     $('sSparks').textContent = profile.sparks;
@@ -350,20 +426,38 @@
       }
       c.appendChild(b); g.appendChild(c);
     });
-    var rows = $('starRows'); rows.innerHTML = '';
-    var labels = { aurora_pack: 'packAurora', double_sparks: 'packDouble', shield_pack: 'packShield' };
-    var on = starsEnabled();
-    ['aurora_pack', 'double_sparks', 'shield_pack'].forEach(function (id) {
-      var item = FO.STAR_ITEMS[id];
-      var r = document.createElement('div'); r.className = 'row';
-      var l = document.createElement('span'); l.textContent = t(labels[id]);
+    var tgEl = $('themeGrid'); tgEl.innerHTML = '';
+    FO.THEMES.forEach(function (th) {
+      var owned = FO.owns(profile, 'theme:' + th.id);
+      if (th.stars && !owned && !starsV2()) return; // temele pe Stars apar doar când botul le știe
+      var c = document.createElement('div'); c.className = 'card';
+      var d = document.createElement('div'); d.className = 'theme';
+      d.style.background = 'linear-gradient(180deg,' + th.top + ',' + th.bottom + ')';
+      c.appendChild(d);
       var b = document.createElement('button'); b.className = 'small';
-      var permanentOwned = id !== 'shield_pack' && item.grants.every(function (gk) { return FO.owns(profile, gk); });
-      b.textContent = permanentOwned ? t('owned') : t('stars', item.stars);
-      b.disabled = permanentOwned || !on;
-      b.onclick = function () { buyStars(id); };
-      r.appendChild(l); r.appendChild(b); rows.appendChild(r);
+      b.setAttribute('data-theme', th.id);
+      if (owned) {
+        b.textContent = profile.theme === th.id ? t('equipped') : t('equip');
+        b.disabled = profile.theme === th.id;
+        b.onclick = function () { FO.equipTheme(profile, th.id); save(); renderShop(); };
+      } else if (th.stars) {
+        b.textContent = '⭐';
+        b.onclick = function () { buyStars('theme_pack'); };
+      } else {
+        b.textContent = t('price', th.price);
+        b.onclick = function () {
+          var r = FO.buyTheme(profile, th.id);
+          if (r === 'ok') { FO.equipTheme(profile, th.id); save(); haptic('ok'); renderShop(); }
+          else if (r === 'poor') toast(t('poor'));
+        };
+      }
+      c.appendChild(b); tgEl.appendChild(c);
     });
+    var rows = $('starRows'); rows.innerHTML = '';
+    var on = starsEnabled();
+    var ids = ['aurora_pack', 'double_sparks', 'shield_pack'];
+    if (starsV2()) ids = ids.concat(['theme_pack', 'guide_perk', 'levels_pack']);
+    ids.forEach(function (id) { rows.appendChild(starRow(id)); });
     $('starsHead').style.display = $('starRows').style.display = $('starsNote').style.display = on ? '' : 'none';
   }
 
@@ -385,7 +479,7 @@
         if (FO.owns(profile, key)) return;
         if (FO.grantStarItem(profile, p.item)) { profile.owned.push(key); changed = true; }
       });
-      if (changed) { save(); refreshMenu(); if ($('shop').classList.contains('on')) renderShop(); }
+      if (changed) { save(); refreshMenu(); if ($('shop').classList.contains('on')) renderShop(); if ($('levels').classList.contains('on')) renderLevels(); }
       return changed;
     }).catch(function () {});
   }
@@ -440,11 +534,23 @@
   function draw(now) {
     var g = geom(), time = now / 1000;
     var grad = ctx.createRadialGradient(g.cx, g.cy, 10, g.cx, g.cy, Math.max(W, H));
-    grad.addColorStop(0, '#1d2660'); grad.addColorStop(1, '#070a1a');
+    var th = FO.themeById(profile.theme) || FO.THEMES[0];
+    grad.addColorStop(0, th.top); grad.addColorStop(1, th.bottom);
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    if (th.band) { // v1.6: benzi de lumină (aurora / apus)
+      ctx.globalAlpha = .13; ctx.strokeStyle = th.band;
+      for (var bi = 0; bi < 3; bi++) {
+        ctx.lineWidth = 26 - bi * 7; ctx.beginPath();
+        for (var x = 0; x <= W; x += 12) {
+          var y = H * (.16 + bi * .07) + Math.sin(x / 70 + time * .5 + bi) * 18;
+          if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+    }
     bgStars.forEach(function (s) {
       ctx.globalAlpha = .35 + .35 * Math.sin(time * 1.3 + s.p);
-      ctx.fillStyle = '#fff'; ctx.fillRect(s.x, s.y, s.s, s.s);
+      ctx.fillStyle = th.star; ctx.fillRect(s.x, s.y, s.s, s.s);
     });
     ctx.globalAlpha = 1;
     // felinarul central
@@ -490,6 +596,13 @@
       }
     });
     ctx.globalAlpha = 1;
+    // v1.6: ghidul felinarului: semn pe inelul următor (verde = sigur, roșu = molie în cale)
+    if (!run.over && FO.owns(profile, 'perk:guide')) {
+      var nr = (run.ring + 1) % FO.RINGS.length, gp = pos(g, nr, run.angle);
+      var bad = FO.dangerAhead(run, nr, 0.6);
+      ctx.strokeStyle = bad ? 'rgba(255,107,139,.9)' : 'rgba(124,245,196,.8)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(gp.x, gp.y, 8, 0, FO.TAU); ctx.stroke();
+    }
     // licuriciul
     var skin = FO.skinById(profile.skin) || FO.SKINS[0];
     var fp = pos(g, run.ring, run.angle);
@@ -525,8 +638,9 @@
         if (ev === 'moon') { burst(fp.x, fp.y, '#cfe0ff', 18); haptic('medium'); toast(t('moon')); }
         if (ev === 'shield') { burst(fp.x, fp.y, '#9bf6ff', 16); haptic('heavy'); }
         if (ev === 'hit') { burst(fp.x, fp.y, skin.glow, 26); haptic('hit'); }
+        if (ev === 'win') { burst(fp.x, fp.y, '#7cf5c4', 30); haptic('ok'); }
       });
-      $('hudScore').textContent = Math.floor(run.score);
+      $('hudScore').textContent = run.goal ? t('level', curLevel + 1) + ' · ' + Math.min(run.goal.n, FO.levelProgress(run)) + '/' + run.goal.n : Math.floor(run.score);
       $('hudSparks').textContent = '✦ ' + run.sparks;
       var ce = $('combo');
       if (run.combo >= 5) { ce.textContent = t('combo', run.combo); ce.style.opacity = 1; } else ce.style.opacity = 0;
@@ -553,7 +667,7 @@
     initAds();
     syncPurchases();
     raf = requestAnimationFrame(loop);
-    window.__fo = { get run() { return run; }, get profile() { return profile; }, get lang() { return lang; }, ads: function () { return ads; } };
+    window.__fo = { get curLevel() { return curLevel; }, start: startRun, get run() { return run; }, get profile() { return profile; }, get lang() { return lang; }, ads: function () { return ads; } };
   });
 })();
 </script>
