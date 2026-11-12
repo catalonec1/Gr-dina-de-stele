@@ -4,7 +4,7 @@
 # Signing: env KEYSTORE, KS_PASS, KEY_ALIAS (keystore is NEVER stored in this repo).
 set -euo pipefail
 APP_ID=$1; NAME=$2; SRC=$3; VCODE=$4; VNAME=$5; ICON=$6; ORIENT=$7; OUT=$8
-SDK=${ANDROID_HOME:-/opt/android}; BT=$SDK/build-tools/35.0.0; JAR=$SDK/platforms/android-34/android.jar
+SDK=${ANDROID_HOME:-/opt/android}; BT=$SDK/build-tools/35.0.0; JAR=$SDK/platforms/android-35/android.jar
 HERE=$(cd "$(dirname "$0")" && pwd); W=$(mktemp -d)
 mkdir -p "$W/res/values" "$W/assets/www" "$W/classes" "$W/dex"
 for d in mdpi:48 hdpi:72 xhdpi:96 xxhdpi:144 xxxhdpi:192; do
