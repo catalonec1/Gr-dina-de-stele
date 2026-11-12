@@ -112,7 +112,9 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }) {
   ok(await p.$eval('[data-lv="5"]', e => e.disabled), 'traseele neatinse sunt blocate');
   ok(!(await p.$eval('[data-lv="2"]', e => e.disabled)), 'traseul următor e deschis');
   await p.evaluate(() => { for (let i = 0; i < 40; i++) { S.done[i] = 1; S.stars[i] = 3; } save(); show('skins'); });
-  ok(await p.$$eval('.sk:not([disabled])', e => e.length) === 10, 'toate cele 10 pietricele se deblochează cu 120 de stele');
+  ok(await p.$$eval('.sk:not([disabled])', e => e.length) === 12, 'toate cele 12 pietricele se deblochează cu 120 de stele (v1.2: Jar, Lumina stelelor)');
+  await p.click('[data-sk="11"]'); ok(await p.evaluate(() => S.skin === 11 && SKINS[11].need === 120 && SKINS[10].need === 108 && VERSION === '1.2'), 'alegerea pietricelei Lumina stelelor (v1.2)');
+  await p.evaluate(() => { S.stars[0] = 2; save(); show('skins'); }); ok(await p.$eval('[data-sk="11"]', e => e.disabled), 'Lumina stelelor cere toate cele 120 de stele');
   await p.click('[data-sk="9"]'); ok(await p.evaluate(() => S.skin === 9), 'alegerea pietricelei Auroră (v1.1)');
   await p.evaluate(() => show('settings'));
   await p.click('#sSound'); ok(await p.evaluate(() => S.sound === false), 'sunet oprit');
@@ -127,7 +129,7 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }) {
   }
   // v1.1: mesajul „Noutăți” apare doar pentru jucătorii care au mai jucat
   { const q = await fresh(b, 'ro-RO'); await q.evaluate(() => { localStorage.setItem('pebble-putt-v1', JSON.stringify({ lang: 'ro', done: [1, 1], stars: [3, 2] })); }); await q.reload(); await q.waitForTimeout(1300);
-    ok(await q.evaluate(() => document.getElementById('toast').textContent.includes('Lacul înghețat') && JSON.parse(localStorage.getItem('pebble-putt-v1')).seen === VERSION), 'v1.1: mesaj Noutăți pentru jucătorii vechi');
+    ok(await q.evaluate(() => document.getElementById('toast').textContent.includes('Lumina stelelor') && JSON.parse(localStorage.getItem('pebble-putt-v1')).seen === VERSION), 'v1.1: mesaj Noutăți pentru jucătorii vechi');
     const n = await fresh(b, 'ro-RO'); await n.waitForTimeout(1300); ok(await n.evaluate(() => !document.getElementById('toast').classList.contains('on')), 'v1.1: fără mesaj Noutăți la prima pornire'); }
   ok(!p.errs.length, 'nicio eroare în consolă' + (p.errs.length ? ': ' + p.errs[0] : ''));
   await b.close();
