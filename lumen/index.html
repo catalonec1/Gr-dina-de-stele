@@ -310,16 +310,18 @@ const Ads = {
         this.a = { gameplay() {}, show(type) { ok = false; return Promise.resolve(window.gdsdk.showAd(type === "rewarded" ? "rewarded" : undefined)).then(() => type === "rewarded" ? ok : true).catch(() => false); } };
       } else if (PLATFORM === "gamemonetize" && window.GM_GAME_ID) {
         // GameMonetize SDK: reclama = sdk.showBanner(); se termină la SDK_GAME_START
-        let pending = null, paused = false;
+        let pending = null, paused = false, ready = false;
         window.SDK_OPTIONS = { gameId: window.GM_GAME_ID, onEvent(ev) {
+          if (ev.name === "SDK_READY") ready = true;
           if (ev.name === "SDK_GAME_PAUSE") paused = true;
-          if (ev.name === "SDK_GAME_START" && pending) { const r = pending; pending = null; r(paused); } } };
+          if (ev.name === "SDK_GAME_START" && pending && paused) { const r = pending; pending = null; r(true); } } };
         await loadScript("https://api.gamemonetize.com/sdk.js");
         this.a = { gameplay() {}, show() { return new Promise(r => {
           if (!window.sdk || typeof window.sdk.showBanner !== "function") return r(false);
           paused = false; pending = r;
-          setTimeout(() => { if (pending === r && !paused) { pending = null; r(false); } }, 4000);
-          try { window.sdk.showBanner(); } catch (e) { pending = null; r(false); } }); } };
+          setTimeout(() => { if (pending === r && !paused) { pending = null; r(false); } }, 15000);
+          const go = () => { try { window.sdk.showBanner(); } catch (e) { if (pending === r) { pending = null; r(false); } } };
+          if (ready) go(); else { let n = 0; const w = setInterval(() => { if (ready || ++n > 20) { clearInterval(w); go(); } }, 250); } }); } };
       } else if (PLATFORM === "gamepix" && window.GamePix && window.GamePix.ads) {
         // GamePix SDK v3: scriptul e pus în <head> de build; pauza/reluarea vin prin evenimente
         const gp = window.GamePix;

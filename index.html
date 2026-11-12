@@ -911,12 +911,13 @@ const Ads = {
   // GameMonetize SDK (gameId vine din build: window.GM_GAME_ID); reclama = sdk.showBanner(), pauza/reluare prin evenimente
   useGM() {
     if (!window.GM_GAME_ID) return;
-    const self = this; let pending = null, paused = false, onStart = null;
+    const self = this; let pending = null, paused = false, onStart = null, ready = false;
     window.SDK_OPTIONS = {
       gameId: window.GM_GAME_ID,
       onEvent(ev) {
+        if (ev.name === "SDK_READY") ready = true;
         if (ev.name === "SDK_GAME_PAUSE") { paused = true; if (onStart) onStart(); }
-        if (ev.name === "SDK_GAME_START" && pending) { const r = pending; pending = null; r(paused); }
+        if (ev.name === "SDK_GAME_START" && pending && paused) { const r = pending; pending = null; r(true); }
       },
     };
     loadScript("https://api.gamemonetize.com/sdk.js").then(() => {
@@ -926,8 +927,9 @@ const Ads = {
           return new Promise(res => {
             if (!window.sdk || typeof window.sdk.showBanner !== "function") return res(false);
             paused = false; onStart = start; pending = res;
-            setTimeout(() => { if (pending === res && !paused) { pending = null; res(false); } }, 4000);
-            try { window.sdk.showBanner(); } catch (e) { pending = null; res(false); }
+            setTimeout(() => { if (pending === res && !paused) { pending = null; res(false); } }, 15000);
+            const go = () => { try { window.sdk.showBanner(); } catch (e) { if (pending === res) { pending = null; res(false); } } };
+            if (ready) go(); else { let n = 0; const w = setInterval(() => { if (ready || ++n > 20) { clearInterval(w); go(); } }, 250); }
           });
         },
       });
