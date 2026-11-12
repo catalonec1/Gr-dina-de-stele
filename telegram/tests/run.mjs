@@ -107,8 +107,62 @@ await test('v1.5: culoarea Cupru (10000), misiunea 5 picături de aur, versiune 
   const p = FO.defaultProfile(); p.sparks = 9999; eq(FO.buySkin(p, 'copper'), 'poor');
   p.sparks = 10000; eq(FO.buySkin(p, 'copper'), 'ok'); assert(FO.equipSkin(p, 'copper')); eq(p.skin, 'copper'); eq(p.sparks, 0);
   assert(FO.MISSION_POOL.some(m => m.k === 'gold' && m.n === 5));
-  ['ro', 'en', 'ru'].forEach(l => assert(FO.I18N[l].whatsNew.includes('10000'), l));
-  eq(FO.VERSION, '1.5');
+});
+await test('v1.6: niveluri: primele 4 gratuite, deblocare pe rând, pachetul Stars deschide restul', () => {
+  const p = FO.defaultProfile();
+  eq(FO.LEVELS.length, 12); eq(FO.levelState(p, 0), 'ok'); eq(FO.levelState(p, 1), 'locked');
+  eq(FO.completeLevel(p, 0), FO.LEVEL_REWARD); eq(FO.completeLevel(p, 0), 0); eq(p.level, 1); eq(FO.levelState(p, 1), 'ok');
+  p.level = 4; eq(FO.levelState(p, 4), 'stars');
+  assert(FO.grantStarItem(p, 'levels_pack')); eq(FO.levelState(p, 4), 'ok');
+  eq(FO.sanitizeProfile({ level: 99 }).level, 12);
+});
+await test('v1.6: tura de nivel se termină cu victorie la atingerea obiectivului; fără record', () => {
+  const r = FO.newRun({ goal: { k: 'drops', n: 1 } }); r.spawnIn = 99;
+  r.items.push({ kind: 'drop', ring: 1, angle: 0.05, drift: 0, ttl: 5 });
+  FO.step(r, 0.016, FO.mulberry32(1));
+  assert(r.won && r.over && r.events.includes('win'));
+  const p = FO.defaultProfile(); r.score = 999; eq(FO.finishRun(p, r).record, false); eq(p.best, 0);
+  const t = FO.newRun({ goal: { k: 'time', n: 1 } }); t.spawnIn = 99;
+  for (let i = 0; i < 70; i++) FO.step(t, 0.016, FO.mulberry32(2));
+  assert(t.won, 'obiectivul de timp');
+});
+await test('v1.6: nivelurile pot fi trecute (simulare cu seed fix și jucător automat)', () => {
+  // jucător simplu: sare când molia e aproape pe inelul curent, dacă inelul următor e liber
+  FO.LEVELS.forEach((L, i) => {
+    let ok = false;
+    for (let attempt = 0; attempt < 20 && !ok; attempt++) {
+      const rng = FO.mulberry32(L.seed + attempt * 7919), r = FO.newRun({ goal: { k: L.k, n: L.n } });
+      for (let s = 0; s < 60 * 240 && !r.over; s++) {
+        if (FO.dangerAhead(r, r.ring, 0.2)) {
+          if (!FO.dangerAhead(r, (r.ring + 1) % 3, 0.35)) FO.tap(r);
+          else if (!FO.dangerAhead(r, (r.ring + 2) % 3, 0.35)) { FO.tap(r); FO.tap(r); }
+        } else {
+          const nx = (r.ring + 1) % 3;
+          if (r.items.some(it => it.kind !== 'moth' && it.ring === nx && FO.angDist(it.angle, r.angle) < 0.5) && !FO.dangerAhead(r, nx, 0.6)) FO.tap(r);
+        }
+        FO.step(r, 1 / 60, rng);
+      }
+      ok = r.won;
+    }
+    assert(ok, 'nivelul ' + (i + 1));
+  });
+});
+await test('v1.6: ghidul felinarului vede molia din față, nu pe cea din spate', () => {
+  const r = FO.newRun(); r.angle = 1; r.dir = 1; r.speed = 2;
+  r.items.push({ kind: 'moth', ring: 2, angle: 1.8, drift: 0, ttl: 5 });
+  assert(FO.dangerAhead(r, 2, 0.5)); assert(!FO.dangerAhead(r, 0, 0.5));
+  r.items[0].angle = 0.3; assert(!FO.dangerAhead(r, 2, 0.5));
+  r.dir = -1; assert(FO.dangerAhead(r, 2, 0.5));
+});
+await test('v1.6: teme: Pădure pe scântei, Aurora/Apus doar pe Stars; versiune nouă', () => {
+  const p = FO.defaultProfile(); eq(p.theme, 'night');
+  p.sparks = 2499; eq(FO.buyTheme(p, 'forest'), 'poor'); p.sparks = 2500; eq(FO.buyTheme(p, 'forest'), 'ok');
+  assert(FO.equipTheme(p, 'forest')); eq(p.theme, 'forest');
+  eq(FO.buyTheme(p, 'aurora'), 'stars'); assert(!FO.equipTheme(p, 'aurora'));
+  FO.grantStarItem(p, 'theme_pack'); assert(FO.equipTheme(p, 'sunset'));
+  eq(FO.sanitizeProfile({ theme: 'aurora' }).theme, 'night');
+  ['ro', 'en', 'ru'].forEach(l => assert(FO.I18N[l].whatsNew.includes('2500'), l));
+  eq(FO.VERSION, '1.6');
 });
 await test('v1.3: culoarea Brad (6000), versiune nouă', () => {
   const s = FO.skinById('pine'); assert(s && s.price === 6000 && !s.stars);
@@ -523,7 +577,40 @@ if (chromium) {
     await page.evaluate(() => { localStorage.setItem('fo_profile', JSON.stringify({ v: 1, best: 40, sparks: 10, runs: 5, skin: 'amber', owned: ['skin:amber'], lang: 'en', seen: '1.1' })); });
     await page.reload(); await page.waitForFunction(() => window.__fo);
     await page.waitForFunction(() => document.getElementById('toast').textContent.includes(window.__fo ? FO.VERSION : '1.3') || document.getElementById('toast').textContent.includes('1.3'), null, { timeout: 3000 });
-    assert((await page.textContent('#toast')).includes('Copper'));
+    assert((await page.textContent('#toast')).includes('challenge levels'));
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+  });
+
+  await test('v1.6: ecranul de niveluri, nivelul 1 câștigat deschide nivelul 2', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'ro' });
+    await page.click('#btnLevels');
+    eq(await page.$$eval('#lvlGrid button', b => b.length), 12);
+    eq(await page.$$eval('#lvlStars .row', r => r.length), 0, 'fără STARS_V2 nu se vinde pachetul');
+    await page.click('#lvlGrid button >> nth=0');
+    await page.waitForFunction(() => window.__fo.curLevel === 0 && window.__fo.run && !window.__fo.run.over);
+    await page.waitForFunction(() => document.getElementById('hudScore').textContent.includes('Nivelul 1'), null, { timeout: 2000 });
+    await page.evaluate(() => { const r = window.__fo.run; r.drops = 9; r.items.push({ kind: 'drop', ring: r.ring, angle: r.angle + 0.05 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForSelector('#over.on', { timeout: 3000 });
+    assert((await page.textContent('#oRecord')).includes('Nivel trecut'));
+    eq(await page.evaluate(() => window.__fo.profile.level), 1);
+    await page.screenshot({ path: path.join(outDir, 'v16-level-win.png') });
+    await page.click('#btnAgain');
+    await page.waitForFunction(() => window.__fo.curLevel === 1);
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+  });
+  await test('v1.6: cu STARS_V2 se cumpără pachetele noi (teme, ghid, niveluri)', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'en', config: { API_BASE: API, ADSGRAM_BLOCK_ID: '', STARS_V2: true } });
+    await page.click('#btnShop');
+    eq(await page.$$eval('#starRows .row', r => r.length), 6);
+    for (const id of ['theme_pack', 'guide_perk', 'levels_pack']) {
+      await page.click(`#starRows button[data-item=${id}]`);
+      await page.waitForFunction(i => window.__fo.profile.owned.some(o => o.startsWith('paid:') && o.endsWith('_' + i)), id, { timeout: 8000 });
+    }
+    await page.click('#themeGrid button[data-theme=aurora]');
+    eq(await page.evaluate(() => window.__fo.profile.theme), 'aurora');
+    await page.click('#btnShopBack'); await page.click('#btnPlay'); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(outDir, 'v16-aurora-guide.png') });
+    eq(await page.evaluate(() => window.__fo.profile.owned.includes('levels:all') && window.__fo.profile.owned.includes('perk:guide')), true);
     eq(errors.length, 0, errors.join(' | ')); await ctx.close();
   });
 
