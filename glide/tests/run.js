@@ -75,7 +75,7 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }, opt 
   await p.click('.lv[data-lv="10"]'); ok(await p.evaluate(() => mode !== 'game'), 'iazurile blocate nu pornesc');
   await p.click('.lv[data-lv="3"]'); ok(await p.evaluate(() => mode === 'game' && LI === 3), 'următorul iaz pornește din listă');
   await p.evaluate(() => toMenu()); await p.click('#bSkins');
-  ok(await p.$$eval('.sk', e => e.length) === 6, '6 fulare');
+  ok(await p.$$eval('.sk', e => e.length) === 8, '8 fulare');
   await p.click('.sk:nth-child(2)'); ok(await p.evaluate(() => S.skin === 0), 'fularul blocat nu se poate alege');
   await p.evaluate(() => { S.stars = new Array(15).fill(3); renderSkins(); }); await p.click('.sk:nth-child(3)');
   ok(await p.evaluate(() => S.skin === 2), 'cu stele destule, fularul se alege');
