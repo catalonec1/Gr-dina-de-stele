@@ -68,6 +68,8 @@ jobs:
         run: node quilt/tests/run.js
       - name: Teste Otter Glide
         run: node glide/tests/run.js
+      - name: Teste Glowcap Grove
+        run: node grove/tests/run.js
       - name: Teste site erori ORA
         run: node ora/tests/run.js
 
@@ -114,6 +116,10 @@ jobs:
         run: |
           mkdir -p dist/web/glide
           cp glide/index.html glide/launch/cover-630x500.png glide/launch/icon-512.png dist/web/glide/
+      - name: Adaugă Glowcap Grove în /grove/
+        run: |
+          mkdir -p dist/web/grove
+          cp grove/index.html grove/launch/cover-630x500.png grove/launch/icon-512.png dist/web/grove/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Pagini extensii Pocket (suport + confidențialitate)
