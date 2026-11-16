@@ -1,0 +1,30 @@
+// Teste site erori ORA: node ora/tests/run.js  (necesită playwright)
+const { chromium } = require('playwright');
+const fs = require('fs'); const os = require('os'); const path = require('path');
+const out = fs.mkdtempSync(path.join(os.tmpdir(), 'ora-'));
+process.argv[2] = out;
+const { build } = require('../build.js');
+let fails = 0; const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++; };
+(async () => {
+  const list = build();
+  ok(list.length >= 250, 'catalog complet (' + list.length + ')');
+  ok(new Set(list.map(e => e.code)).size === list.length, 'coduri unice');
+  const sm = fs.readFileSync(path.join(out, 'sitemap.xml'), 'utf8');
+  ok((sm.match(/<loc>/g) || []).length === list.length + 1, 'sitemap cu toate paginile');
+  const p1 = fs.readFileSync(path.join(out, 'ORA-01403', 'index.html'), 'utf8');
+  ok(/<title>ORA-01403: /.test(p1) && /rel="canonical" href="https:\/\/catalonec1\.github\.io\/Gr-dina-de-stele\/ora\/ORA-01403\/"/.test(p1), 'titlu + canonical');
+  ok(p1.includes('"@type":"FAQPage"') && p1.includes('35912-ora-error-helper'), 'JSON-LD + link plugin');
+  const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 390, height: 844 } });
+  const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  await pg.goto('file://' + path.join(out, 'index.html'));
+  await pg.fill('#q', 'ORA-01403');
+  ok(await pg.$$eval('#ix li:not([hidden])', l => l.length) === 1, 'căutare după cod');
+  await pg.fill('#q', 'mutating');
+  ok(await pg.$$eval('#ix li:not([hidden])', l => l.length) >= 1, 'căutare după cuvânt');
+  ok(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'fără scroll orizontal pe telefon');
+  await pg.goto('file://' + path.join(out, 'PLS-00201', 'index.html'));
+  ok(await pg.evaluate(() => document.documentElement.scrollWidth <= 390), 'pagină eroare fără scroll orizontal');
+  ok(errs.length === 0, 'fără erori JS');
+  await b.close(); fs.rmSync(out, { recursive: true, force: true });
+  process.exit(fails ? 1 : 0);
+})();

@@ -10,7 +10,10 @@
 export const ITEMS = {
   aurora_pack:   { stars: 50,  title: { en: 'Aurora + Ember pack', ro: 'Pachet Aurora + Jar', ru: 'Набор Аврора + Уголёк' } },
   double_sparks: { stars: 100, title: { en: 'Double sparks forever', ro: 'Scântei ×2 pentru totdeauna', ru: 'Двойные искры навсегда' } },
-  shield_pack:   { stars: 25,  title: { en: '10 shields', ro: '10 scuturi', ru: '10 щитов' } }
+  shield_pack:   { stars: 25,  title: { en: '10 shields', ro: '10 scuturi', ru: '10 щитов' } },
+  theme_pack:    { stars: 50,  title: { en: 'Aurora + Sunset themes', ro: 'Teme Aurora + Apus', ru: 'Темы Аврора + Закат' } },
+  guide_perk:    { stars: 40,  title: { en: 'Lantern guide (hints)', ro: 'Ghidul felinarului (indicii)', ru: 'Фонарь-подсказка' } },
+  levels_pack:   { stars: 75,  title: { en: 'Level pack 5-12', ro: 'Pachetul de niveluri 5-12', ru: 'Набор уровней 5-12' } }
 };
 
 const TEXT = {

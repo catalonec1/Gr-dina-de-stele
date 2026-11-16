@@ -28,6 +28,10 @@ jobs:
         run: node tests/v13.js
       - name: Teste Grădina de stele v1.4
         run: node tests/v14.js
+      - name: Teste Grădina de stele v1.5
+        run: node tests/v15.js
+      - name: Teste Grădina de stele v1.6
+        run: node tests/v16.js
       - name: Teste joc Telegram
         run: node telegram/tests/run.mjs
       - name: Teste fișe gratuite (printabile)
@@ -42,16 +46,32 @@ jobs:
         run: node lumen/tests/v20.js
       - name: Teste Lumen Links v2.1
         run: node lumen/tests/v21.js
+      - name: Teste Lumen Links v2.2
+        run: node lumen/tests/v22.js
+      - name: Teste Lumen Links v2.3
+        run: node lumen/tests/v23.js
       - name: Teste Paper River
         run: node river/tests/run.js
       - name: Teste Paper River v1.1
         run: node river/tests/v11.js
       - name: Teste Paper River v1.2
         run: node river/tests/v12.js
+      - name: Teste Paper River v1.3
+        run: node river/tests/v13.js
+      - name: Teste Paper River v1.4
+        run: node river/tests/v14.js
       - name: Teste Hive Bloom
         run: node hive/tests/run.js
       - name: Teste Pebble Putt
         run: node putt/tests/run.js
+      - name: Teste Cozy Quilt
+        run: node quilt/tests/run.js
+      - name: Teste Otter Glide
+        run: node glide/tests/run.js
+      - name: Teste Glowcap Grove
+        run: node grove/tests/run.js
+      - name: Teste site erori ORA
+        run: node ora/tests/run.js
 
   deploy:
     needs: test
@@ -88,6 +108,18 @@ jobs:
         run: |
           mkdir -p dist/web/putt
           cp putt/index.html putt/launch/cover-630x500.png putt/launch/icon-512.png dist/web/putt/
+      - name: Adaugă Cozy Quilt în /quilt/
+        run: |
+          mkdir -p dist/web/quilt
+          cp quilt/index.html quilt/launch/cover-630x500.png quilt/launch/icon-512.png dist/web/quilt/
+      - name: Adaugă Otter Glide în /glide/
+        run: |
+          mkdir -p dist/web/glide
+          cp glide/index.html glide/launch/cover-630x500.png glide/launch/icon-512.png dist/web/glide/
+      - name: Adaugă Glowcap Grove în /grove/
+        run: |
+          mkdir -p dist/web/grove
+          cp grove/index.html grove/launch/cover-630x500.png grove/launch/icon-512.png dist/web/grove/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Pagini extensii Pocket (suport + confidențialitate)
@@ -96,6 +128,10 @@ jobs:
         run: |
           mkdir -p dist/web/printabile
           cp printabile/index.html dist/web/printabile/
+      - name: Portofoliu în /portfolio/
+        run: cp -r portfolio dist/web/
+      - name: Site de referință erori ORA în /ora/
+        run: node ora/build.js dist/web/ora
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
