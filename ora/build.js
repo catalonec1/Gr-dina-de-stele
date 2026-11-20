@@ -13,7 +13,9 @@ const LINKS = {
   lint: 'https://plugins.jetbrains.com/plugin/35825-pl-sql-lint',
   helper: 'https://plugins.jetbrains.com/plugin/35912-ora-error-helper',
   plan: 'https://plugins.jetbrains.com/plugin/35913-oracle-plan-reader',
-  book: 'https://www.amazon.com/s?k=%22PL%2FSQL+in+Practice%22&i=digital-text',
+  book: 'https://www.amazon.com/dp/B0HQV2MR6Q',
+  paperback: 'https://www.amazon.com/dp/B0HRSNJM64',
+  vscode: 'https://marketplace.visualstudio.com/items?itemName=catalonec.plsql-lint',
 };
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -63,7 +65,9 @@ const promo = `<!-- ad-slot: reserved for ads once there is traffic -->
 <a href="${LINKS.helper}" rel="noopener"><b>ORA Error Helper</b><br><span class="mut">Explains ORA-/PLS- codes inside JetBrains IDEs and DataGrip.</span></a>
 <a href="${LINKS.lint}" rel="noopener"><b>PL/SQL Lint</b><br><span class="mut">Flags risky PL/SQL patterns while you type.</span></a>
 <a href="${LINKS.plan}" rel="noopener"><b>Oracle Plan Reader</b><br><span class="mut">Reads execution plans and points at the slow step.</span></a>
-<a href="${LINKS.book}" rel="noopener"><b>PL/SQL in Practice</b><br><span class="mut">Kindle book with practical PL/SQL for working developers.</span></a></div>`;
+<a href="${LINKS.book}" rel="noopener"><b>PL/SQL in Practice (Kindle $2.99)</b><br><span class="mut">Tested PL/SQL patterns for working Oracle developers. Paperback edition also available.</span></a>
+<a href="${LINKS.vscode}" rel="noopener"><b>PL/SQL Lint for VS Code</b><br><span class="mut">The same PL/SQL checks inside Visual Studio Code, free.</span></a></div>
+<p class="mut">Prefer print? <a href="${LINKS.paperback}" rel="noopener">PL/SQL in Practice paperback</a>.</p>`;
 
 function errorPage(e, i, list) {
   const same = list.filter(x => x.code.slice(0, 3) === e.code.slice(0, 3));
