@@ -13,6 +13,7 @@ Joc idle HTML5 într-un singur fișier (`index.html`), în RO / EN / RU.
 - **Cozy Quilt** (puzzle cu petice: 60 de pilote în 4 lumi, rotire, nasturi, oglindire, Pilota zilei; RO/EN/RU): `quilt/` → https://catalonec1.github.io/Gr-dina-de-stele/quilt/ · teste: `node quilt/tests/run.js` · capturi: `node quilt/tools/shots.js`
 - **Otter Glide** (puzzle cu alunecare pe gheață: 60 de iazuri în 4 lumi, pești, nămeți, gheață crăpată, Iazul zilei; RO/EN/RU): `glide/` → https://catalonec1.github.io/Gr-dina-de-stele/glide/ · teste: `node glide/tests/run.js` · capturi: `node glide/tools/shots.js`
 - **Glowcap Grove** (puzzle cu rădăcini rotite: 60 de poieni în 4 lumi, pietre, două rețele, tuneluri, Poiana zilei; RO/EN/RU): `grove/` → https://catalonec1.github.io/Gr-dina-de-stele/grove/ · teste: `node grove/tests/run.js` · capturi: `node grove/tools/shots.js`
+- **Cocoon Garden** (idle / incremental: stejar, 8 creaturi, anotimpuri, fluturi aurii, migrație cu praf de aripi, trofee, offline; RO/EN/RU): `cocoon/` → https://catalonec1.github.io/Gr-dina-de-stele/cocoon/ · teste: `node cocoon/tests/run.js` · capturi: `node cocoon/tools/shots.js`
 
 ## Versiuni
 - **v1.2** (2026-11-06): a 9-a stea, Galaxia spirală (cu brațe animate și 3 îmbunătățiri), ploi de meteori la ~10 min (30 s de comete dese, 25% aur), misiune zilnică nouă „prinde o cometă de aur”, 4 trofee noi (23 în total). Teste: `node tests/v12.js`.

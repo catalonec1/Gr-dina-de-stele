@@ -70,6 +70,8 @@ jobs:
         run: node glide/tests/run.js
       - name: Teste Glowcap Grove
         run: node grove/tests/run.js
+      - name: Teste Cocoon Garden
+        run: node cocoon/tests/run.js
       - name: Teste site erori ORA
         run: node ora/tests/run.js
 
@@ -120,6 +122,10 @@ jobs:
         run: |
           mkdir -p dist/web/grove
           cp grove/index.html grove/launch/cover-630x500.png grove/launch/icon-512.png dist/web/grove/
+      - name: Adaugă Cocoon Garden în /cocoon/
+        run: |
+          mkdir -p dist/web/cocoon
+          cp cocoon/index.html cocoon/launch/cover-630x500.png cocoon/launch/icon-512.png dist/web/cocoon/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Pagini extensii Pocket (suport + confidențialitate)
