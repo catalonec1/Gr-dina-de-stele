@@ -60,6 +60,8 @@ jobs:
         run: node river/tests/v13.js
       - name: Teste Paper River v1.4
         run: node river/tests/v14.js
+      - name: Teste Paper River v1.5
+        run: node river/tests/v15.js
       - name: Teste Hive Bloom
         run: node hive/tests/run.js
       - name: Teste Pebble Putt
