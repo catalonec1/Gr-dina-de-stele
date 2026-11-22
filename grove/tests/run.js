@@ -94,7 +94,8 @@ const SOLVE = () => { const L = G.L; for (let i = 0; i < L.w * L.h; i++) { let k
   await p.click('.lv[data-lv="10"]'); ok(await p.evaluate(() => mode !== 'game'), 'poienile blocate nu pornesc');
   await p.click('.lv[data-lv="3"]'); ok(await p.evaluate(() => mode === 'game' && LI === 3), 'următoarea poiană pornește din listă');
   await p.evaluate(() => toMenu()); await p.click('#bSkins');
-  ok(await p.$$eval('.sk', e => e.length) === 8, '8 lumini');
+  const SKINS_N = await p.evaluate(() => SKINS.length);
+  ok(await p.$$eval('.sk', e => e.length) === SKINS_N, SKINS_N + ' lumini');
   await p.click('.sk:nth-child(2)'); ok(await p.evaluate(() => S.skin === 0), 'lumina blocată nu se poate alege');
   await p.evaluate(() => { S.stars = new Array(15).fill(3); renderSkins(); }); await p.click('.sk:nth-child(3)');
   ok(await p.evaluate(() => S.skin === 2), 'lumina deblocată se alege');
