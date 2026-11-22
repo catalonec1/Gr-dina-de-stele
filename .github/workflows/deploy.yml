@@ -72,6 +72,8 @@ jobs:
         run: node glide/tests/run.js
       - name: Teste Glowcap Grove
         run: node grove/tests/run.js
+      - name: Teste Glowcap Grove v1.1
+        run: node grove/tests/v11.js
       - name: Teste Cocoon Garden
         run: node cocoon/tests/run.js
       - name: Teste site erori ORA
