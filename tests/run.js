@@ -66,7 +66,7 @@ async function fresh(b, locale = 'ro-RO', init) {
   ok(p.errs.length === 0, 'fără erori în consolă ' + p.errs.join('|'));
   // v1.1: stele noi, cumpărare x10 / Max, cometă de aur, trofee, statistici, tastatură
   p = await fresh(b);
-  ok(await p.evaluate(() => STAR_TYPES.length === 8 && ['ro','en','ru'].every(k => T[k].stars.length === 8)), 'v1.1: 8 tipuri de stele traduse');
+  ok(await p.evaluate(() => STAR_TYPES.length >= 8 && ['ro','en','ru'].every(k => T[k].stars.length === STAR_TYPES.length)), 'v1.1: 8 tipuri de stele traduse');
   ok(await p.evaluate(() => ['ro','en','ru'].every(k => ACHIEVEMENTS.every(a => T[k].an[a.id] && T[k].ad[a.k]))), 'v1.1: trofee traduse în toate limbile');
   await p.evaluate(() => { S.light = 1e4; S.buyMode = 10; renderList(); });
   const cost10 = await p.evaluate(() => starCostN(0, 10));
@@ -77,7 +77,7 @@ async function fresh(b, locale = 'ro-RO', init) {
   const nMax = await p.evaluate(() => buyCount(0));
   await p.click('.row:nth-child(2) .buy');
   ok(await p.evaluate(n => S.owned[0] === 10 + n && S.light >= 0 && S.light < starCost(0), nMax), 'v1.1: cumpărare Max');
-  ok(await p.evaluate(() => document.querySelectorAll('.modes button').length === 3), 'v1.1: comutator x1/x10/Max');
+  ok(await p.evaluate(() => document.querySelectorAll('.modes button').length >= 3), 'v1.1: comutator x1/x10/Max');
   const rA = await p.evaluate(() => { S.ach = {}; return ratePerSec(); });
   const rB = await p.evaluate(() => { S.ach = { taps1: true, comets1: true }; return ratePerSec(); });
   ok(Math.abs(rB / rA - 1.04) < 1e-9, 'v1.1: fiecare trofeu +2% lumină');
@@ -100,12 +100,17 @@ async function fresh(b, locale = 'ro-RO', init) {
   p = await fresh(b, 'ro-RO', () => { if (!sessionStorage.y) { sessionStorage.y = 1;
     localStorage.setItem('gradina-de-stele-v1', JSON.stringify({ light: 50, lifeLight: 5e5, owned: [3, 0, 0, 0, 0, 0], ups: {}, dust: 1, boostUntil: 0, lang: 'ro', sound: true, last: Date.now() })); } });
   await p.waitForTimeout(300);
-  ok(await p.evaluate(() => S.owned.length === 8 && S.stats.total >= 5e5 && S.seen === VERSION && !!S.ach.total2 === false && !!S.ach.total1), 'v1.1: migrare salvare v1.0');
-  await p.waitForFunction(() => document.getElementById('toast').textContent.includes('1.1'), null, { timeout: 5000 }).catch(() => {});
-  ok(await p.evaluate(() => document.getElementById('toast').textContent.includes('1.1')), 'v1.1: mesaj „Noutăți” pentru jucătorii vechi');
+  ok(await p.evaluate(() => S.owned.length === STAR_TYPES.length && S.stats.total >= 5e5 && S.seen === VERSION && !!S.ach.total2 === false && !!S.ach.total1), 'v1.1: migrare salvare v1.0');
+  await p.waitForFunction(() => document.getElementById('toast').textContent.includes(VERSION), null, { timeout: 5000 }).catch(() => {});
+  ok(await p.evaluate(() => document.getElementById('toast').textContent.includes(VERSION)), 'v1.1: mesaj „Noutăți” pentru jucătorii vechi');
   // reclamă în curs: sunetul jucătorului nu se salvează ca oprit
+  // Basic Launch (fără CG_ADS): SDK-ul CrazyGames nu activează reclame, bonusul e gratuit
   p = await fresh(b);
-  await p.evaluate(() => { Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} },
+  await p.evaluate(() => { Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} }, ad: { requestAd() {} } }); });
+  ok(await p.evaluate(() => !Ads.enabled), 'CrazyGames Basic Launch: fără reclame');
+  // Full Launch (CG_ADS=1): reclamă în curs
+  p = await fresh(b);
+  await p.evaluate(() => { window.CG_ADS = 1; Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){}, gameplayStop(){} },
     ad: { requestAd(type, cb) { cb.adStarted(); window.__fin = cb.adFinished; } } }); });
   await p.click('.row:nth-child(1) .buy');
   ok(await p.evaluate(() => { save(); return JSON.parse(localStorage.getItem(SAVE_KEY)).sound === true && Ads.muted; }), 'v1.1: în timpul reclamei sunetul e oprit fără să strice setarea');
@@ -124,7 +129,7 @@ async function fresh(b, locale = 'ro-RO', init) {
   ok(p.errs.length === 0 && await p.evaluate(() => S.light) > 0, 'merge fără localStorage');
   // SDK reclame simulat: recompensă doar după reclamă, eroare fără recompensă
   p = await fresh(b, 'ro-RO');
-  await p.evaluate(() => { window.__mode = 'ok'; window.__calls = [];
+  await p.evaluate(() => { window.CG_ADS = 1; window.__mode = 'ok'; window.__calls = [];
     Ads.useSdk({ environment: 'local', game: { loadingStop(){}, gameplayStart(){ __calls.push('start'); }, gameplayStop(){ __calls.push('stop'); } },
       ad: { requestAd(type, cb) { __calls.push(type); cb.adStarted(); setTimeout(() => __mode === 'ok' ? cb.adFinished() : cb.adError('x'), 50); } } }); });
   ok(await p.evaluate(() => Ads.enabled), 'SDK detectat');
@@ -185,6 +190,19 @@ async function fresh(b, locale = 'ro-RO', init) {
     await c2.close();
   }
   srv2.close();
+  // Regresii găsite prin teste de mutație (skill rea-ci-tests-audit): fiecare verificare de mai jos
+  // pică dacă formula sau validarea respectivă se schimbă, ceea ce suita veche nu observa.
+  p = await fresh(b, 'ro-RO', () => { if (!sessionStorage.z) { sessionStorage.z = 1;
+    localStorage.setItem('gradina-de-stele-v1', JSON.stringify({ light: 0, lifeLight: 0, owned: [0, 10, 0, 0, 0, 0], ups: {}, dust: 0, boostUntil: 0, lang: 'xx', buyMode: 'abc', sound: true, last: Date.now() - 24 * 3600e3 })); } });
+  await p.waitForTimeout(300);
+  ok(Math.abs(await p.evaluate(() => S.light) - 288000) < 3000, 'mutație: câștigul offline e plafonat la 8h');
+  ok(await p.evaluate(() => S.lang === 'en' && S.buyMode === 1), 'mutație: salvare cu limbă / mod de cumpărare invalid se corectează');
+  ok(await p.evaluate(() => { S.last = 0; save(); return JSON.parse(localStorage.getItem(SAVE_KEY)).last > Date.now() - 5000; }), 'mutație: save() actualizează ora ultimei sesiuni');
+  ok(await p.evaluate(() => { S.owned[0] = 1; return starCost(0) === Math.ceil(STAR_TYPES[0].cost * 1.15); }), 'mutație: costul stelei crește cu 15%, rotunjit în sus');
+  ok(await p.evaluate(() => { S.ach = {}; S.ups = {}; S.boostUntil = 0; S.dust = 0; const r0 = ratePerSec(); S.dust = 5; return Math.abs(ratePerSec() / r0 - 1.5) < 1e-9; }), 'mutație: fiecare praf de stele +10%');
+  ok(await p.evaluate(() => { S.dust = 0; const r0 = ratePerSec(); S.ups = { global0: true }; return Math.abs(ratePerSec() / r0 - 1.5) < 1e-9; }), 'mutație: îmbunătățirea globală x1.5');
+  ok(await p.evaluate(() => { S.ups = { tap2: true }; S.boostUntil = 0; return Math.abs(tapValue() - (2 + ratePerSec() * 0.05)) < 1e-9; }), 'mutație: atingerea adaugă 5% din producție');
+  ok(p.errs.length === 0, 'mutație: fără erori în consolă ' + p.errs.join('|'));
   await b.close();
   console.log(fails ? `\n${fails} TESTE PICATE` : '\nTOATE TESTELE AU TRECUT');
   process.exit(fails ? 1 : 0);

@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Cocoon Garden</title>
+<meta name="description" content="A cozy idle / incremental garden. Shake the old tree for leaves, raise caterpillars, ladybugs, snails and bees, ride the four seasons, catch golden butterflies and migrate for wing dust. Keeps growing while you are away.">
+<meta name="theme-color" content="#2c4a2a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232c4a2a'/%3E%3Cellipse cx='32' cy='36' rx='12' ry='19' fill='%23f2e6c8'/%3E%3Cpath d='M20 30h24M21 38h22M23 46h18' stroke='%23c9b48a' stroke-width='2'/%3E%3Cpath d='M32 6v11' stroke='%236b4a2e' stroke-width='4'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#2c4a2a;--panel:rgba(26,46,26,.95);--line:rgba(255,255,255,.16);--ink:#fbfdf3;--dim:#cfe0c4;--acc:#ffd166;--acc2:#a8e06c;--pw:400px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
+button{font:inherit;color:inherit;background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:14px;padding:10px 14px;cursor:pointer;transition:transform .08s,background .15s}
+button:hover{background:rgba(255,255,255,.16)}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+button.big{font-size:21px;padding:15px 0;width:min(80vw,310px);margin:6px 0;font-weight:700}
+button.pri{background:linear-gradient(180deg,#ffe49a,#f5b83d);color:#4a2b00;border:none;box-shadow:0 5px 0 #a86f12,0 8px 20px rgba(0,0,0,.3)}
+button.pri:active{transform:translateY(3px);box-shadow:0 2px 0 #a86f12}
+button.ico{padding:6px 10px;min-width:44px;min-height:42px;font-size:19px;background:rgba(14,30,14,.6)}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:8;overflow:auto;background:rgba(10,22,10,.6);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.screen.on{display:flex;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-6px) rotate(5deg)}}
+@keyframes poke{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,10px)}}
+#menu h1{margin:0 0 6px;font-size:clamp(46px,13vw,78px);line-height:.95;color:#f6ffe6;text-shadow:0 5px 0 #4f8f2a,0 9px 0 rgba(0,0,0,.25),0 0 40px rgba(168,224,108,.4);text-align:center;font-weight:900}
+#menu h1 span{display:block;font-size:.72em;color:var(--acc);text-shadow:0 4px 0 #a86f12,0 7px 0 rgba(0,0,0,.25)}
+#menu .sub{color:var(--dim);margin:8px 18px 18px;text-align:center;max-width:390px;font-size:16px}
+.deco{font-size:54px;margin-bottom:8px;animation:bob 2.6s ease-in-out infinite}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.panelbox{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;width:min(92vw,430px);box-shadow:0 20px 60px rgba(0,0,0,.5);animation:pop .35s ease}
+h2{margin:0 0 12px;text-align:center;font-size:24px}
+.set{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);gap:12px}
+.set:last-child{border:none}
+.set button{min-width:96px}
+#hud{position:fixed;left:0;top:0;z-index:4;padding:calc(8px + env(safe-area-inset-top)) 10px 0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+#hud button{pointer-events:auto}
+#hud .mid{text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.6)}
+#leaves{font-size:28px;font-weight:900;display:block;line-height:1.1}
+#rate{font-size:14px;color:#eef7e4}
+#season{display:inline-block;margin-top:4px;font-size:13px;padding:3px 10px;border-radius:12px;background:rgba(0,0,0,.3)}
+#rush{display:none;margin-top:4px;font-size:13px;padding:3px 10px;border-radius:12px;background:rgba(255,209,102,.9);color:#4a2b00;font-weight:800}
+#side{position:fixed;z-index:5;background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:column}
+#tabs{display:flex;gap:4px;padding:6px 6px 0}
+#tabs button{flex:1;padding:8px 2px;font-size:13px;border-radius:12px 12px 0 0;border-bottom:none;background:rgba(255,255,255,.05)}
+#tabs button.on{background:rgba(255,255,255,.16);color:var(--acc);font-weight:800}
+#buyMode{display:flex;gap:6px;padding:6px 8px;align-items:center;font-size:13px;color:var(--dim)}
+#buyMode button{padding:4px 10px;font-size:13px;border-radius:10px}
+#buyMode button.on{background:var(--acc);color:#4a2b00;border-color:transparent;font-weight:800}
+#list{flex:1;overflow-y:auto;padding:4px 8px calc(10px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.it{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:5px 0;padding:8px 10px;border-radius:14px}
+.it .e{font-size:28px;width:38px;text-align:center;flex:none}
+.it .t{flex:1;min-width:0}
+.it .t b{display:block;font-size:15px}
+.it .t small{display:block;color:var(--dim);font-size:12px;line-height:1.3}
+.it .c{text-align:right;font-weight:800;color:var(--acc);font-size:14px;white-space:nowrap}
+.it .c small{display:block;color:var(--dim);font-weight:400;font-size:11px}
+.it.no .c{color:#d99}
+.it.lock{opacity:.4}
+.ach{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:6px 0}
+.ach div{aspect-ratio:1;border-radius:14px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--line);filter:grayscale(1);opacity:.4}
+.ach div.got{filter:none;opacity:1;background:rgba(255,209,102,.18)}
+.note{color:var(--dim);font-size:13px;text-align:center;margin:8px 4px}
+#tip{position:fixed;z-index:6;background:rgba(20,40,20,.95);border:1px solid var(--line);border-radius:14px;padding:9px 14px;font-size:15px;text-align:center;display:none;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35);transform:translateX(-50%)}
+#tip.on{display:block;animation:pop .35s ease}
+#tip b{color:var(--acc)}
+#hand{position:fixed;z-index:7;font-size:34px;pointer-events:none;display:none;animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+#toast{pointer-events:none;position:fixed;left:50%;top:calc(110px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(20,40,20,.97);border:1px solid var(--line);border-radius:14px;padding:9px 16px;z-index:9;display:none;font-weight:700;text-align:center;max-width:92vw}
+#toast.on{display:block;animation:pop .3s ease}
+@media (max-height:640px){.deco{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><button class="ico" id="bMenu" aria-label="Menu">☰</button><div class="mid"><span id="leaves">0</span><span id="rate"></span><br><span id="season"></span><br><span id="rush"></span></div><button class="ico" id="bSet" aria-label="Settings">⚙️</button></div>
+<div id="side">
+  <div id="tabs"><button data-tab="gen" class="on"></button><button data-tab="up"></button><button data-tab="mig"></button><button data-tab="ach"></button></div>
+  <div id="buyMode"><span data-t="buy"></span><button data-n="1" class="on">×1</button><button data-n="10">×10</button><button data-n="0">Max</button></div>
+  <div id="list"></div>
+</div>
+<div id="tip"></div>
+<div id="hand">👆</div>
+<div id="toast"></div>
+
+<div class="screen on" id="menu">
+  <div class="deco">🦋</div>
+  <h1>Cocoon<span>Garden</span></h1>
+  <div class="sub" data-t="sub"></div>
+  <button class="big pri" id="bPlay"></button>
+  <button class="big" id="bNew" style="display:none"></button>
+  <div class="row"><button id="bSettings" class="ico" aria-label="Settings">⚙️</button><button id="bLang" class="ico" aria-label="Language">RO</button></div>
+  <div id="menuInfo" style="color:var(--acc);margin-top:10px;font-weight:700"></div>
+</div>
+<div class="screen" id="settings"><div class="panelbox"><h2 data-t="settings"></h2>
+  <div class="set"><span data-t="music"></span><button id="sMusic"></button></div>
+  <div class="set"><span data-t="sound"></span><button id="sSound"></button></div>
+  <div class="set"><span data-t="tut"></span><button id="sTut"></button></div>
+  <div class="set"><span data-t="lang"></span><button id="sLang"></button></div>
+  <div class="set"><span data-t="fx"></span><button id="sFx"></button></div>
+  <div class="set"><span data-t="keys"></span><small style="color:var(--dim);text-align:right">Space 🌳 · 1–8 · B 🦋 · Esc</small></div>
+  <div class="set"><span data-t="reset"></span><button id="sReset" style="color:#ff9a9a"></button></div>
+  <div class="row"><button class="big pri" id="sClose" style="margin:0"></button></div>
+</div></div>
+<div class="screen" id="away"><div class="panelbox" style="text-align:center"><h2 data-t="awayT"></h2><div style="font-size:44px">🌙🍃</div><p id="awayInfo" style="color:var(--dim)"></p><button class="big pri" id="awayOk" style="margin:0 auto"></button></div></div>
+<div class="screen" id="confirm"><div class="panelbox" style="text-align:center"><h2 id="cfT"></h2><p id="cfP" style="color:var(--dim)"></p><div class="row"><button id="cfNo"></button><button class="pri" id="cfYes"></button></div></div></div>
+
+<script>
+'use strict';
+const VERSION = '1.0';
+// ---------- texte ----------
+const TX = {
+  ro: { sub: 'O grădină liniștită care crește și când nu ești aici. Scutură stejarul, crește omizi, gărgărițe și albine, prinde fluturi aurii și pleacă în migrație.', play: 'Joacă', cont: 'Continuă', newg: 'Joc nou', settings: 'Setări', music: 'Muzică', sound: 'Sunete', tut: 'Tutorial', lang: 'Limba', fx: 'Efecte', keys: 'Tastatură', reset: 'Șterge progresul', on: 'Pornit', off: 'Oprit', erase: 'Șterge', sure: 'Apasă din nou', close: 'Închide', buy: 'Cumpără', perSec: '/s', tabs: ['Creaturi', 'Îmbunătățiri', 'Migrație', 'Trofee'], seasons: ['Primăvară', 'Vară', 'Toamnă', 'Iarnă'], boost: '×2: ', own: 'ai', each: 'fiecare', tap: 'Atingere', up: 'Îmbunătățire', need: 'apare la', noUps: 'Cumpără mai multe creaturi ca să apară îmbunătățiri noi.', bought: 'Cumpărat', rush: 'Ploaie de polen ×7', gift: 'Fluturele a lăsat ', butterfly: 'Fluture auriu!', awayT: 'Bine ai revenit!', away: 'Cât ai lipsit ({t}), grădina a strâns ', ok: 'Super', migT: 'Migrația fluturilor', migP: 'Fluturii pleacă spre sud și lasă praf de aripi. Frunzele, creaturile și îmbunătățirile se resetează, dar fiecare 🌟 praf dă +5% producție pentru totdeauna.', migNow: 'Pleacă în migrație: +{d} 🌟', migNeed: 'Ai nevoie de 1 M 🍃 strânse în această grădină (acum {x}).', dust: 'Praf de aripi', mult: 'bonus producție', cfMig: 'Pornești migrația?', yes: 'Da', no: 'Nu', newConf: 'Ștergi grădina și începi de la zero?', achGot: 'Trofeu: ', achInfo: 'Fiecare trofeu dă +2% producție.',
+    steps: ['<b>1/3</b> Atinge stejarul ca să scuturi frunze ({n}/10).', '<b>2/3</b> Cumpără o omidă: mănâncă frunze și le adună singură.', '<b>3/3</b> Un fluture auriu! Atinge-l repede pentru un bonus.'],
+    gens: ['Omidă', 'Gărgăriță', 'Melc', 'Albină', 'Arici', 'Broscuță', 'Bufniță', 'Floarea lunii'], gdesc: ['ronțăie frunze toată ziua', 'culege frunze de pe tufe', 'încet, dar nu se oprește', 'aduce și polen', 'adună grămezi de frunze', 'prinde frunze din iaz', 'veghează livada noaptea', 'înflorește doar la lună plină'],
+    ups: ['Mandibule ascuțite', 'Puncte norocoase', 'Cochilie lucioasă', 'Fagure dublu', 'Ace moi', 'Salt lung', 'Ochi de noapte', 'Rouă de argint'], clickUp: 'Crengi mai grele', clickD: 'atingerea dă ×2 și +1% din producție',
+    achs: ['Primele 100 de frunze', '10 000 de frunze', 'Un milion', 'Un miliard', 'Un trilion', 'Prima omidă', '50 de omizi', '100 de omizi', 'Câte una din toate', '25 din fiecare', '1 000 de atingeri', 'Primul fluture', '10 fluturi', 'Prima migrație', '100/s', '1 M/s'] },
+  en: { sub: 'A quiet garden that keeps growing while you are away. Shake the old oak, raise caterpillars, ladybugs and bees, catch golden butterflies and migrate south.', play: 'Play', cont: 'Continue', newg: 'New game', settings: 'Settings', music: 'Music', sound: 'Sounds', tut: 'Tutorial', lang: 'Language', fx: 'Effects', keys: 'Keyboard', reset: 'Reset progress', on: 'On', off: 'Off', erase: 'Reset', sure: 'Tap again', close: 'Close', buy: 'Buy', perSec: '/s', tabs: ['Creatures', 'Upgrades', 'Migration', 'Trophies'], seasons: ['Spring', 'Summer', 'Autumn', 'Winter'], boost: '×2: ', own: 'own', each: 'each', tap: 'Tap', up: 'Upgrade', need: 'appears at', noUps: 'Get more creatures to unlock new upgrades.', bought: 'Bought', rush: 'Pollen rush ×7', gift: 'The butterfly left ', butterfly: 'Golden butterfly!', awayT: 'Welcome back!', away: 'While you were away ({t}), the garden gathered ', ok: 'Lovely', migT: 'Butterfly migration', migP: 'The butterflies fly south and leave wing dust behind. Leaves, creatures and upgrades reset, but every 🌟 dust gives +5% production forever.', migNow: 'Migrate now: +{d} 🌟', migNeed: 'You need 1 M 🍃 gathered in this garden (now {x}).', dust: 'Wing dust', mult: 'production bonus', cfMig: 'Start the migration?', yes: 'Yes', no: 'No', newConf: 'Erase this garden and start over?', achGot: 'Trophy: ', achInfo: 'Every trophy gives +2% production.',
+    steps: ['<b>1/3</b> Tap the oak to shake down leaves ({n}/10).', '<b>2/3</b> Buy a caterpillar: it munches leaves for you.', '<b>3/3</b> A golden butterfly! Tap it quickly for a bonus.'],
+    gens: ['Caterpillar', 'Ladybug', 'Snail', 'Bee', 'Hedgehog', 'Frog', 'Owl', 'Moonflower'], gdesc: ['munches leaves all day', 'picks leaves off the bushes', 'slow, but never stops', 'brings pollen too', 'rolls up piles of leaves', 'catches leaves on the pond', 'watches the orchard at night', 'blooms only under a full moon'],
+    ups: ['Sharp nibblers', 'Lucky spots', 'Shiny shell', 'Double comb', 'Soft spines', 'Long jump', 'Night eyes', 'Silver dew'], clickUp: 'Heavier branches', clickD: 'taps give ×2 and +1% of production',
+    achs: ['First 100 leaves', '10,000 leaves', 'A million', 'A billion', 'A trillion', 'First caterpillar', '50 caterpillars', '100 caterpillars', 'One of everything', '25 of everything', '1,000 taps', 'First butterfly', '10 butterflies', 'First migration', '100/s', '1 M/s'] },
+  ru: { sub: 'Тихий сад, который растёт, даже когда вас нет. Трясите старый дуб, разводите гусениц, божьих коровок и пчёл, ловите золотых бабочек и улетайте на юг.', play: 'Играть', cont: 'Продолжить', newg: 'Новая игра', settings: 'Настройки', music: 'Музыка', sound: 'Звуки', tut: 'Обучение', lang: 'Язык', fx: 'Эффекты', keys: 'Клавиатура', reset: 'Сбросить прогресс', on: 'Вкл', off: 'Выкл', erase: 'Сбросить', sure: 'Ещё раз', close: 'Закрыть', buy: 'Купить', perSec: '/с', tabs: ['Существа', 'Улучшения', 'Миграция', 'Трофеи'], seasons: ['Весна', 'Лето', 'Осень', 'Зима'], boost: '×2: ', own: 'есть', each: 'каждый', tap: 'Нажатие', up: 'Улучшение', need: 'появится при', noUps: 'Купите больше существ, чтобы открыть улучшения.', bought: 'Куплено', rush: 'Пыльцевой дождь ×7', gift: 'Бабочка оставила ', butterfly: 'Золотая бабочка!', awayT: 'С возвращением!', away: 'Пока вас не было ({t}), сад собрал ', ok: 'Отлично', migT: 'Миграция бабочек', migP: 'Бабочки улетают на юг и оставляют пыльцу крыльев. Листья, существа и улучшения сбрасываются, но каждая 🌟 даёт +5% производства навсегда.', migNow: 'Улететь: +{d} 🌟', migNeed: 'Нужно собрать 1 M 🍃 в этом саду (сейчас {x}).', dust: 'Пыльца крыльев', mult: 'бонус производства', cfMig: 'Начать миграцию?', yes: 'Да', no: 'Нет', newConf: 'Стереть сад и начать заново?', achGot: 'Трофей: ', achInfo: 'Каждый трофей даёт +2% производства.',
+    steps: ['<b>1/3</b> Нажмите на дуб, чтобы стряхнуть листья ({n}/10).', '<b>2/3</b> Купите гусеницу: она собирает листья сама.', '<b>3/3</b> Золотая бабочка! Скорее нажмите на неё.'],
+    gens: ['Гусеница', 'Божья коровка', 'Улитка', 'Пчела', 'Ёжик', 'Лягушка', 'Сова', 'Лунный цветок'], gdesc: ['жуёт листья весь день', 'собирает листья с кустов', 'медленно, но без остановки', 'приносит и пыльцу', 'катает кучи листьев', 'ловит листья на пруду', 'сторожит сад ночью', 'цветёт только в полнолуние'],
+    ups: ['Острые челюсти', 'Счастливые точки', 'Блестящая раковина', 'Двойные соты', 'Мягкие иголки', 'Длинный прыжок', 'Ночное зрение', 'Серебряная роса'], clickUp: 'Тяжёлые ветви', clickD: 'нажатие ×2 и +1% от производства',
+    achs: ['Первые 100 листьев', '10 000 листьев', 'Миллион', 'Миллиард', 'Триллион', 'Первая гусеница', '50 гусениц', '100 гусениц', 'Каждого по одному', 'Каждого по 25', '1 000 нажатий', 'Первая бабочка', '10 бабочек', 'Первая миграция', '100/с', '1 M/с'] }
+};
+const LANGS = ['ro', 'en', 'ru'];
+// ---------- economie ----------
+const GENS = [
+  { e: '🐛', base: 15, rate: 0.2, s: 0 }, { e: '🐞', base: 110, rate: 1.2, s: 0 }, { e: '🐌', base: 1200, rate: 9, s: 2 }, { e: '🐝', base: 13000, rate: 50, s: 1 },
+  { e: '🦔', base: 150000, rate: 280, s: 2 }, { e: '🐸', base: 1.8e6, rate: 1600, s: 1 }, { e: '🦉', base: 2.2e7, rate: 9000, s: 3 }, { e: '🌙', base: 3e8, rate: 52000, s: 3 }
+];
+const UP_AT = [10, 25, 50, 100, 150], UP_K = [10, 50, 500, 5000, 50000];
+const CLICK_COST = [100, 1500, 25000, 4e5, 8e6, 2e8, 6e9, 2e11];
+const SEASON_LEN = 45, GROWTH = 1.15, MIG_MIN = 1e6;
+const costOf = (g, n) => GENS[g].base * Math.pow(GROWTH, n);
+function costN(g, own, k) { const r = GROWTH; return GENS[g].base * Math.pow(r, own) * (Math.pow(r, k) - 1) / (r - 1); }
+function maxBuy(g, own, money) { const r = GROWTH, b = GENS[g].base * Math.pow(r, own); return Math.max(0, Math.floor(Math.log(money * (r - 1) / b + 1) / Math.log(r))); }
+const ACHS = [
+  s => s.life >= 100, s => s.life >= 1e4, s => s.life >= 1e6, s => s.life >= 1e9, s => s.life >= 1e12,
+  s => s.own[0] >= 1, s => s.own[0] >= 50, s => s.own[0] >= 100, s => s.own.every(n => n >= 1), s => s.own.every(n => n >= 25),
+  s => s.clicks >= 1000, s => s.flies >= 1, s => s.flies >= 10, s => s.migs >= 1, () => prod() >= 100, () => prod() >= 1e6
+];
+const ACH_E = ['🍃', '🌿', '🌳', '🌲', '🏞️', '🐛', '🐛', '👑', '🎒', '🏆', '👆', '🦋', '🦋', '🌟', '⚡', '🌈'];
+// ---------- salvare ----------
+const SK = 'cocoon-garden-v1';
+const FRESH = () => ({ lang: null, leaves: 0, run: 0, life: 0, own: [0, 0, 0, 0, 0, 0, 0, 0], ups: [0, 0, 0, 0, 0, 0, 0, 0], clickUps: 0, clicks: 0, flies: 0, dust: 0, migs: 0, ach: [], time: 0, rushT: 0, music: 1, sound: 1, fx: 1, tut: 1, step: 0, last: 0, started: 0 });
+let S = FRESH();
+try { const o = JSON.parse(localStorage.getItem(SK) || '{}'); Object.assign(S, o); } catch (e) {}
+if (!S.lang) { const n = (navigator.language || 'en').slice(0, 2); S.lang = LANGS.includes(n) ? n : n === 'uk' || n === 'be' ? 'ru' : 'en'; }
+function save() { S.last = Date.now(); try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} }
+const T = (k, v) => { let s = TX[S.lang][k]; if (v) for (const x in v) s = s.replace('{' + x + '}', v[x]); return s; };
+// ---------- formule ----------
+const season = () => Math.floor(S.time / SEASON_LEN) % 4;
+function genMult(g) { return Math.pow(2, S.ups[g]) * (GENS[g].s === season() ? 2 : 1); }
+function globalMult() { return (1 + 0.05 * S.dust) * (1 + 0.02 * S.ach.length) * (S.rushT > 0 ? 7 : 1); }
+function genRate(g) { return GENS[g].rate * genMult(g) * globalMult(); }
+function prod() { let p = 0; for (let g = 0; g < 8; g++) p += S.own[g] * GENS[g].rate * genMult(g); return p * globalMult(); }
+function clickPower() { return Math.pow(2, S.clickUps) + 0.01 * S.clickUps * prod(); }
+function dustFor(life) { return Math.floor(Math.sqrt(life / MIG_MIN)); }
+const migGain = () => S.run >= MIG_MIN ? Math.max(1, dustFor(S.run)) : 0;
+const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  if (n < 10) return (Math.floor(n * 10) / 10).toString(); if (n < 1000) return Math.floor(n).toString();
+  const e = Math.min(SUF.length - 1, Math.floor(Math.log10(n) / 3)); const v = n / Math.pow(1000, e); return (v < 100 ? v.toFixed(v < 10 ? 2 : 1) : Math.floor(v)) + ' ' + SUF[e];
+}
+function fmtTime(s) { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm' : s + 's'; }
+// ---------- sunet ----------
+let AC = null;
+function ac() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {} return AC; }
+function tone(f, d = 0.12, type = 'sine', v = 0.1, delay = 0, f2, bus = 'sound') {
+  if (!S[bus] || !AC) return;
+  try { const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + 0.02); } catch (e) {}
+}
+const SFX = { tap: () => tone(420 + Math.random() * 120, 0.06, 'triangle', 0.06, 0, 300), buy: () => { tone(660, 0.08, 'sine', 0.08); tone(990, 0.12, 'sine', 0.06, 0.06); }, up: () => [523, 784, 1047].forEach((f, i) => tone(f, 0.15, 'sine', 0.07, i * 0.06)), fly: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.2, 'sine', 0.08, i * 0.07)), no: () => tone(160, 0.12, 'sawtooth', 0.03, 0, 120), ach: () => [659, 880, 1319].forEach((f, i) => tone(f, 0.25, 'triangle', 0.07, i * 0.1)) };
+const MEL = [[392, 494, 587], [440, 523, 659], [349, 440, 523], [392, 494, 587]]; let mStep = 0, mNext = 0;
+function musicTick(now) { if (!S.music || !AC || AC.state !== 'running' || now < mNext) return; mNext = now + 600; const ch = MEL[Math.floor(mStep / 8) % 4], f = ch[mStep % 3] * (mStep % 8 > 4 ? 2 : 1); tone(f, 1.1, 'sine', 0.022, 0, 0, 'music'); if (mStep % 8 === 0) tone(ch[0] / 2, 3, 'triangle', 0.02, 0, 0, 'music'); mStep++; }
+// ---------- simulare (pas fix) ----------
+let fly = null, flyNext = 60, parts = [], floats = [], crawlers = [];
+function tick(dt) {
+  S.time += dt; if (S.rushT > 0) S.rushT = Math.max(0, S.rushT - dt);
+  const p = prod() * dt; S.leaves += p; S.run += p; S.life += p;
+  // fluture auriu
+  if (fly) { fly.t += dt; if (fly.t > fly.life) fly = null; }
+  else { flyNext -= dt; if (flyNext <= 0) spawnFly(); }
+  checkAch();
+}
+function spawnFly(life = 11) { fly = { t: 0, life, y0: 0.25 + Math.random() * 0.35, dir: Math.random() < 0.5 ? 1 : -1, ph: Math.random() * 6 }; flyNext = 45 + Math.random() * 60; }
+function flyPos() { if (!fly) return null; const k = fly.t / fly.life, A = arena(); const x = A.x + A.w * (fly.dir > 0 ? 0.06 + k * 0.88 : 0.94 - k * 0.88); return { x, y: A.y + A.h * fly.y0 + Math.sin(fly.t * 2 + fly.ph) * A.h * 0.08 }; }
+function catchFly() {
+  if (!fly) return false; const p = flyPos(); fly = null; S.flies++;
+  if (Math.random() < 0.5 && prod() > 0) { S.rushT = 30; toast('🦋 ' + T('rush')); }
+  else { const g = Math.max(25 * clickPower(), prod() * 90); S.leaves += g; S.run += g; S.life += g; toast('🦋 ' + T('gift') + fmt(g) + ' 🍃'); }
+  SFX.fly(); burst(p.x, p.y, '#ffd166', 24, 2.2); if (S.step === 2) { S.step = 3; tutUI(); }
+  save(); return true;
+}
+function tapTree(x, y) {
+  const g = clickPower(); S.leaves += g; S.run += g; S.life += g; S.clicks++;
+  SFX.tap(); if (S.fx) { floats.push({ x, y, t: 0, txt: '+' + fmt(g) }); burst(x, y, '#a8e06c', 5, 1.4); } treeShake = 1;
+  if (S.step === 0 && S.clicks >= 10) { S.step = 1; } tutUI();
+}
+function buyGen(g, n) {
+  const own = S.own[g]; let k = n || maxBuy(g, own, S.leaves); if (!k) { SFX.no(); return false; }
+  const c = costN(g, own, k); if (c > S.leaves + 1e-9) { SFX.no(); return false; }
+  S.leaves -= c; S.own[g] += k; SFX.buy();
+  if (S.step === 1 && S.own[0] >= 1) { S.step = 2; spawnFly(16); flyNext = 30; }
+  tutUI(); checkAch(); renderList(); save(); return true;
+}
+function upCost(g) { const k = S.ups[g]; return k < 5 ? GENS[g].base * UP_K[k] : Infinity; }
+function upReady(g) { const k = S.ups[g]; return k < 5 && S.own[g] >= UP_AT[k]; }
+function buyUp(g) {
+  if (!upReady(g) || S.leaves < upCost(g)) { SFX.no(); return false; }
+  S.leaves -= upCost(g); S.ups[g]++; SFX.up(); renderList(); save(); return true;
+}
+function buyClick() { const c = CLICK_COST[S.clickUps]; if (c === undefined || S.leaves < c) { SFX.no(); return false; } S.leaves -= c; S.clickUps++; SFX.up(); renderList(); save(); return true; }
+function migrate() {
+  const d = migGain(); if (!d) return false;
+  const keep = { lang: S.lang, music: S.music, sound: S.sound, fx: S.fx, tut: S.tut, life: S.life, clicks: S.clicks, flies: S.flies, ach: S.ach, time: S.time, step: S.step, started: S.started };
+  const dust = S.dust + d, migs = S.migs + 1; S = Object.assign(FRESH(), keep, { dust, migs }); checkAch();
+  SFX.fly(); for (let i = 0; i < 30; i++) setTimeout(() => { const A = arena(); burst(A.x + Math.random() * A.w, A.y + A.h * 0.7, ['#ffd166', '#ff9f6b', '#c99bff'][i % 3], 6, 2); }, i * 40);
+  save(); renderList(); return true;
+}
+function checkAch() {
+  for (let i = 0; i < ACHS.length; i++) if (!S.ach.includes(i) && ACHS[i](S)) { S.ach.push(i); if (started) { SFX.ach(); toast(ACH_E[i] + ' ' + T('achGot') + T('achs')[i]); } if (tab === 'ach') renderList(); }
+}
+function offline() {
+  if (!S.last) return; const dt = Math.min(8 * 3600, (Date.now() - S.last) / 1000); if (dt < 60) return;
+  const p = prod() * dt * 0.5; if (p <= 0) return; S.leaves += p; S.run += p; S.life += p; S.time += dt;
+  $('awayInfo').textContent = T('away', { t: fmtTime(dt) }) + fmt(p) + ' 🍃'; show('away');
+}
+// ---------- ecran ----------
+const cv = document.getElementById('c'), cx = cv.getContext('2d'), $ = id => document.getElementById(id);
+let W = 0, H = 0, DPR = 1, wide = false, treeShake = 0, started = false, tab = 'gen', buyN = 1, cur = 'menu';
+function arena() { return wide ? { x: 0, y: 0, w: W - 400, h: H } : { x: 0, y: 0, w: W, h: Math.round(H * 0.5) }; }
+function treeBox() { const A = arena(), r = Math.min(A.w * 0.3, A.h * 0.3); return { x: A.x + A.w / 2, y: A.y + A.h * 0.5, r }; }
+function layout() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; wide = W >= 820 && W > H;
+  const A = arena(); cv.width = A.w * DPR; cv.height = A.h * DPR; cv.style.width = A.w + 'px'; cv.style.height = A.h + 'px'; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const sd = $('side'), hd = $('hud');
+  if (wide) Object.assign(sd.style, { left: (W - 400) + 'px', top: '0', width: '400px', height: H + 'px', borderLeft: '1px solid var(--line)', borderTop: 'none' });
+  else Object.assign(sd.style, { left: '0', top: A.h + 'px', width: W + 'px', height: (H - A.h) + 'px', borderLeft: 'none', borderTop: '1px solid var(--line)' });
+  hd.style.width = A.w + 'px'; tutUI();
+}
+addEventListener('resize', layout);
+function burst(x, y, col, n, sp = 1.4) { if (!S.fx) return; for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = (0.4 + Math.random()) * sp; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: 1, col, r: 2 + Math.random() * 3, leaf: Math.random() < 0.6 }); } }
+const PAL = [
+  { sky: ['#9fd8f0', '#d9f2d2'], hill: ['#86c95a', '#6fb24a'], crown: ['#5fae45', '#7cc85a', '#9bd96a'], ground: '#5d9a3f' },
+  { sky: ['#7cc6f2', '#fff1c4'], hill: ['#9ccf55', '#7fb845'], crown: ['#3f9a3a', '#5fb848', '#8fd25a'], ground: '#6aa443' },
+  { sky: ['#f6c48a', '#fde6c0'], hill: ['#d69a4a', '#c07f38'], crown: ['#e0702e', '#f2a03a', '#f6c24e'], ground: '#a8743a' },
+  { sky: ['#a9c3df', '#eef4fb'], hill: ['#e8eef5', '#d4dee9'], crown: ['#cfe0ee', '#e8f1f8', '#ffffff'], ground: '#dfe8f0' }
+];
+function draw(now) {
+  const A = arena(), P = PAL[season()], g = cx.createLinearGradient(0, 0, 0, A.h);
+  g.addColorStop(0, P.sky[0]); g.addColorStop(1, P.sky[1]); cx.fillStyle = g; cx.fillRect(0, 0, A.w, A.h);
+  cx.fillStyle = 'rgba(255,255,255,.7)'; for (let i = 0; i < 4; i++) { const x = ((now / 60 + i * 260) % (A.w + 200)) - 100, y = A.h * (0.08 + i * 0.05); cx.beginPath(); cx.ellipse(x, y, 46, 14, 0, 0, 6.28); cx.ellipse(x + 30, y - 8, 30, 14, 0, 0, 6.28); cx.fill(); }
+  cx.fillStyle = P.hill[0]; cx.beginPath(); cx.moveTo(0, A.h * .62); for (let x = 0; x <= A.w; x += 20) cx.lineTo(x, A.h * .62 + Math.sin(x / 140) * 14); cx.lineTo(A.w, A.h); cx.lineTo(0, A.h); cx.fill();
+  cx.fillStyle = P.ground; cx.fillRect(0, A.h * .78, A.w, A.h * .22);
+  // stejarul
+  const t = treeBox(), sh = Math.sin(now / 40) * treeShake * 6; treeShake = Math.max(0, treeShake - 0.06);
+  cx.fillStyle = '#6b4a2e'; cx.beginPath(); cx.moveTo(t.x - t.r * .18, A.h * .82); cx.lineTo(t.x - t.r * .1, t.y); cx.lineTo(t.x + t.r * .1, t.y); cx.lineTo(t.x + t.r * .18, A.h * .82); cx.fill();
+  const blobs = [[0, -.15, .62], [-.5, .1, .45], [.5, .1, .45], [-.3, -.5, .42], [.32, -.48, .42], [0, .25, .5]];
+  blobs.forEach(([bx, by, br], k) => { cx.fillStyle = P.crown[k % 3]; cx.beginPath(); cx.arc(t.x + bx * t.r + sh, t.y + by * t.r - t.r * .25, br * t.r, 0, 6.28); cx.fill(); });
+  // coconi atârnați (cât migrații ai făcut, max 5)
+  for (let i = 0; i < Math.min(5, S.migs + 1); i++) { const x = t.x + (i - 2) * t.r * .32 + sh, y = t.y + t.r * .55 + Math.sin(now / 600 + i) * 3; cx.strokeStyle = 'rgba(80,60,40,.6)'; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(x, y - t.r * .2); cx.lineTo(x, y); cx.stroke(); cx.fillStyle = '#f2e6c8'; cx.beginPath(); cx.ellipse(x, y + 8, 6, 11, 0, 0, 6.28); cx.fill(); }
+  // creaturi pe pământ
+  const shown = []; for (let gI = 0; gI < 8; gI++) for (let k = 0; k < Math.min(S.own[gI], gI ? 4 : 10); k++) shown.push(gI);
+  while (crawlers.length < shown.length) crawlers.push({ x: Math.random(), v: (Math.random() < .5 ? -1 : 1) * (0.00004 + Math.random() * 0.00006), y: Math.random(), p: Math.random() * 6 });
+  crawlers.length = shown.length;
+  crawlers.forEach((c, k) => {
+    c.x += c.v * 16; if (c.x < 0.02 || c.x > 0.98) c.v *= -1; const gI = shown[k], x = c.x * A.w, y = A.h * (.8 + c.y * .16);
+    if (gI === 0) { const s = 6, dir = Math.sign(c.v); for (let j = 4; j >= 0; j--) { cx.fillStyle = j % 2 ? '#c8ec7c' : '#9bd35a'; cx.beginPath(); cx.arc(x - dir * j * s * 1.3, y - Math.abs(Math.sin(now / 160 + j * .8 + c.p)) * 3, j ? s : s * 1.2, 0, 6.28); cx.fill(); } cx.fillStyle = '#222'; cx.beginPath(); cx.arc(x + dir * 3, y - 2, 1.6, 0, 6.28); cx.fill(); }
+    else { cx.font = (gI >= 6 ? 22 : 18) + 'px serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; const fy = gI === 3 || gI === 6 ? y - A.h * .25 + Math.sin(now / 300 + c.p) * 10 : y; cx.save(); cx.translate(x, fy); if (c.v > 0) cx.scale(-1, 1); cx.fillText(GENS[gI].e, 0, 0); cx.restore(); }
+  });
+  // fluture auriu
+  const fp = flyPos(); if (fp) { const fl = 0.35 + 0.65 * Math.abs(Math.sin(now / 90)); cx.save(); cx.translate(fp.x, fp.y); const gg = cx.createRadialGradient(0, 0, 0, 0, 0, 40); gg.addColorStop(0, 'rgba(255,220,120,.6)'); gg.addColorStop(1, 'rgba(255,220,120,0)'); cx.fillStyle = gg; cx.fillRect(-40, -40, 80, 80); for (const sx of [-1, 1]) { cx.fillStyle = '#ffd166'; cx.beginPath(); cx.ellipse(sx * 12 * fl, -6, 13 * fl + 2, 14, sx * .4, 0, 6.28); cx.fill(); cx.fillStyle = '#ff9f43'; cx.beginPath(); cx.ellipse(sx * 9 * fl, 10, 8 * fl + 2, 9, -sx * .4, 0, 6.28); cx.fill(); } cx.fillStyle = '#3b2a1a'; cx.fillRect(-2.5, -13, 5, 27); cx.restore(); }
+  // particule și numere
+  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life -= 0.02; cx.globalAlpha = Math.max(0, p.life); cx.fillStyle = p.col; cx.beginPath(); if (p.leaf) cx.ellipse(p.x, p.y, p.r * 1.4, p.r * .7, p.x / 20, 0, 6.28); else cx.arc(p.x, p.y, p.r, 0, 6.28); cx.fill(); }
+  parts = parts.filter(p => p.life > 0);
+  cx.font = '800 18px Trebuchet MS,sans-serif'; cx.textAlign = 'center';
+  for (const f of floats) { f.t += 0.016; cx.globalAlpha = Math.max(0, 1 - f.t); cx.fillStyle = '#fff'; cx.strokeStyle = 'rgba(0,0,0,.4)'; cx.lineWidth = 3; cx.strokeText(f.txt, f.x, f.y - f.t * 50); cx.fillText(f.txt, f.x, f.y - f.t * 50); }
+  floats = floats.filter(f => f.t < 1); cx.globalAlpha = 1;
+}
+let lastT = 0, acc = 0, uiT = 0;
+function frame(now) {
+  if (!lastT) lastT = now; acc += Math.min(1, (now - lastT) / 1000); lastT = now;
+  if (started && cur !== 'menu') while (acc >= 1 / 30) { tick(1 / 30); acc -= 1 / 30; } else acc = 0;
+  draw(now); musicTick(now);
+  if (now > uiT) { uiT = now + 200; hud(); refreshList(); tutUI(); }
+  requestAnimationFrame(frame);
+}
+function hud() {
+  $('leaves').textContent = '🍃 ' + fmt(S.leaves); $('rate').textContent = ' ' + fmt(prod()) + T('perSec');
+  const s = season(), left = SEASON_LEN - S.time % SEASON_LEN, names = GENS.map((g, i) => g.s === s ? g.e : '').join('');
+  $('season').textContent = ['🌸', '☀️', '🍂', '❄️'][s] + ' ' + T('seasons')[s] + ' · ' + T('boost') + names + ' · ' + Math.ceil(left) + 's';
+  const r = $('rush'); if (S.rushT > 0) { r.style.display = 'inline-block'; r.textContent = '🦋 ' + T('rush') + ' · ' + Math.ceil(S.rushT) + 's'; } else r.style.display = 'none';
+}
+// ---------- listă ----------
+function renderList() {
+  document.querySelectorAll('#tabs button').forEach((b, i) => { b.textContent = T('tabs')[i]; b.classList.toggle('on', b.dataset.tab === tab); });
+  $('buyMode').style.display = tab === 'gen' ? 'flex' : 'none';
+  const L = $('list'); let h = '';
+  if (tab === 'gen') {
+    for (let g = 0; g < 8; g++) { const vis = g === 0 || S.own[g - 1] > 0 || S.own[g] > 0 || S.life >= GENS[g].base * 0.5; h += `<button class="it${vis ? '' : ' lock'}" data-g="${g}" ${vis ? '' : 'disabled'}><span class="e">${vis ? GENS[g].e : '❔'}</span><span class="t"><b>${vis ? T('gens')[g] : '???'} <small style="display:inline;color:var(--acc)" data-own></small></b><small data-desc></small></span><span class="c"><span data-cost></span><small data-cnt></small></span></button>`; }
+  } else if (tab === 'up') {
+    let any = false;
+    for (let g = 0; g < 8; g++) if (upReady(g)) { any = true; h += `<button class="it" data-u="${g}"><span class="e">${GENS[g].e}</span><span class="t"><b>${T('ups')[g]} ${['I', 'II', 'III', 'IV', 'V'][S.ups[g]]}</b><small>${T('gens')[g]} ×2</small></span><span class="c"><span data-cost></span></span></button>`; }
+    if (CLICK_COST[S.clickUps] !== undefined) { any = true; h += `<button class="it" data-k="1"><span class="e">🌳</span><span class="t"><b>${T('clickUp')} ${S.clickUps + 1}</b><small>${T('clickD')}</small></span><span class="c"><span data-cost></span></span></button>`; }
+    let nx = ''; for (let g = 0; g < 8; g++) { const k = S.ups[g]; if (k < 5 && !upReady(g) && S.own[g] > 0) nx += `<div class="note">${GENS[g].e} ${T('ups')[g]}: ${T('need')} ${UP_AT[k]} (${S.own[g]})</div>`; }
+    h += (any ? '' : `<div class="note">${T('noUps')}</div>`) + nx;
+  } else if (tab === 'mig') {
+    h = `<div class="panelbox" style="width:auto;margin:8px 0;animation:none;text-align:center"><div style="font-size:40px">🦋🦋🦋</div><h2>${T('migT')}</h2><p class="note">${T('migP')}</p><p style="font-size:20px;font-weight:800;color:var(--acc)">🌟 ${S.dust} · +${S.dust * 5}% ${T('mult')}</p><button class="big pri" id="bMig" style="margin:0 auto"></button><p class="note" id="migNote"></p></div>`;
+  } else {
+    h = `<div class="note">${T('achInfo')} (${S.ach.length}/${ACHS.length})</div><div class="ach">` + ACHS.map((_, i) => `<div class="${S.ach.includes(i) ? 'got' : ''}" title="${T('achs')[i]}">${ACH_E[i]}</div>`).join('') + '</div><div class="note">' + S.ach.map(i => ACH_E[i] + ' ' + T('achs')[i]).join(' · ') + '</div>';
+  }
+  L.innerHTML = h; refreshList();
+}
+function refreshList() {
+  if (tab === 'gen') document.querySelectorAll('[data-g]').forEach(b => {
+    const g = +b.dataset.g; if (b.disabled) { if (S.life >= GENS[g].base * 0.5 || (g && S.own[g - 1] > 0)) renderList(); return; }
+    const k = buyN || Math.max(1, maxBuy(g, S.own[g], S.leaves)), c = costN(g, S.own[g], k);
+    b.querySelector('[data-cost]').textContent = '🍃 ' + fmt(c); b.querySelector('[data-cnt]').textContent = '×' + k;
+    b.querySelector('[data-own]').textContent = S.own[g] ? T('own') + ' ' + S.own[g] : '';
+    b.querySelector('[data-desc]').textContent = T('gdesc')[g] + ' · ' + fmt(genRate(g)) + T('perSec') + ' ' + T('each');
+    b.classList.toggle('no', c > S.leaves);
+  });
+  else if (tab === 'up') {
+    document.querySelectorAll('[data-u]').forEach(b => { const c = upCost(+b.dataset.u); b.querySelector('[data-cost]').textContent = '🍃 ' + fmt(c); b.classList.toggle('no', c > S.leaves); });
+    document.querySelectorAll('[data-k]').forEach(b => { const c = CLICK_COST[S.clickUps]; b.querySelector('[data-cost]').textContent = '🍃 ' + fmt(c); b.classList.toggle('no', c > S.leaves); });
+    const want = []; for (let g = 0; g < 8; g++) if (upReady(g)) want.push(g); if (want.length !== document.querySelectorAll('[data-u]').length) renderList();
+  } else if (tab === 'mig') { const d = migGain(), b = $('bMig'); if (!b) return; b.disabled = !d; b.textContent = T('migNow', { d }); $('migNote').textContent = d ? '' : T('migNeed', { x: fmt(S.run) }); }
+}
+$('list').addEventListener('click', e => {
+  ac(); const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.g !== undefined) buyGen(+b.dataset.g, buyN);
+  else if (b.dataset.u !== undefined) buyUp(+b.dataset.u);
+  else if (b.dataset.k) buyClick();
+  else if (b.id === 'bMig') ask(T('cfMig'), T('migP'), () => { migrate(); tab = 'gen'; renderList(); });
+});
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; renderList(); });
+document.querySelectorAll('#buyMode button').forEach(b => b.onclick = () => { buyN = +b.dataset.n; document.querySelectorAll('#buyMode button').forEach(x => x.classList.toggle('on', x === b)); refreshList(); });
+// ---------- intrare ----------
+cv.addEventListener('pointerdown', e => {
+  ac(); if (!started || cur !== null) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, f = flyPos();
+  if (f && Math.hypot(x - f.x, y - f.y) < 46) { catchFly(); return; }
+  const t = treeBox(); if (Math.hypot(x - t.x, y - (t.y - t.r * .25)) < t.r * 1.15) tapTree(x, y);
+});
+addEventListener('keydown', e => {
+  ac(); const k = e.key.toLowerCase();
+  if (k === 'escape') { if (cur === null) { save(); show('menu'); texts(); } else if (cur === 'settings' || cur === 'away' || cur === 'confirm') show(started ? null : 'menu'); return; }
+  if (!started || cur !== null) return;
+  if (k === ' ' || k === 'enter') { e.preventDefault(); const t = treeBox(); tapTree(t.x + (Math.random() - .5) * t.r, t.y - t.r * .3); }
+  else if (k >= '1' && k <= '8') buyGen(+k - 1, buyN); else if (k === 'b') catchFly();
+});
+// ---------- tutorial ----------
+function tutUI() {
+  const tp = $('tip'), hd = $('hand');
+  if (!S.tut || S.step >= 3 || !started || cur !== null) { tp.classList.remove('on'); hd.style.display = 'none'; return; }
+  const A = arena(), t = treeBox(); tp.innerHTML = T('steps')[S.step].replace('{n}', Math.min(10, S.clicks)); tp.classList.add('on');
+  tp.style.left = (A.w / 2) + 'px'; tp.style.top = (A.h * 0.17 + 40) + 'px'; tp.style.maxWidth = Math.min(A.w - 24, 440) + 'px';
+  let hx, hy; if (S.step === 0) { hx = t.x; hy = t.y - t.r * .1; } else if (S.step === 1) { const b = document.querySelector('[data-g="0"]'); if (tab !== 'gen' || !b) { tab = 'gen'; renderList(); } const r = (b || document.body).getBoundingClientRect(); hx = r.right - 50; hy = r.top + r.height * .55; } else { const f = flyPos(); if (!f) { if (!fly) spawnFly(16); } const p = flyPos(); hx = p.x; hy = p.y + 18; }
+  hd.style.display = 'block'; hd.style.left = hx + 'px'; hd.style.top = hy + 'px';
+}
+// ---------- ecrane ----------
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); cur = id; tutUI(); }
+let toastT = 0;
+function toast(m) { const el = $('toast'); el.textContent = m; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
+let askCb = null; function ask(t, p, cb) { $('cfT').textContent = t; $('cfP').textContent = p; askCb = cb; show('confirm'); }
+$('cfYes').onclick = () => { show(started ? null : 'menu'); const c = askCb; askCb = null; if (c) c(); };
+$('cfNo').onclick = () => show(started ? null : 'menu');
+function texts() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-t]').forEach(e => e.textContent = T(e.dataset.t));
+  const has = S.started; $('bPlay').textContent = has ? T('cont') : T('play'); $('bNew').textContent = T('newg'); $('bNew').style.display = has ? '' : 'none';
+  $('bLang').textContent = S.lang.toUpperCase(); $('sLang').textContent = S.lang.toUpperCase();
+  for (const k of ['music', 'sound', 'fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).textContent = S[k] ? T('on') : T('off');
+  $('sReset').textContent = T('erase'); $('sClose').textContent = T('close'); $('awayOk').textContent = T('ok'); $('cfYes').textContent = T('yes'); $('cfNo').textContent = T('no');
+  $('menuInfo').textContent = has ? '🍃 ' + fmt(S.life) + (S.dust ? ' · 🌟 ' + S.dust : '') + ' · 🏆 ' + S.ach.length + '/' + ACHS.length : '';
+  renderList(); hud();
+}
+function play() { ac(); S.started = 1; started = true; save(); show(null); texts(); }
+$('bPlay').onclick = play;
+$('bNew').onclick = () => ask(T('newConf'), '', () => { const l = S.lang; S = Object.assign(FRESH(), { lang: l }); crawlers = []; fly = null; flyNext = 60; save(); play(); });
+$('bMenu').onclick = () => { save(); show('menu'); texts(); };
+$('bSet').onclick = $('bSettings').onclick = () => { texts(); show('settings'); };
+$('sClose').onclick = () => show(started ? null : 'menu');
+$('awayOk').onclick = () => show(started ? null : 'menu');
+const cycleLang = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); texts(); };
+$('bLang').onclick = cycleLang; $('sLang').onclick = cycleLang;
+for (const k of ['music', 'sound', 'fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).onclick = () => { S[k] ^= 1; if (k === 'tut' && S.tut && S.step >= 3) S.step = 0; save(); texts(); };
+let sure = 0; $('sReset').onclick = () => { if (!sure) { sure = 1; $('sReset').textContent = T('sure'); setTimeout(() => { sure = 0; texts(); }, 2500); return; } const l = S.lang; S = Object.assign(FRESH(), { lang: l }); crawlers = []; fly = null; started = false; sure = 0; save(); show('menu'); texts(); };
+addEventListener('visibilitychange', () => { if (document.hidden && started) save(); });
+addEventListener('pagehide', () => { if (started) save(); });
+setInterval(() => { if (started) save(); }, 5000);
+// ---------- pornire ----------
+layout(); texts(); offline(); if (S.started && cur === 'menu') texts();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

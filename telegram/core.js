@@ -14,6 +14,20 @@
   var BASE_SPEED = 1.5;                    // rad/s
   var MAX_SPEED = 3.6;
   var SAVE_VERSION = 1;
+  var GOLD_CHANCE = 0.08;                  // din picături, după primele 10 s
+  var GOLD_SPARKS = 5;
+  var MISSION_REWARD = 25;
+  var FREE_DAILY = 25;
+  var VERSION = '1.6';
+  var MOON_CHANCE = 0.05;                  // v1.2: lună (din picături, după 15 s): încetinește timpul
+  var MOON_TIME = 5, MOON_SLOW = 0.6;                     // cadoul zilnic fără reclamă (când Adsgram nu e activ)
+  // Misiuni zilnice: 3 pe zi, alese determinist după dată (UTC)
+  var MISSION_POOL = [
+    { k: 'drops', n: 15 }, { k: 'drops', n: 30 }, { k: 'score', n: 150 }, { k: 'score', n: 300 },
+    { k: 'combo', n: 8 }, { k: 'combo', n: 15 }, { k: 'runs', n: 3 }, { k: 'runs', n: 5 }, { k: 'gold', n: 1 }, { k: 'gold', n: 3 }, { k: 'moon', n: 2 },
+    { k: 'score', n: 500 }, { k: 'combo', n: 25 }, { k: 'moon', n: 4 }, // v1.4: misiuni grele
+    { k: 'gold', n: 5 } // v1.5
+  ];
 
   // Magazin: prețuri în scântei (monedă de joc) sau în Telegram Stars (XTR).
   var SKINS = [
@@ -21,14 +35,43 @@
     { id: 'mint',   color: '#7cf5c4', glow: '#2ec4b6', price: 150 },
     { id: 'rose',   color: '#ff8fab', glow: '#fb6f92', price: 300 },
     { id: 'violet', color: '#c8a2ff', glow: '#9d4edd', price: 600 },
+    { id: 'frost',  color: '#e0fbfc', glow: '#98c1d9', price: 1000 },
+    { id: 'sun',    color: '#fff3b0', glow: '#ff9f1c', price: 2000 },
+    { id: 'dusk',   color: '#ffb4a2', glow: '#e5989b', price: 3000 },
+    { id: 'jade',   color: '#b5e48c', glow: '#52b69a', price: 4500 },
+    { id: 'pine',   color: '#e9fff2', glow: '#74c69d', price: 6000 }, // v1.3: brad de iarnă
+    { id: 'lilac',  color: '#f1e4ff', glow: '#b392f0', price: 8000 }, // v1.4: liliac de cristal
+    { id: 'copper', color: '#ffc09f', glow: '#d9734e', price: 10000 }, // v1.5: cupru
     { id: 'aurora', color: '#9bf6ff', glow: '#4cc9f0', stars: true },
     { id: 'ember',  color: '#ff9e6d', glow: '#f3722c', stars: true }
   ];
   var STAR_ITEMS = {
     aurora_pack: { stars: 50,  grants: ['skin:aurora', 'skin:ember'] },
     double_sparks: { stars: 100, grants: ['perk:double'] },
-    shield_pack: { stars: 25,  grants: ['shields:10'] }
+    shield_pack: { stars: 25,  grants: ['shields:10'] },
+    // v1.6: teme, ghidul felinarului (indiciu), pachet de niveluri
+    theme_pack: { stars: 50, grants: ['theme:aurora', 'theme:sunset'] },
+    guide_perk: { stars: 40, grants: ['perk:guide'] },
+    levels_pack: { stars: 75, grants: ['levels:all'] }
   };
+
+  // v1.6: teme de fundal. 'night' gratuită, 'forest' pe scântei, restul pe Stars.
+  var THEMES = [
+    { id: 'night',  top: '#1d2660', bottom: '#070a1a', star: '#ffffff', price: 0 },
+    { id: 'forest', top: '#16463a', bottom: '#03100b', star: '#d8ffe8', price: 2500 },
+    { id: 'aurora', top: '#123a4a', bottom: '#040a16', star: '#bdfcff', band: '#4cc9f0', stars: true },
+    { id: 'sunset', top: '#6a2c55', bottom: '#14071a', star: '#ffd9c2', band: '#ff9e6d', stars: true }
+  ];
+
+  // v1.6: niveluri-provocare cu seed fix. Primele FREE_LEVELS sunt gratuite, se deblochează pe rând.
+  // Obiective: drops (picături), score (puncte), time (secunde rezistate), gold (picături de aur), combo (serie).
+  var LEVELS = [
+    { seed: 101, k: 'drops', n: 10 }, { seed: 202, k: 'time', n: 25 }, { seed: 303, k: 'score', n: 200 },
+    { seed: 404, k: 'combo', n: 8 }, { seed: 505, k: 'drops', n: 22 }, { seed: 606, k: 'time', n: 35 },
+    { seed: 707, k: 'gold', n: 2 }, { seed: 808, k: 'score', n: 450 }, { seed: 909, k: 'combo', n: 15 },
+    { seed: 1010, k: 'time', n: 45 }, { seed: 1111, k: 'drops', n: 32 }, { seed: 1212, k: 'score', n: 800 }
+  ];
+  var FREE_LEVELS = 4, LEVEL_REWARD = 40;
 
   function mulberry32(seed) {
     var a = seed >>> 0;
@@ -59,9 +102,15 @@
       sparks: 0,
       combo: 0,
       bestCombo: 0,
+      drops: 0,
+      golds: 0,
+      moons: 0,
+      slow: 0,             // v1.2: secunde rămase de timp încetinit
       items: [],             // {kind:'drop'|'moth', ring, angle, drift, ttl}
       spawnIn: 0.6,
       shield: !!opts.shield,
+      goal: opts.goal || null,   // v1.6: {k, n} pentru niveluri
+      won: false,
       continued: false,
       over: false,
       jumpFx: 0,
@@ -75,6 +124,9 @@
   function spawn(run, rng) {
     var mothChance = Math.min(0.55, 0.28 + run.t * 0.006);
     var kind = rng() < mothChance ? 'moth' : 'drop';
+    // v1.1: picătură de aur rară (după 10 s): +5 scântei
+    if (kind === 'drop' && run.t > 10 && rng() < GOLD_CHANCE) kind = 'gold';
+    else if (kind === 'drop' && run.t > 15 && rng() < MOON_CHANCE) kind = 'moon';
     var ring = Math.floor(rng() * RINGS.length);
     var ahead = 1.4 + rng() * (TAU - 2.5);   // ≥80° în față și ≥63° în spate
     var angle = normAngle(run.angle + run.dir * ahead);
@@ -86,7 +138,8 @@
     if (run.over) return run;
     run.events.length = 0;
     run.t += dt;
-    run.speed = speedAt(run.t);
+    if (run.slow > 0) run.slow = Math.max(0, run.slow - dt);
+    run.speed = speedAt(run.t) * (run.slow > 0 ? MOON_SLOW : 1);
     run.angle = normAngle(run.angle + run.dir * run.speed * dt);
     run.score += dt * 2;
     if (run.jumpFx > 0) run.jumpFx = Math.max(0, run.jumpFx - dt * 4);
@@ -104,11 +157,14 @@
       if (it.ttl <= 0) { run.items.splice(i, 1); continue; }
       if (it.ring !== run.ring) continue;
       var d = angDist(it.angle, run.angle);
-      if (it.kind === 'drop' && d < PICK_ANGLE) {
+      if ((it.kind === 'drop' || it.kind === 'gold' || it.kind === 'moon') && d < PICK_ANGLE) {
         run.items.splice(i, 1);
         run.combo += 1;
+        run.drops += 1;
         run.bestCombo = Math.max(run.bestCombo, run.combo);
         var gain = 1 + Math.floor(run.combo / 5);
+        if (it.kind === 'gold') { gain += GOLD_SPARKS; run.golds += 1; run.events.push('gold'); }
+        if (it.kind === 'moon') { run.slow = MOON_TIME; run.moons += 1; run.events.push('moon'); }
         run.sparks += gain;
         run.score += 10 * gain;
         run.events.push('pick');
@@ -125,7 +181,26 @@
         }
       }
     }
+    if (run.goal && levelProgress(run) >= run.goal.n) { run.won = true; run.over = true; run.events.push('win'); }
     return run;
+  }
+
+  function levelProgress(run) {
+    var g = run.goal; if (!g) return 0;
+    return g.k === 'drops' ? run.drops : g.k === 'gold' ? run.golds : g.k === 'combo' ? run.bestCombo :
+      g.k === 'time' ? Math.floor(run.t) : Math.floor(run.score);
+  }
+
+  // v1.6 (ghidul felinarului): e o molie pe inelul dat care va lovi licuriciul în următoarele `secs` secunde?
+  function dangerAhead(run, ring, secs) {
+    var reach = run.speed * secs + HIT_ANGLE;
+    for (var i = 0; i < run.items.length; i++) {
+      var it = run.items[i];
+      if (it.kind !== 'moth' || it.ring !== ring) continue;
+      var fwd = normAngle((it.angle - run.angle) * run.dir);
+      if (fwd <= reach || TAU - fwd <= HIT_ANGLE) return true;
+    }
+    return false;
   }
 
   // Atingere: licuriciul sare pe inelul următor (spre exterior, apoi revine în centru).
@@ -155,10 +230,14 @@
       sparks: 0,
       runs: 0,
       skin: 'amber',
-      owned: ['skin:amber'],
+      owned: ['skin:amber', 'theme:night'],
+      theme: 'night',
+      level: 0,            // v1.6: câte niveluri au fost trecute
       shields: 0,
       lastDaily: '',
-      lang: ''
+      lang: '',
+      seen: '',
+      missions: null
     };
   }
 
@@ -176,8 +255,20 @@
       });
     }
     if (typeof raw.skin === 'string' && p.owned.indexOf('skin:' + raw.skin) >= 0) p.skin = raw.skin;
+    if (typeof raw.theme === 'string' && p.owned.indexOf('theme:' + raw.theme) >= 0) p.theme = raw.theme;
+    p.level = Math.min(LEVELS.length, num(raw.level));
     if (typeof raw.lastDaily === 'string') p.lastDaily = raw.lastDaily.slice(0, 10);
     if (raw.lang === 'ro' || raw.lang === 'en' || raw.lang === 'ru') p.lang = raw.lang;
+    if (typeof raw.seen === 'string') p.seen = raw.seen.slice(0, 10);
+    var m = raw.missions;
+    if (m && typeof m.day === 'string' && Array.isArray(m.list) && m.list.length === 3) {
+      var list = m.list.map(function (q) {
+        var base = null;
+        for (var i = 0; i < MISSION_POOL.length; i++) if (q && MISSION_POOL[i].k === q.k && MISSION_POOL[i].n === q.n) base = MISSION_POOL[i];
+        return base ? { k: base.k, n: base.n, prog: Math.min(base.n, num(q.prog)), claimed: !!q.claimed } : null;
+      });
+      if (list.every(Boolean)) p.missions = { day: m.day.slice(0, 10), list: list };
+    }
     return p;
   }
 
@@ -187,13 +278,49 @@
 
   function owns(p, key) { return p.owned.indexOf(key) >= 0; }
 
+  // ---------- Misiuni zilnice ----------
+  function missionsFor(day) {
+    var h = 0;
+    for (var i = 0; i < day.length; i++) h = (h * 31 + day.charCodeAt(i)) >>> 0;
+    var kinds = {}, list = [];
+    for (var j = 0; list.length < 3 && j < 60; j++) {
+      var q = MISSION_POOL[(h + j * 3) % MISSION_POOL.length];
+      if (kinds[q.k]) continue; kinds[q.k] = 1;
+      list.push({ k: q.k, n: q.n, prog: 0, claimed: false });
+    }
+    return list;
+  }
+  function ensureMissions(p, date) {
+    var day = todayKey(date);
+    if (!p.missions || p.missions.day !== day) p.missions = { day: day, list: missionsFor(day) };
+    return p.missions.list;
+  }
+  // Progres după o tură: drops/gold se adună, score/combo sunt recorduri pe tură, runs numără ture.
+  function trackMissions(p, run, date) {
+    var list = ensureMissions(p, date), done = [];
+    list.forEach(function (q) {
+      if (q.prog >= q.n) return;
+      var v = q.k === 'drops' ? q.prog + run.drops : q.k === 'gold' ? q.prog + run.golds : q.k === 'moon' ? q.prog + (run.moons || 0) :
+        q.k === 'runs' ? q.prog + 1 : q.k === 'score' ? Math.max(q.prog, Math.floor(run.score)) : Math.max(q.prog, run.bestCombo);
+      q.prog = Math.min(q.n, v);
+      if (q.prog >= q.n) done.push(q);
+    });
+    return done;
+  }
+  function claimMission(p, idx, date) {
+    var list = ensureMissions(p, date), q = list[idx];
+    if (!q || q.claimed || q.prog < q.n) return 0;
+    q.claimed = true; p.sparks += MISSION_REWARD;
+    return MISSION_REWARD;
+  }
+
   function finishRun(p, run) {
     var mult = owns(p, 'perk:double') ? 2 : 1;
     var earned = run.sparks * mult;
     var score = Math.floor(run.score);
     p.sparks += earned;
     p.runs += 1;
-    var record = score > p.best;
+    var record = !run.goal && score > p.best;   // recordul ține doar de modul fără sfârșit
     if (record) p.best = score;
     return { earned: earned, score: score, record: record };
   }
@@ -221,6 +348,43 @@
     return true;
   }
 
+  // ---------- v1.6: teme ----------
+  function themeById(id) {
+    for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i];
+    return null;
+  }
+  function buyTheme(p, id) {
+    var th = themeById(id);
+    if (!th) return 'unknown';
+    if (owns(p, 'theme:' + id)) return 'owned';
+    if (th.stars) return 'stars';
+    if (p.sparks < th.price) return 'poor';
+    p.sparks -= th.price;
+    p.owned.push('theme:' + id);
+    return 'ok';
+  }
+  function equipTheme(p, id) {
+    if (!owns(p, 'theme:' + id)) return false;
+    p.theme = id;
+    return true;
+  }
+
+  // ---------- v1.6: niveluri ----------
+  // 'ok' | 'locked' (trebuie trecut nivelul anterior) | 'stars' (cere pachetul de niveluri) | 'unknown'
+  function levelState(p, idx) {
+    if (!LEVELS[idx]) return 'unknown';
+    if (idx > p.level) return 'locked';
+    if (idx >= FREE_LEVELS && !owns(p, 'levels:all')) return 'stars';
+    return 'ok';
+  }
+  // Prima trecere a nivelului deblochează următorul și dă LEVEL_REWARD scântei.
+  function completeLevel(p, idx) {
+    if (idx !== p.level || !LEVELS[idx]) return 0;
+    p.level += 1;
+    p.sparks += LEVEL_REWARD;
+    return LEVEL_REWARD;
+  }
+
   // Aplică un produs plătit în Stars (după confirmarea plății).
   function grantStarItem(p, itemId) {
     var item = STAR_ITEMS[itemId];
@@ -241,11 +405,12 @@
   }
 
   function canClaimDaily(p, date) { return p.lastDaily !== todayKey(date); }
-  function claimDaily(p, date) {
+  function claimDaily(p, date, amount) {
     if (!canClaimDaily(p, date)) return 0;
+    amount = amount || 50;
     p.lastDaily = todayKey(date);
-    p.sparks += 50;
-    return 50;
+    p.sparks += amount;
+    return amount;
   }
 
   // ---------- Texte ----------
@@ -265,7 +430,16 @@
       noAd: 'Reclama nu e disponibilă acum.', terms: 'Termeni', support: 'Suport',
       termsText: 'Produsele cumpărate cu Stars sunt digitale și se folosesc doar în acest joc. Probleme cu plata: scrie /paysupport botului. Suportul Telegram nu poate ajuta la cumpărăturile din boți.',
       agree: 'Prin cumpărare ești de acord cu Termenii.', owned: 'Deținut', combo: 'Serie ×{n}',
-      hint: 'Atinge oriunde'
+      hint: 'Atinge oriunde',
+      dailyFree: 'Cadou zilnic +25', missions: 'Misiunile zilei', claim: 'Ia +{n}', gold: 'Picătură de aur! +5',
+      m_drops: 'Culege {n} picături', m_score: 'Fă {n} puncte într-o tură', m_combo: 'Serie de {n}',
+      m_runs: 'Joacă {n} ture', m_gold: 'Picături de aur: {n}', mDone: 'Misiune îndeplinită!',
+      m_moon: 'Prinde {n} luni', moon: 'Lună! Timpul curge mai încet', whatsNew: 'Noutăți v{n}: 12 niveluri-provocare (primele 4 gratuite), tema Pădure (2500 scântei) și teme noi',
+      levels: 'Niveluri', level: 'Nivelul {n}', lvlWin: 'Nivel trecut! +{n} scântei', lvlWinAgain: 'Nivel trecut din nou!',
+      lvlFail: 'Nivelul nu e trecut. Mai încearcă!', next: 'Nivelul următor', retry: 'Reîncearcă', lvlNeed: 'Trece nivelul anterior',
+      lvlFree: 'Primele {n} niveluri sunt gratuite', themes: 'Teme',
+      g_drops: 'Culege {n} picături', g_score: 'Fă {n} puncte', g_time: 'Rezistă {n} secunde', g_gold: 'Prinde {n} picături de aur', g_combo: 'Fă o serie de {n}',
+      packTheme: 'Teme Aurora + Apus (2 fundaluri)', packGuide: 'Ghidul felinarului: arată unde e sigur să sari', packLevels: 'Pachetul de niveluri 5–12'
     },
     en: {
       title: 'Firefly Orbit',
@@ -282,7 +456,16 @@
       noAd: 'No ad available right now.', terms: 'Terms', support: 'Support',
       termsText: 'Items bought with Stars are digital and only usable in this game. Payment issues: send /paysupport to the bot. Telegram support cannot help with purchases made in bots.',
       agree: 'By purchasing you agree to the Terms.', owned: 'Owned', combo: 'Streak ×{n}',
-      hint: 'Tap anywhere'
+      hint: 'Tap anywhere',
+      dailyFree: 'Daily gift +25', missions: "Today's missions", claim: 'Claim +{n}', gold: 'Golden drop! +5',
+      m_drops: 'Catch {n} drops', m_score: 'Score {n} in one run', m_combo: 'Reach a {n} streak',
+      m_runs: 'Play {n} runs', m_gold: 'Golden drops: {n}', mDone: 'Mission complete!',
+      m_moon: 'Catch {n} moons', moon: 'Moon! Time slows down', whatsNew: 'New in v{n}: 12 challenge levels (first 4 free), Forest theme (2500 sparks) and new themes',
+      levels: 'Levels', level: 'Level {n}', lvlWin: 'Level cleared! +{n} sparks', lvlWinAgain: 'Level cleared again!',
+      lvlFail: 'Level not cleared. Try again!', next: 'Next level', retry: 'Retry', lvlNeed: 'Clear the previous level',
+      lvlFree: 'The first {n} levels are free', themes: 'Themes',
+      g_drops: 'Catch {n} drops', g_score: 'Score {n} points', g_time: 'Survive {n} seconds', g_gold: 'Catch {n} golden drops', g_combo: 'Reach a {n} streak',
+      packTheme: 'Aurora + Sunset themes (2 backgrounds)', packGuide: 'Lantern guide: shows when it is safe to hop', packLevels: 'Level pack 5–12'
     },
     ru: {
       title: 'Орбита светлячка',
@@ -299,7 +482,16 @@
       noAd: 'Реклама сейчас недоступна.', terms: 'Условия', support: 'Поддержка',
       termsText: 'Товары за Stars цифровые и используются только в этой игре. Проблемы с оплатой: отправь боту /paysupport. Поддержка Telegram не помогает с покупками в ботах.',
       agree: 'Покупая, ты соглашаешься с Условиями.', owned: 'Есть', combo: 'Серия ×{n}',
-      hint: 'Нажми где угодно'
+      hint: 'Нажми где угодно',
+      dailyFree: 'Подарок дня +25', missions: 'Задания дня', claim: 'Забрать +{n}', gold: 'Золотая капля! +5',
+      m_drops: 'Собери капель: {n}', m_score: 'Набери {n} очков за забег', m_combo: 'Серия ×{n}',
+      m_runs: 'Сыграй забегов: {n}', m_gold: 'Собери золотых капель: {n}', mDone: 'Задание выполнено!',
+      m_moon: 'Поймай лун: {n}', moon: 'Луна! Время замедляется', whatsNew: 'Новое в v{n}: 12 уровней-испытаний (первые 4 бесплатно), тема «Лес» (2500 искр) и новые темы',
+      levels: 'Уровни', level: 'Уровень {n}', lvlWin: 'Уровень пройден! +{n} искр', lvlWinAgain: 'Уровень пройден снова!',
+      lvlFail: 'Уровень не пройден. Попробуй ещё!', next: 'Следующий уровень', retry: 'Ещё раз', lvlNeed: 'Пройди предыдущий уровень',
+      lvlFree: 'Первые {n} уровня бесплатны', themes: 'Темы',
+      g_drops: 'Собери {n} капель', g_score: 'Набери {n} очков', g_time: 'Продержись {n} секунд', g_gold: 'Поймай {n} золотых капель', g_combo: 'Сделай серию {n}',
+      packTheme: 'Темы Аврора + Закат (2 фона)', packGuide: 'Фонарь-подсказка: показывает, когда прыгать безопасно', packLevels: 'Набор уровней 5–12'
     }
   };
 
@@ -323,7 +515,12 @@
     newRun: newRun, step: step, tap: tap, revive: revive, speedAt: speedAt,
     defaultProfile: defaultProfile, sanitizeProfile: sanitizeProfile, parseProfile: parseProfile,
     owns: owns, finishRun: finishRun, buySkin: buySkin, equipSkin: equipSkin, skinById: skinById,
-    grantStarItem: grantStarItem, todayKey: todayKey, canClaimDaily: canClaimDaily, claimDaily: claimDaily,
-    pickLang: pickLang, tr: tr
+    grantStarItem: grantStarItem, THEMES: THEMES, LEVELS: LEVELS, FREE_LEVELS: FREE_LEVELS, LEVEL_REWARD: LEVEL_REWARD,
+    themeById: themeById, buyTheme: buyTheme, equipTheme: equipTheme, levelState: levelState, completeLevel: completeLevel,
+    levelProgress: levelProgress, dangerAhead: dangerAhead, todayKey: todayKey, canClaimDaily: canClaimDaily, claimDaily: claimDaily,
+    pickLang: pickLang, tr: tr,
+    VERSION: VERSION, MOON_CHANCE: MOON_CHANCE, MOON_TIME: MOON_TIME, MOON_SLOW: MOON_SLOW,
+    MISSION_POOL: MISSION_POOL, MISSION_REWARD: MISSION_REWARD, FREE_DAILY: FREE_DAILY, GOLD_CHANCE: GOLD_CHANCE,
+    missionsFor: missionsFor, ensureMissions: ensureMissions, trackMissions: trackMissions, claimMission: claimMission
   };
 });

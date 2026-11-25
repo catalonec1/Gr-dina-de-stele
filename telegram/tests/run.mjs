@@ -63,6 +63,163 @@ await test('simulare 120 s: deterministă, viteza crește și e plafonată', () 
   eq(JSON.stringify(a), JSON.stringify(b));
   assert(FO.speedAt(0) < FO.speedAt(30)); assert(FO.speedAt(1000) <= 3.6);
 });
+
+await test('v1.2: luna încetinește timpul 5 s și dă o scânteie', () => {
+  const r = FO.newRun(); r.t = 20; r.spawnIn = 99;
+  r.items.push({ kind: 'moon', ring: 1, angle: 0.05, drift: 0, ttl: 5 });
+  FO.step(r, 0.016, FO.mulberry32(1));
+  eq(r.moons, 1); eq(r.sparks, 1); assert(r.events.includes('moon') && r.slow > 4.9);
+  FO.step(r, 0.016, FO.mulberry32(1));
+  assert(Math.abs(r.speed - FO.speedAt(r.t) * FO.MOON_SLOW) < 1e-9, 'viteza trebuie înmulțită cu ' + FO.MOON_SLOW);
+  for (let i = 0; i < 330; i++) FO.step(r, 0.016, FO.mulberry32(i));
+  eq(r.slow, 0); assert(Math.abs(r.speed - FO.speedAt(r.t)) < 1e-9, 'viteza revine');
+});
+await test('v1.2: lunile apar doar după 15 s, rar', () => {
+  const rng = FO.mulberry32(9); let early = 0, moon = 0, drops = 0;
+  for (let i = 0; i < 6000; i++) {
+    const r = FO.newRun(); r.t = i < 1500 ? 12 : 40; r.spawnIn = 0; FO.step(r, 0.001, rng);
+    r.items.forEach(it => { if (i < 1500 && it.kind === 'moon') early++; if (i >= 1500 && it.kind !== 'moth') { drops++; if (it.kind === 'moon') moon++; } });
+  }
+  eq(early, 0); assert(moon / drops > 0.02 && moon / drops < 0.08, 'proporție ' + moon / drops);
+});
+await test('v1.2: misiunea „prinde luni”, culori noi, versiune în profil', () => {
+  const p = FO.defaultProfile(), d = new Date('2026-11-07T10:00:00Z');
+  p.missions = { day: FO.todayKey(d), list: [{ k: 'moon', n: 2, prog: 0, claimed: false }, { k: 'runs', n: 3, prog: 0, claimed: false }, { k: 'drops', n: 15, prog: 0, claimed: false }] };
+  const run = FO.newRun(); run.moons = 2; eq(FO.trackMissions(p, run, d).length, 1);
+  const back = FO.parseProfile(JSON.stringify(Object.assign({}, p, { seen: '1.2' })));
+  eq(back.missions.list[0].k, 'moon'); eq(back.seen, '1.2');
+  ['dusk', 'jade'].forEach(id => { const s = FO.skinById(id); assert(s && s.price > 2000 && !s.stars, id); });
+  p.sparks = 3000; eq(FO.buySkin(p, 'dusk'), 'ok'); eq(FO.buySkin(p, 'jade'), 'poor');
+  ['ro', 'en', 'ru'].forEach(l => ['m_moon', 'moon', 'whatsNew'].forEach(k => assert(FO.I18N[l][k], l + ':' + k)));
+  assert(FO.VERSION >= '1.2');
+});
+
+await test('v1.4: culoarea Liliac (8000), misiuni grele, versiune nouă', () => {
+  const s = FO.skinById('lilac'); assert(s && s.price === 8000 && !s.stars);
+  const p = FO.defaultProfile(); p.sparks = 7999; eq(FO.buySkin(p, 'lilac'), 'poor');
+  p.sparks = 8000; eq(FO.buySkin(p, 'lilac'), 'ok'); assert(FO.equipSkin(p, 'lilac')); eq(p.skin, 'lilac'); eq(p.sparks, 0);
+  assert(FO.MISSION_POOL.some(m => m.k === 'score' && m.n === 500) && FO.MISSION_POOL.some(m => m.k === 'moon' && m.n === 4) && FO.MISSION_POOL.some(m => m.k === 'combo' && m.n === 25));
+  assert(FO.VERSION >= '1.4');
+});
+
+await test('v1.5: culoarea Cupru (10000), misiunea 5 picături de aur, versiune nouă', () => {
+  const s = FO.skinById('copper'); assert(s && s.price === 10000 && !s.stars);
+  const p = FO.defaultProfile(); p.sparks = 9999; eq(FO.buySkin(p, 'copper'), 'poor');
+  p.sparks = 10000; eq(FO.buySkin(p, 'copper'), 'ok'); assert(FO.equipSkin(p, 'copper')); eq(p.skin, 'copper'); eq(p.sparks, 0);
+  assert(FO.MISSION_POOL.some(m => m.k === 'gold' && m.n === 5));
+});
+await test('v1.6: niveluri: primele 4 gratuite, deblocare pe rând, pachetul Stars deschide restul', () => {
+  const p = FO.defaultProfile();
+  eq(FO.LEVELS.length, 12); eq(FO.levelState(p, 0), 'ok'); eq(FO.levelState(p, 1), 'locked');
+  eq(FO.completeLevel(p, 0), FO.LEVEL_REWARD); eq(FO.completeLevel(p, 0), 0); eq(p.level, 1); eq(FO.levelState(p, 1), 'ok');
+  p.level = 4; eq(FO.levelState(p, 4), 'stars');
+  assert(FO.grantStarItem(p, 'levels_pack')); eq(FO.levelState(p, 4), 'ok');
+  eq(FO.sanitizeProfile({ level: 99 }).level, 12);
+});
+await test('v1.6: tura de nivel se termină cu victorie la atingerea obiectivului; fără record', () => {
+  const r = FO.newRun({ goal: { k: 'drops', n: 1 } }); r.spawnIn = 99;
+  r.items.push({ kind: 'drop', ring: 1, angle: 0.05, drift: 0, ttl: 5 });
+  FO.step(r, 0.016, FO.mulberry32(1));
+  assert(r.won && r.over && r.events.includes('win'));
+  const p = FO.defaultProfile(); r.score = 999; eq(FO.finishRun(p, r).record, false); eq(p.best, 0);
+  const t = FO.newRun({ goal: { k: 'time', n: 1 } }); t.spawnIn = 99;
+  for (let i = 0; i < 70; i++) FO.step(t, 0.016, FO.mulberry32(2));
+  assert(t.won, 'obiectivul de timp');
+});
+await test('v1.6: nivelurile pot fi trecute (simulare cu seed fix și jucător automat)', () => {
+  // jucător simplu: sare când molia e aproape pe inelul curent, dacă inelul următor e liber
+  FO.LEVELS.forEach((L, i) => {
+    let ok = false;
+    for (let attempt = 0; attempt < 20 && !ok; attempt++) {
+      const rng = FO.mulberry32(L.seed + attempt * 7919), r = FO.newRun({ goal: { k: L.k, n: L.n } });
+      for (let s = 0; s < 60 * 240 && !r.over; s++) {
+        if (FO.dangerAhead(r, r.ring, 0.2)) {
+          if (!FO.dangerAhead(r, (r.ring + 1) % 3, 0.35)) FO.tap(r);
+          else if (!FO.dangerAhead(r, (r.ring + 2) % 3, 0.35)) { FO.tap(r); FO.tap(r); }
+        } else {
+          const nx = (r.ring + 1) % 3;
+          if (r.items.some(it => it.kind !== 'moth' && it.ring === nx && FO.angDist(it.angle, r.angle) < 0.5) && !FO.dangerAhead(r, nx, 0.6)) FO.tap(r);
+        }
+        FO.step(r, 1 / 60, rng);
+      }
+      ok = r.won;
+    }
+    assert(ok, 'nivelul ' + (i + 1));
+  });
+});
+await test('v1.6: ghidul felinarului vede molia din față, nu pe cea din spate', () => {
+  const r = FO.newRun(); r.angle = 1; r.dir = 1; r.speed = 2;
+  r.items.push({ kind: 'moth', ring: 2, angle: 1.8, drift: 0, ttl: 5 });
+  assert(FO.dangerAhead(r, 2, 0.5)); assert(!FO.dangerAhead(r, 0, 0.5));
+  r.items[0].angle = 0.3; assert(!FO.dangerAhead(r, 2, 0.5));
+  r.dir = -1; assert(FO.dangerAhead(r, 2, 0.5));
+});
+await test('v1.6: teme: Pădure pe scântei, Aurora/Apus doar pe Stars; versiune nouă', () => {
+  const p = FO.defaultProfile(); eq(p.theme, 'night');
+  p.sparks = 2499; eq(FO.buyTheme(p, 'forest'), 'poor'); p.sparks = 2500; eq(FO.buyTheme(p, 'forest'), 'ok');
+  assert(FO.equipTheme(p, 'forest')); eq(p.theme, 'forest');
+  eq(FO.buyTheme(p, 'aurora'), 'stars'); assert(!FO.equipTheme(p, 'aurora'));
+  FO.grantStarItem(p, 'theme_pack'); assert(FO.equipTheme(p, 'sunset'));
+  eq(FO.sanitizeProfile({ theme: 'aurora' }).theme, 'night');
+  ['ro', 'en', 'ru'].forEach(l => assert(FO.I18N[l].whatsNew.includes('2500'), l));
+  eq(FO.VERSION, '1.6');
+});
+await test('v1.3: culoarea Brad (6000), versiune nouă', () => {
+  const s = FO.skinById('pine'); assert(s && s.price === 6000 && !s.stars);
+  const p = FO.defaultProfile(); p.sparks = 5999; eq(FO.buySkin(p, 'pine'), 'poor');
+  p.sparks = 6000; eq(FO.buySkin(p, 'pine'), 'ok'); assert(FO.equipSkin(p, 'pine')); eq(p.skin, 'pine');
+  const back = FO.parseProfile(JSON.stringify(p)); eq(back.skin, 'pine');
+  assert(FO.VERSION >= '1.3');
+});
+
+// ---------------- v1.1: picături de aur, misiuni zilnice, culori noi ----------------
+await test('v1.1: picătura de aur dă +5 scântei în plus și eveniment', () => {
+  const r = FO.newRun(); r.spawnIn = 99;
+  r.items.push({ kind: 'gold', ring: 1, angle: 0.05, drift: 0, ttl: 5 });
+  FO.step(r, 0.016, FO.mulberry32(1));
+  eq(r.sparks, 6); eq(r.golds, 1); eq(r.drops, 1); assert(r.events.includes('gold') && r.events.includes('pick'));
+});
+await test('v1.1: picăturile de aur apar doar după 10 s, ~8% din picături', () => {
+  const rng = FO.mulberry32(5); let early = 0, gold = 0, drops = 0;
+  for (let i = 0; i < 4000; i++) {
+    const r = FO.newRun(); r.t = i < 1000 ? 5 : 30; r.spawnIn = 0; FO.step(r, 0.001, rng);
+    r.items.forEach(it => { if (i < 1000 && it.kind === 'gold') early++; if (i >= 1000 && it.kind !== 'moth') { drops++; if (it.kind === 'gold') gold++; } });
+  }
+  eq(early, 0); assert(gold / drops > 0.05 && gold / drops < 0.11, 'proporție ' + gold / drops);
+});
+await test('v1.1: 3 misiuni diferite pe zi, deterministe, schimbate a doua zi', () => {
+  const a = FO.missionsFor('2026-11-06'), b = FO.missionsFor('2026-11-06');
+  eq(JSON.stringify(a), JSON.stringify(b)); eq(new Set(a.map(q => q.k)).size, 3);
+  let diff = 0; for (let d = 1; d <= 20; d++) { const x = FO.missionsFor('2026-12-' + String(d).padStart(2, '0'));
+    eq(new Set(x.map(q => q.k)).size, 3); if (JSON.stringify(x) !== JSON.stringify(a)) diff++; }
+  assert(diff >= 15, 'misiunile trebuie să varieze');
+});
+await test('v1.1: progresul misiunilor după ture și revendicare o singură dată', () => {
+  const p = FO.defaultProfile(), d = new Date('2026-11-06T10:00:00Z');
+  p.missions = { day: FO.todayKey(d), list: [{ k: 'drops', n: 15, prog: 0, claimed: false }, { k: 'score', n: 150, prog: 0, claimed: false }, { k: 'runs', n: 3, prog: 0, claimed: false }] };
+  const run = FO.newRun(); run.drops = 10; run.score = 120.7; run.bestCombo = 4;
+  eq(FO.trackMissions(p, run, d).length, 0);
+  eq(p.missions.list[0].prog, 10); eq(p.missions.list[1].prog, 120); eq(p.missions.list[2].prog, 1);
+  const run2 = FO.newRun(); run2.drops = 9; run2.score = 160;
+  eq(FO.trackMissions(p, run2, d).length, 2);
+  eq(p.missions.list[0].prog, 15); eq(p.missions.list[1].prog, 150);
+  eq(FO.claimMission(p, 0, d), FO.MISSION_REWARD); eq(FO.claimMission(p, 0, d), 0); eq(FO.claimMission(p, 2, d), 0);
+  eq(p.sparks, 25);
+  FO.ensureMissions(p, new Date('2026-11-07T10:00:00Z'));
+  eq(p.missions.day, '2026-11-07'); assert(p.missions.list.every(q => q.prog === 0 && !q.claimed));
+});
+await test('v1.1: misiunile din salvare sunt validate (fără valori inventate)', () => {
+  const ok = FO.parseProfile(JSON.stringify({ missions: { day: '2026-11-06', list: [{ k: 'drops', n: 15, prog: 99, claimed: true }, { k: 'runs', n: 3, prog: 1 }, { k: 'gold', n: 1, prog: 0 }] } }));
+  eq(ok.missions.list[0].prog, 15); eq(ok.missions.list[1].claimed, false);
+  eq(FO.parseProfile(JSON.stringify({ missions: { day: '2026-11-06', list: [{ k: 'drops', n: 1, prog: 1 }, { k: 'runs', n: 3 }, { k: 'gold', n: 1 }] } })).missions, null);
+  eq(FO.parseProfile(JSON.stringify({ missions: 'x' })).missions, null);
+});
+await test('v1.1: culori noi Ger și Soare cu scântei; cadoul fără reclamă e 25', () => {
+  eq(FO.skinById('frost').price, 1000); eq(FO.skinById('sun').price, 2000);
+  const p = FO.defaultProfile(); p.sparks = 1000; eq(FO.buySkin(p, 'frost'), 'ok'); eq(p.sparks, 0);
+  eq(FO.claimDaily(p, new Date('2026-11-06T01:00:00Z'), FO.FREE_DAILY), 25);
+  ['ro', 'en', 'ru'].forEach(l => ['m_drops', 'm_score', 'm_combo', 'm_runs', 'm_gold', 'missions', 'claim', 'dailyFree', 'gold', 'mDone'].forEach(k => assert(FO.I18N[l][k], l + ':' + k)));
+});
 await test('apariția nu pune molii direct peste licurici', () => {
   const rng = FO.mulberry32(9);
   for (let i = 0; i < 500; i++) {
@@ -204,7 +361,10 @@ await test('/setup setează webhook cu secret derivat din token, comenzi, buton 
 // ---------------- browser ----------------
 console.log('browser (Playwright, Telegram simulat)');
 let chromium;
-try { ({ chromium } = require('playwright')); } catch { console.log('  skip: playwright lipsește'); }
+try { ({ chromium } = require('playwright')); } catch {
+  // În CI, testele de browser sunt obligatorii: lipsa Playwright nu are voie să dea verde.
+  if (process.env.CI) { failed++; console.log('  FAIL playwright lipsește în CI'); } else console.log('  skip: playwright lipsește');
+}
 
 if (chromium) {
   const API = 'https://api.test';
@@ -353,18 +513,105 @@ if (chromium) {
   });
   await test('fără bot și fără Adsgram configurate: jocul merge, butoanele plătite sunt ascunse', async () => {
     const { page, ctx, errors } = await openPage({ config: { API_BASE: '', ADSGRAM_BLOCK_ID: '' } });
-    assert(!(await visible(page, '#btnDaily')));
+    // v1.1: fără Adsgram, cadoul zilnic e gratuit (+25)
+    assert(await visible(page, '#btnDaily')); eq(await page.textContent('#btnDaily'), 'Cadou zilnic +25');
+    const sp0 = await page.evaluate(() => window.__fo.profile.sparks);
+    await page.click('#btnDaily');
+    eq(await page.evaluate(() => window.__fo.profile.sparks), sp0 + 25); assert(await page.$eval('#btnDaily', b => b.disabled));
     await page.click('#btnShop');
     assert(!(await visible(page, '#starRows')));
     await page.click('#btnShopBack'); await page.click('#btnPlay');
     await page.waitForTimeout(200); assert(await page.evaluate(() => window.__fo.run.score > 0));
     eq(errors.length, 0, errors.join('\n')); await ctx.close();
   });
+  await test('v1.1: misiunile apar în meniu, avansează după tură și se revendică', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'en' });
+    eq(await page.$$eval('#missions .row', r => r.length), 3);
+    eq(await page.textContent('#missions h3'), "Today's missions");
+    await page.evaluate(() => { const p = window.__fo.profile; p.missions.list = [{ k: 'drops', n: 15, prog: 14, claimed: false }, { k: 'runs', n: 3, prog: 0, claimed: false }, { k: 'gold', n: 1, prog: 0, claimed: false }]; });
+    await page.click('#btnPlay'); await page.waitForTimeout(100);
+    await page.evaluate(() => { const r = window.__fo.run; r.spawnIn = 99;
+      r.items.push({ kind: 'gold', ring: r.ring, angle: r.angle + 0.05 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForTimeout(250);
+    await page.evaluate(() => { const r = window.__fo.run; r.shield = false; r.items.push({ kind: 'moth', ring: r.ring, angle: r.angle + 0.03 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForSelector('#over.on', { timeout: 4000 });
+    eq(await page.evaluate(() => window.__fo.profile.missions.list.map(q => q.prog).join()), '15,1,1');
+    // continuare după reclamă: progresul nu se numără de două ori
+    await page.click('#btnRevive'); await page.waitForTimeout(150);
+    eq(await page.evaluate(() => window.__fo.profile.missions.list.map(q => q.prog).join()), '14,0,0');
+    await page.evaluate(() => { const r = window.__fo.run; r.shield = false; r.items.push({ kind: 'moth', ring: r.ring, angle: r.angle + 0.03 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForSelector('#over.on', { timeout: 4000 });
+    eq(await page.evaluate(() => window.__fo.profile.missions.list.map(q => q.prog).join()), '15,1,1');
+    await page.click('#btnOverMenu');
+    const sp = await page.evaluate(() => window.__fo.profile.sparks);
+    const btns = await page.$$('#missions .row button');
+    assert(!(await btns[0].isDisabled()) && await btns[1].isDisabled());
+    await btns[0].click();
+    eq(await page.evaluate(() => window.__fo.profile.sparks), sp + 25);
+    assert(await page.$eval('#missions .row', r => r.classList.contains('done')));
+    await page.screenshot({ path: path.join(outDir, 'v11-missions-en.png') });
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+  });
   await test('în afara Telegram (browser simplu) jocul tot pornește', async () => {
     const { page, ctx, errors } = await openPage({ telegram: false, lang: 'en' });
     await page.click('#btnPlay'); await page.keyboard.press('Space');
     await page.waitForTimeout(200); assert(await page.evaluate(() => window.__fo.run.score > 0));
     eq(errors.length, 0, errors.join('\n')); await ctx.close();
+  });
+
+  await test('v1.2: luna în joc, culorile noi în magazin', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'en' });
+    eq(await page.evaluate(() => window.__fo.profile.seen), FO.VERSION);
+    await page.click('#btnShop');
+    eq(await page.$$eval('#skinGrid .card', c => c.length), FO.SKINS.length);
+    await page.click('#btnShopBack');
+    await page.click('#btnPlay'); await page.waitForTimeout(150);
+    await page.evaluate(() => { const r = window.__fo.run; r.items.push({ kind: 'moon', ring: r.ring, angle: r.angle + 0.05 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForTimeout(400);
+    assert(await page.evaluate(() => window.__fo.run.moons === 1 && window.__fo.run.slow > 0), 'luna trebuia culeasă');
+    await page.screenshot({ path: path.join(outDir, 'v12-moon.png') });
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+  });
+  await test('v1.2+: mesaj Noutăți doar pentru jucătorii vechi', async () => {
+    const { page, ctx, errors } = await openPage({ telegram: false, lang: 'en' });
+    await page.evaluate(() => { localStorage.setItem('fo_profile', JSON.stringify({ v: 1, best: 40, sparks: 10, runs: 5, skin: 'amber', owned: ['skin:amber'], lang: 'en', seen: '1.1' })); });
+    await page.reload(); await page.waitForFunction(() => window.__fo);
+    await page.waitForFunction(() => document.getElementById('toast').textContent.includes(window.__fo ? FO.VERSION : '1.3') || document.getElementById('toast').textContent.includes('1.3'), null, { timeout: 3000 });
+    assert((await page.textContent('#toast')).includes('challenge levels'));
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+  });
+
+  await test('v1.6: ecranul de niveluri, nivelul 1 câștigat deschide nivelul 2', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'ro' });
+    await page.click('#btnLevels');
+    eq(await page.$$eval('#lvlGrid button', b => b.length), 12);
+    eq(await page.$$eval('#lvlStars .row', r => r.length), 0, 'fără STARS_V2 nu se vinde pachetul');
+    await page.click('#lvlGrid button >> nth=0');
+    await page.waitForFunction(() => window.__fo.curLevel === 0 && window.__fo.run && !window.__fo.run.over);
+    await page.waitForFunction(() => document.getElementById('hudScore').textContent.includes('Nivelul 1'), null, { timeout: 2000 });
+    await page.evaluate(() => { const r = window.__fo.run; r.drops = 9; r.items.push({ kind: 'drop', ring: r.ring, angle: r.angle + 0.05 * r.dir, drift: 0, ttl: 5 }); });
+    await page.waitForSelector('#over.on', { timeout: 3000 });
+    assert((await page.textContent('#oRecord')).includes('Nivel trecut'));
+    eq(await page.evaluate(() => window.__fo.profile.level), 1);
+    await page.screenshot({ path: path.join(outDir, 'v16-level-win.png') });
+    await page.click('#btnAgain');
+    await page.waitForFunction(() => window.__fo.curLevel === 1);
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
+  });
+  await test('v1.6: cu STARS_V2 se cumpără pachetele noi (teme, ghid, niveluri)', async () => {
+    const { page, ctx, errors } = await openPage({ lang: 'en', config: { API_BASE: API, ADSGRAM_BLOCK_ID: '', STARS_V2: true } });
+    await page.click('#btnShop');
+    eq(await page.$$eval('#starRows .row', r => r.length), 6);
+    for (const id of ['theme_pack', 'guide_perk', 'levels_pack']) {
+      await page.click(`#starRows button[data-item=${id}]`);
+      await page.waitForFunction(i => window.__fo.profile.owned.some(o => o.startsWith('paid:') && o.endsWith('_' + i)), id, { timeout: 8000 });
+    }
+    await page.click('#themeGrid button[data-theme=aurora]');
+    eq(await page.evaluate(() => window.__fo.profile.theme), 'aurora');
+    await page.click('#btnShopBack'); await page.click('#btnPlay'); await page.waitForTimeout(300);
+    await page.screenshot({ path: path.join(outDir, 'v16-aurora-guide.png') });
+    eq(await page.evaluate(() => window.__fo.profile.owned.includes('levels:all') && window.__fo.profile.owned.includes('perk:guide')), true);
+    eq(errors.length, 0, errors.join(' | ')); await ctx.close();
   });
 
   await browser.close(); server.close();

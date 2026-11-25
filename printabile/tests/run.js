@@ -77,8 +77,100 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   await p.click('.langs button[data-l=ru]');
   ok(await p.$eval('#tab-maze', e => e.textContent) === 'Лабиринт', 'comutare în rusă');
 
+  // Ceasul: ore valide, minute pe nivel, fără duplicate, mod citire/desen
+  for (const lang of ['ro', 'en', 'ru']) {
+    const c = await open(`?lang=${lang}&k=clock`);
+    let good = true;
+    const MIN = { easy: [0, 30], medium: [0, 15, 30, 45], hard: [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55] };
+    for (const level of ['easy', 'medium', 'hard']) for (const mode of ['read', 'draw']) {
+      await c.selectOption('#level', level); await c.selectOption('#mode', mode);
+      for (let i = 0; i < 5; i++) {
+        await c.click('#new');
+        const r = await c.evaluate(() => ({ cs: window.__last.clocks, hands: document.querySelectorAll('#out > .clocks svg line[stroke-width="4"]').length, n: document.querySelectorAll('#out > .clocks figure').length }));
+        const keys = new Set(r.cs.map(x => x.h + ':' + x.m));
+        good = good && r.n === 9 && r.cs.length === 9 && keys.size === 9 &&
+          r.cs.every(x => x.h >= 1 && x.h <= 12 && MIN[level].includes(x.m)) && r.hands === (mode === 'read' ? 9 : 0);
+      }
+    }
+    ok(good, `ceas ${lang}: 9 ceasuri valide, minute pe nivel, fără duplicate, ace doar la citire`);
+    ok(await c.$$eval('.key .clocks svg line[stroke-width="4"]', l => l.length) === 9, `ceas ${lang}: răspunsurile au acele desenate`);
+    ok(c.errs.length === 0, `ceas: fără erori în consolă (${lang})`);
+  }
+
+  // Fracții: k < d, numitori pe nivel, fără duplicate, colorare doar în modul „scrie fracția”
+  for (const lang of ['ro', 'en', 'ru']) {
+    const f = await open(`?lang=${lang}&k=frac`);
+    let good = true;
+    const DEN = { easy: [2, 4, 8], medium: [3, 6], hard: [2, 3, 4, 5, 6, 8] };
+    for (const level of ['easy', 'medium', 'hard']) for (const fmode of ['name', 'shade']) {
+      await f.selectOption('#level', level); await f.selectOption('#fmode', fmode);
+      for (let i = 0; i < 5; i++) {
+        await f.click('#new');
+        const r = await f.evaluate(() => {
+          const figs = [...document.querySelectorAll('#out > .fracs figure')];
+          return { fs: window.__last.fracs, n: figs.length,
+            parts: figs.map(g => g.querySelectorAll('svg path, svg rect').length),
+            shaded: figs.map(g => g.querySelectorAll('svg [fill="#c9ced8"]').length) };
+        });
+        const keys = new Set(r.fs.map(x => x.k + '/' + x.d + x.sh));
+        good = good && r.n === 9 && keys.size === 9 &&
+          r.fs.every((x, j) => x.k >= 1 && x.k < x.d && DEN[level].includes(x.d) && (x.sh !== 'grid' || x.d % 2 === 0) &&
+            r.parts[j] === x.d && r.shaded[j] === (fmode === 'name' ? x.k : 0));
+      }
+    }
+    ok(good, `fracții ${lang}: 9 fracții valide, numitori pe nivel, părți = numitor, colorare corectă pe mod`);
+    ok(await f.$$eval('.key .fracs figure', g => g.every(x => /^\d+\d+$/.test(x.querySelector('figcaption').textContent))), `fracții ${lang}: răspunsurile au fracția scrisă`);
+    ok(f.errs.length === 0, `fracții: fără erori în consolă (${lang})`);
+  }
+
+
+  // Modele (ce urmează?): reguli corecte pe nivel, 6 rânduri, 2 căsuțe goale, răspunsuri în cheie
+  const RULES = { easy: ['AB'], medium: ['AAB', 'ABB'], hard: ['ABC', 'AABB'] };
+  const PER = { AB: [0, 1], AAB: [0, 0, 1], ABB: [0, 1, 1], ABC: [0, 1, 2], AABB: [0, 0, 1, 1] };
+  for (const lang of ['ro', 'en', 'ru']) {
+    const f = await open(`?lang=${lang}&k=pat`);
+    let good = true;
+    for (const level of ['easy', 'medium', 'hard']) {
+      await f.selectOption('#level', level);
+      for (let i = 0; i < 5; i++) {
+        await f.click('#new');
+        const r = await f.evaluate(() => ({ ps: window.__last.pats,
+          slots: document.querySelectorAll('#out > .pats .slot').length,
+          keyShapes: [...document.querySelectorAll('.key .pats .row')].map(x => x.querySelectorAll('svg').length) }));
+        good = good && r.ps.length === 6 && r.slots === 12 && r.keyShapes.every(n => n === 8) &&
+          r.ps.every(p => RULES[level].includes(p.rule) && new Set(p.shown).size === new Set(PER[p.rule]).size &&
+            [...p.shown, ...p.next].every((s, j, all) => s === all[j % PER[p.rule].length]) &&
+            PER[p.rule].every((k, j) => PER[p.rule].every((k2, j2) => (k === k2) === (p.shown[j] === p.shown[j2]))));
+      }
+    }
+    ok(good, `modele ${lang}: 6 rânduri, regula nivelului respectată, 2 căsuțe goale, cheia are răspunsul`);
+    ok(f.errs.length === 0, `modele: fără erori în consolă (${lang})`);
+  }
+
+  // Descompunere: parte + parte = întreg, interval pe nivel, un singur cerc gol, fără duplicate
+  for (const lang of ['ro', 'en', 'ru']) {
+    const f = await open(`?lang=${lang}&k=bond`);
+    let good = true;
+    const RANGE = { easy: [3, 10], medium: [11, 20], hard: [11, 20] };
+    for (const level of ['easy', 'medium', 'hard']) {
+      await f.selectOption('#level', level);
+      for (let i = 0; i < 5; i++) {
+        await f.click('#new');
+        const r = await f.evaluate(() => ({ bs: window.__last.bonds,
+          texts: [...document.querySelectorAll('#out > .bonds svg')].map(s => s.querySelectorAll('text').length),
+          keyTexts: [...document.querySelectorAll('.key .bonds svg')].map(s => s.querySelectorAll('text').length) }));
+        const keys = new Set(r.bs.map(o => o.w + '/' + o.a + o.h));
+        good = good && r.bs.length === 9 && keys.size === 9 && r.texts.every(n => n === 2) && r.keyTexts.every(n => n === 3) &&
+          r.bs.every(o => o.a + o.b === o.w && o.a >= 0 && o.b >= 0 && o.w >= RANGE[level][0] && o.w <= RANGE[level][1] &&
+            (level === 'hard' ? ['w', 'a', 'b'] : ['a', 'b']).includes(o.h));
+      }
+    }
+    ok(good, `descompunere ${lang}: 9 scheme corecte, interval pe nivel, un cerc gol, cheia completă`);
+    ok(f.errs.length === 0, `descompunere: fără erori în consolă (${lang})`);
+  }
+
   // Mobil: fără scroll orizontal
-  for (const k of ['maze', 'words', 'math']) {
+  for (const k of ['maze', 'words', 'math', 'clock', 'frac', 'pat', 'bond']) {
     const m = await open(`?k=${k}&lang=ru`, { width: 360, height: 740 });
     if (k === 'words') await m.selectOption('#level', 'hard');
     ok(await m.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), `mobil 360px fără scroll orizontal (${k})`);
@@ -92,7 +184,7 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
 
   // Linkuri către produsele proprii
   const links = await p.$$eval('.cards a', as => as.map(a => a.href));
-  ok(links.length === 5 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
+  ok(links.length === 10 && links.every(h => h.startsWith('https://')), 'linkurile către joc, cărți și Payhip sunt https');
 
   await b.close();
   console.log(fails ? `\n${fails} teste au eșuat` : '\nToate testele au trecut');

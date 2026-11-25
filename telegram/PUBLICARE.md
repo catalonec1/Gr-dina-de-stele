@@ -10,6 +10,7 @@ Joc original, cu o singură atingere: licuriciul se rotește în jurul unui feli
 | Salvare în Telegram CloudStorage + localStorage | `index.html` | gata |
 | Reclame recompensate Adsgram (continuare o dată pe tură, cadou zilnic +50) | `index.html` | gata, aștept `ADSGRAM_BLOCK_ID` |
 | Plăți Telegram Stars (XTR): Aurora+Jar 50 ⭐, Scântei ×2 100 ⭐, 10 scuturi 25 ⭐ | `bot/worker.js` | gata, aștept botul și Worker-ul |
+| v1.6: Teme Aurora+Apus 50 ⭐, Ghidul felinarului (indicii) 40 ⭐, Niveluri 5–12 75 ⭐; niveluri 1–4 și tema Pădure gratuite | `core.js`, `index.html`, `bot/worker.js` | gata; vânzarea pornește cu `STARS_V2: true` în `config.js` după redeploy Worker |
 | Bot: /start cu buton de joc, /terms, /paysupport, pre_checkout, successful_payment | `bot/worker.js` | gata |
 | Verificarea semnăturii `initData` (HMAC-SHA256, „WebAppData”) | `bot/worker.js` | gata |
 | Teste automate (32: logică, bot, browser cu Telegram simulat) | `tests/run.mjs` | trec |

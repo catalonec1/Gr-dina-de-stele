@@ -15,7 +15,8 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }, init
 async function solveByClicks(p) {
   const clicks = await p.evaluate(() => {
     const r = document.getElementById('board').getBoundingClientRect(), out = [];
-    G.lv.tiles.forEach((tl, i) => { const k = minTurns(tl, G.lv.sol[i]);
+    const need = solveTurns(G.lv);
+    G.lv.tiles.forEach((tl, i) => { const k = need[i];
       const x = r.left + geo.ox + (i % G.lv.W + 0.5) * geo.s, y = r.top + geo.oy + (((i / G.lv.W) | 0) + 0.5) * geo.s;
       for (let j = 0; j < k; j++) out.push([x, y]); });
     return out;
