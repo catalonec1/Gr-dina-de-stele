@@ -19,3 +19,16 @@ Joc idle HTML5 într-un singur fișier (`index.html`), în RO / EN / RU.
 - **v1.2** (2026-11-06): a 9-a stea, Galaxia spirală (cu brațe animate și 3 îmbunătățiri), ploi de meteori la ~10 min (30 s de comete dese, 25% aur), misiune zilnică nouă „prinde o cometă de aur”, 4 trofee noi (23 în total). Teste: `node tests/v12.js`.
 - **v1.1** (2026-11-05): stele noi Pulsar și Quasar, 19 trofee (+2% lumină fiecare, păstrate la renaștere), comete de aur (x5), cumpărare x1 / x10 / Max, statistici, Space/Enter pe desktop, sufixe pentru numere mari. Bugfix: acord RU la misiuni, setarea de sunet nu se mai salvează greșit în timpul reclamelor, insigna „Zilnic” se actualizează la miezul nopții, mesaj „Noutăți” pentru jucătorii vechi.
 - **v1.0** (2026-11-04): lansare.
+
+## Grădina de stele v1.7 — note de versiune (decembrie 2026)
+
+Teste noi: `node tests/v17.js` (14: îmbunătățire nouă, 3 trofee, migrare salvare v1.6, Noutăți o singură dată, RO/EN/RU, fără erori JS).
+
+**EN (Amazon „What's new” / itch devlog / GamePix):**
+v1.7 — Winter sky update! An 8th “Clear sky” upgrade (all light x1.5) and 3 new winter trophies: Polar night, Comet blizzard and A hundred thousand snowflakes (39 trophies, each +2% light). Your garden and progress are kept.
+
+**RO:**
+v1.7 — Cerul de iarnă! A 8-a îmbunătățire „Cer senin” (toată lumina x1.5) și 3 trofee noi de iarnă: Noaptea polară, Viscolul de comete și O sută de mii de fulgi (39 de trofee, fiecare +2% lumină). Grădina și progresul se păstrează.
+
+**RU:**
+v1.7 — Зимнее небо! Восьмое улучшение «Ясное небо» (весь свет x1.5) и 3 новых зимних трофея: «Полярная ночь», «Кометная метель» и «Сто тысяч снежинок» (39 трофеев, каждый +2% света). Сад и прогресс сохраняются.
