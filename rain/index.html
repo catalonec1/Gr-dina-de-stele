@@ -410,8 +410,9 @@ function win() {
     if (first) { S.hints++; info += ' · ' + T('gotHint'); }
     const nf = SPECIES.find(s => s.need > before && s.need <= totalStars()); if (nf) setTimeout(() => toast(T('newFlower') + nf.name[S.lang]), wait + 900);
   }
-  save();
+  save(); const g0 = G;
   setTimeout(() => {
+    if (G !== g0 || mode !== 'game') return;
     document.getElementById('wTitle').textContent = L.daily ? T('dailyDone') + S.streak : T('done');
     document.getElementById('wStars').innerHTML = [0, 1, 2].map(i => i < st ? `<span class="s" style="animation-delay:${i * 0.15}s">★</span>` : '★').join('');
     document.getElementById('wInfo').textContent = info;
