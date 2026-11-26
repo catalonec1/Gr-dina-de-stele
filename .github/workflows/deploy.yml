@@ -86,6 +86,16 @@ jobs:
         run: node kiln/tests/run.js
       - name: Teste Rain Garden
         run: node rain/tests/run.js
+      - name: Teste Grădina de stele v1.7
+        run: node tests/v17.js
+      - name: Teste Glowcap Grove v1.2
+        run: node grove/tests/v12.js
+      - name: Teste Lumen Links v2.4
+        run: node lumen/tests/v24.js
+      - name: Teste Hive Bloom v1.4
+        run: node hive/tests/v14.js
+      - name: Teste Pebble Putt v1.3
+        run: node putt/tests/v13.js
       - name: Teste site erori ORA
         run: node ora/tests/run.js
 
