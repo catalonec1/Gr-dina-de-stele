@@ -290,14 +290,14 @@ const JH = () => JW * 1.3;
 // așezarea rafturilor: alege numărul de coloane care dă cele mai mari borcane
 function layout() {
   DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  if (!G) return; const N = G.sh.length, top = 74 + (hasTip() ? 50 : 0), bot = 84, aw = W - 24, ah = H - top - bot - 16;
+  if (!G) return; const sm = H < 700, N = G.sh.length, top = (sm ? 64 : 74) + (hasTip() ? 50 : 0), bot = sm ? 76 : 84, aw = W - 40, ah = H - top - bot - 16;
   let best = null;
   for (let cols = 1; cols <= 5; cols++) {
     const rows = Math.ceil(N / cols), cw = aw / cols, ch = ah / rows;
-    const jw = Math.min((cw - 26) / (CAP * 1.1 + 0.2), (ch - 30) / 1.68, 74);
+    const jw = Math.min((cw - 26) / (CAP * 1.1 + 0.2), (ch - 24) / 1.52, 74);
     if (!best || jw > best.jw + 0.5) best = { cols, rows, jw, cw: 0, ch: 0 };
   }
-  JW = Math.max(14, Math.floor(best.jw)); const cw = Math.min(aw / best.cols, JW * (CAP * 1.1 + 0.2) + 40), ch = Math.min(ah / best.rows, JW * 1.68 + 46);
+  JW = Math.max(14, Math.floor(best.jw)); const cw = Math.min(aw / best.cols, JW * (CAP * 1.1 + 0.2) + 40), ch = Math.min(ah / best.rows, JW * 1.52 + 44);
   const x0 = (W - cw * best.cols) / 2, y0 = top + 8 + (ah - ch * best.rows) / 2;
   R = [];
   for (let i = 0; i < N; i++) {
@@ -455,7 +455,7 @@ function sym(c, k, x, y, r, col, bg) {
   c.fill();
 }
 function speckle(c, x, y, w, h, sp, seed) { const S0 = SPICES[sp]; c.fillStyle = sp === 5 ? 'rgba(170,185,200,.55)' : 'rgba(255,255,255,.2)'; for (let k = 0; k < 7; k++) { const a = (seed * 37 + k * 53) % 97 / 97, b = (seed * 71 + k * 29) % 89 / 89; c.fillRect(x + a * w, y + b * h, Math.max(1, w * .06), Math.max(1, w * .06)); } c.fillStyle = 'rgba(0,0,0,.12)'; for (let k = 0; k < 5; k++) { const a = (seed * 13 + k * 41) % 83 / 83, b = (seed * 19 + k * 61) % 79 / 79; c.fillRect(x + a * w, y + b * h, Math.max(1, w * .05), Math.max(1, w * .05)); } void S0; }
-function label(c, x, y, w, h, sp, big) { rr(c, x, y, w, h, Math.min(4, w * .12)); c.fillStyle = '#fffaf0'; c.fill(); c.strokeStyle = 'rgba(90,60,30,.35)'; c.lineWidth = 1; c.stroke(); sym(c, sp, x + w / 2, y + h / 2, Math.min(w, h) * (big ? .44 : .36), SPICES[sp].d, '#fffaf0'); }
+function label(c, x, y, w, h, sp, big) { rr(c, x, y, w, h, Math.min(4, w * .12)); c.fillStyle = '#fffaf0'; c.fill(); c.strokeStyle = 'rgba(90,60,30,.35)'; c.lineWidth = 1; c.stroke(); sym(c, sp, x + w / 2, y + h / 2, Math.min(w, h) * (big ? .46 : .38), SPICES[sp].d, '#fffaf0'); }
 function gingham(c, x, y, w, h, col) { c.save(); c.clip(); c.fillStyle = '#fff6ea'; c.fillRect(x, y, w, h); const q = Math.max(3, w / 6); c.fillStyle = col; c.globalAlpha = .55; for (let i = 0; i * q < w; i += 2) c.fillRect(x + i * q, y, q, h); for (let j = 0; j * q < h; j += 2) c.fillRect(x, y + j * q, w, q); c.globalAlpha = 1; c.restore(); }
 // un borcan: x = stânga, yb = baza, w = lățime
 function drawJar(c, x, yb, w, sp, style, hid, big) {
@@ -469,7 +469,7 @@ function drawJar(c, x, yb, w, sp, style, hid, big) {
     c.fillStyle = '#6b4320'; c.font = `900 ${Math.round(w * .5)}px Trebuchet MS,sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', x + w / 2, yb - h * .32);
     return;
   }
-  const lw = w * .74, lh = h * .3;
+  const lw = w * .76, lh = h * .38;
   if (style === 1) { // cutie emailată
     rr(c, x + w * .02, yb - h * .9, w * .96, h * .9, w * .1); c.fillStyle = '#f5ecda'; c.fill(); c.strokeStyle = 'rgba(80,50,20,.35)'; c.lineWidth = 1; c.stroke();
     c.fillStyle = S0.c; c.fillRect(x + w * .02, yb - h * .2, w * .96, h * .12); c.fillRect(x + w * .02, yb - h * .82, w * .96, h * .1);
@@ -500,7 +500,7 @@ function drawJar(c, x, yb, w, sp, style, hid, big) {
     rr(c, x + w * .07, yb - h * .74, w * .86, h * .7, w * .17); c.fillStyle = S0.c; c.fill(); speckle(c, x + w * .1, yb - h * .72, w * .8, h * .64, sp, sp * 7 + 3);
     if (style === 3) { c.beginPath(); c.moveTo(x - w * .05, yb - h * .82); c.quadraticCurveTo(x + w / 2, yb - h * 1.14, x + w * 1.05, yb - h * .82); c.lineTo(x + w * .92, yb - h * .74); c.quadraticCurveTo(x + w / 2, yb - h * .82, x + w * .08, yb - h * .74); c.closePath(); gingham(c, x - w * .08, yb - h * 1.1, w * 1.16, h * .4, S0.c === '#eef1f4' ? '#8aa0b8' : S0.c); c.strokeStyle = '#fffaf0'; c.lineWidth = Math.max(1.5, w * .05); c.beginPath(); c.moveTo(x + w * .06, yb - h * .79); c.lineTo(x + w * .94, yb - h * .79); c.stroke(); }
     else { rr(c, x + w * .1, yb - h, w * .8, h * .16, w * .06); const g = c.createLinearGradient(0, yb - h, 0, yb - h * .84); g.addColorStop(0, '#f3d888'); g.addColorStop(1, '#b8892f'); c.fillStyle = g; c.fill(); c.fillStyle = 'rgba(80,50,10,.25)'; for (let k = 1; k < 6; k++) c.fillRect(x + w * (.1 + k * .133), yb - h * .99, 1, h * .14); }
-    label(c, x + (w - lw) / 2, yb - h * .58, lw, lh, sp, big);
+    label(c, x + (w - lw) / 2, yb - h * .62, lw, lh, sp, big);
     c.fillStyle = 'rgba(255,255,255,.45)'; rr(c, x + w * .1, yb - h * .78, w * .08, h * .62, w * .04); c.fill();
   }
 }
