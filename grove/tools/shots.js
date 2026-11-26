@@ -18,6 +18,7 @@ const play = (lv, k, skin = 0) => ALL + `S.skin=${skin};FAST=true;startLevel(${l
   await shot('menu-mobile-en.png', M, 'en-US', ALL + 'S.skin=0;save();menuInfo();', 2500);
   await shot('game-first-roots-en.png', M, 'en-US', play(12, 14, 0));
   await shot('game-stones-en.png', M, 'en-US', play(24, 22, 1));
+  await shot('game-snowy-glade-en.png', M, 'en-US', 'S.scene=1;' + play(20, 18, 8)); // v1.2: Poiana înzăpezită
   await shot('game-two-networks-ru.png', M, 'ru-RU', play(38, 30, 0) + 'hint();', 900);
   await shot('win-mobile-ro.png', M, 'ro-RO', play(33, 999, 2), 2000);
   await shot('levels-mobile-en.png', M, 'en-US', ALL + "save();renderLevels();show('levels');");
