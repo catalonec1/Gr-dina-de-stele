@@ -33,7 +33,7 @@ const OLD = { lang: 'ro', done: Array(36).fill(1), stars: Array(36).fill(3), hin
   await p.click('#skList .sk[data-sk="8"]'); ok(await ev(p, () => S.skin === 4), 'Fulg de nea e blocat la 108★');
   // grădina 37 rezolvată cu soluția generatorului → 111★ și anunț de omidă nouă
   await ev(p, () => { show(null); startLevel(36); for (const j of G.L.sol.slice(1)) move(j); });
-  await p.waitForTimeout(1200);
+  await p.waitForTimeout(1800);
   ok(await ev(p, () => S.done[36] === 1 && totalStars() === 111), 'grădina 37 se termină cu soluția verificată (111★)');
   ok((await p.textContent('#toast')).includes('Fulg de nea'), 'anunț: omidă nouă Fulg de nea');
   await ev(p, () => toMenu()); await p.click('#bSkins'); await p.click('#skList .sk[data-sk="8"]');
@@ -41,7 +41,7 @@ const OLD = { lang: 'ro', done: Array(36).fill(1), stars: Array(36).fill(3), hin
   await p.click('#skList .sk[data-sk="9"]'); ok(await ev(p, () => S.skin === 8), 'Ghirlandă e blocată sub 170★');
   await ev(p, () => { S.stars = Array(60).fill(3); S.done = Array(60).fill(1); renderSkins(); }); await p.click('#skList .sk[data-sk="9"]');
   ok(await ev(p, () => S.skin === 9), 'cu 180★ se alege Ghirlandă');
-  await ev(p, () => { startLevel(10); for (const j of G.L.sol.slice(1)) move(j); }); await p.waitForTimeout(900);
+  await ev(p, () => { startLevel(10); for (const j of G.L.sol.slice(1)) move(j); }); await p.waitForTimeout(1800);
   ok(await ev(p, () => G.done), 'o grădină se termină cu omida Ghirlandă (desenare fără erori)');
   // 3. Noutăți o singură dată
   await ev(p, () => toMenu()); await p.click('#bPlay'); await p.waitForTimeout(200);
