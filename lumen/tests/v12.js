@@ -53,7 +53,7 @@ async function solveByClicks(p) {
   await p2.addInitScript(() => { if (!sessionStorage.m) { sessionStorage.m = 1;
     localStorage.setItem('lumen-links-v1', JSON.stringify({ lang: 'en', sound: true, level: 7, stars: { 1: 3 }, daily: {}, hints: 2, pal: 0, tut: true, rushBest: 4, streak: { n: 1, last: '' } })); } });
   await p2.goto(URL); await p2.waitForTimeout(900);
-  ok(await p2.evaluate(() => document.getElementById('toast').textContent.includes('5 worlds') && S.level === 7 && S.rushBest === 4 && S.zen === 0), 'v1.2: migrare v1.1 + mesaj Noutăți');
+  ok(await p2.evaluate(() => document.getElementById('toast').textContent.includes('v' + VERSION) && S.level === 7 && S.rushBest === 4 && S.zen === 0), 'v1.2: migrare v1.1 + mesaj Noutăți');
   ok(await p2.evaluate(() => { const r = document.getElementById('bSound').getBoundingClientRect(); return r.bottom <= innerHeight; }), 'v1.2: meniul încape pe ecran 360x640');
   ok(errs.length === 0, 'v1.2: fără erori JS ' + errs.join('|'));
   await b.close();
