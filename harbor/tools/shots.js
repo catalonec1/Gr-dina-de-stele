@@ -31,7 +31,7 @@ const only = process.argv[2];
   const cover = async (name, w, h, icon) => {
     const ctx = await b.newContext({ viewport: { width: w, height: h } }); const p = await ctx.newPage(); const k = Math.min(w / 1280, h / 720);
     const html = icon
-      ? `<body style="margin:0;width:${w}px;height:${h}px;overflow:hidden;background:url(data:image/png;base64,${scene}) 28% 30%/260% auto"><div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 40%,rgba(3,6,20,.55))"></div></body>`
+      ? `<body style="margin:0;width:${w}px;height:${h}px;overflow:hidden;background:url(data:image/png;base64,${scene}) ${-90 * w / 360}px ${-140 * w / 360}px/${900 * w / 360}px auto"><div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,rgba(0,0,0,0) 40%,rgba(3,6,20,.55))"></div></body>`
       : `<body style="margin:0;width:${w}px;height:${h}px;overflow:hidden;background:url(data:image/png;base64,${scene}) center/cover;font-family:'Trebuchet MS',sans-serif;position:relative">
         <div style="position:absolute;inset:0;background:linear-gradient(270deg,rgba(5,8,26,.78),rgba(5,8,26,.0) 62%)"></div>
         <div style="position:absolute;right:${w * .05}px;top:${h * .2}px;text-align:right;line-height:.92;font-weight:900;font-size:${120 * k}px;color:#fff4dc;text-shadow:0 ${7 * k}px 0 #b4621c,0 0 ${44 * k}px rgba(255,190,90,.7)">Lantern<br><span style="color:#6fe3d6;text-shadow:0 ${7 * k}px 0 #1c6a72,0 ${14 * k}px ${30 * k}px rgba(0,0,0,.6)">Harbor</span></div>
