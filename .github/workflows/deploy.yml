@@ -78,6 +78,14 @@ jobs:
         run: node cocoon/tests/run.js
       - name: Teste Nibble Trail
         run: node trail/tests/run.js
+      - name: Teste Lantern Harbor
+        run: node harbor/tests/run.js
+      - name: Teste Spice Shelf
+        run: node shelf/tests/run.js
+      - name: Teste Clay & Kiln
+        run: node kiln/tests/run.js
+      - name: Teste Rain Garden
+        run: node rain/tests/run.js
       - name: Teste site erori ORA
         run: node ora/tests/run.js
 
@@ -136,6 +144,22 @@ jobs:
         run: |
           mkdir -p dist/web/trail
           cp trail/index.html trail/launch/cover-630x500.png trail/launch/icon-512.png dist/web/trail/
+      - name: Adaugă Lantern Harbor în /harbor/ (nelistat)
+        run: |
+          mkdir -p dist/web/harbor
+          cp harbor/index.html harbor/launch/cover-630x500.png harbor/launch/icon-512.png dist/web/harbor/
+      - name: Adaugă Spice Shelf în /shelf/ (nelistat)
+        run: |
+          mkdir -p dist/web/shelf
+          cp shelf/index.html shelf/launch/cover-630x500.png shelf/launch/icon-512.png dist/web/shelf/
+      - name: Adaugă Clay & Kiln în /kiln/ (nelistat)
+        run: |
+          mkdir -p dist/web/kiln
+          cp kiln/index.html kiln/launch/cover-630x500.png kiln/launch/icon-512.png dist/web/kiln/
+      - name: Adaugă Rain Garden în /rain/ (nelistat)
+        run: |
+          mkdir -p dist/web/rain
+          cp rain/index.html rain/launch/cover-630x500.png rain/launch/icon-512.png dist/web/rain/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Pagini extensii Pocket (suport + confidențialitate)
