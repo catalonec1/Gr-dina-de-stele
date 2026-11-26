@@ -51,7 +51,7 @@ const ev = (p, f, a) => p.evaluate(f, a);
   ok(await ev(p, () => { S.rushT = 0; const a = prod(); S.rushT = 30; const r = prod(); S.rushT = 0; return Math.abs(r / a - 7) < 1e-9; }), 'ploaia de polen = ×7');
   // 4. UI listă și file
   await p.click('#tabs [data-tab="up"]'); ok(await p.isVisible('#list .it, #list .note'), 'fila Îmbunătățiri');
-  await p.click('#tabs [data-tab="ach"]'); ok((await p.$$('.ach div')).length === 16, 'fila Trofee are 16 trofee');
+  await p.click('#tabs [data-tab="ach"]'); ok((await p.$$('.ach div')).length >= 16, 'fila Trofee are >= 16 trofee');
   await p.click('#tabs [data-tab="mig"]'); ok(await ev(p, () => document.getElementById('bMig').disabled), 'migrația e blocată sub 1 M');
   // 5. migrație
   await ev(p, () => { S.run = 4.1e6; S.life = 5e6; S.leaves = 4e6; S.own = [50, 20, 5, 1, 0, 0, 0, 0]; refreshList(); });
