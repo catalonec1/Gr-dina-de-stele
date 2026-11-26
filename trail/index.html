@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Nibble Trail</title>
+<meta name="description" content="A cozy one-stroke puzzle. Guide a hungry little caterpillar across the garden, eat every leaf without crossing your own trail, then flutter away as a butterfly. 60 gardens plus a new Daily Garden every day.">
+<meta name="theme-color" content="#24452c">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2324452c'/%3E%3Ccircle cx='14' cy='40' r='8' fill='%23a8e06c'/%3E%3Ccircle cx='26' cy='36' r='9' fill='%2386c94e'/%3E%3Ccircle cx='39' cy='34' r='10' fill='%23a8e06c'/%3E%3Ccircle cx='49' cy='26' r='11' fill='%23ffd166'/%3E%3Ccircle cx='46' cy='24' r='2.5' fill='%23222'/%3E%3Ccircle cx='53' cy='23' r='2.5' fill='%23222'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#24452c;--panel:rgba(30,60,36,.96);--line:rgba(255,255,255,.18);--ink:#f7fbef;--dim:#cfe2c8;--acc:#ffd166;--acc2:#a8e06c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;z-index:4;overflow:auto}
+.screen.on{display:flex;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-6px) rotate(5deg)}}
+@keyframes poke{0%,100%{transform:translate(-50%,-10%) scale(1)}50%{transform:translate(-50%,10%) scale(.9)}}
+button{font:inherit;color:inherit;background:rgba(255,255,255,.1);border:1px solid var(--line);border-radius:16px;padding:12px 18px;cursor:pointer;transition:transform .08s,background .15s}
+button:hover{background:rgba(255,255,255,.16)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button:disabled{opacity:.45}
+button.big{font-size:21px;padding:15px 0;width:min(80vw,310px);margin:6px 0;font-weight:700}
+button.pri{background:linear-gradient(180deg,#ffe49a,#f5b83d);color:#4a2b00;border:none;box-shadow:0 6px 0 #a86f12,0 10px 24px rgba(0,0,0,.35)}
+button.pri:active{transform:translateY(4px);box-shadow:0 2px 0 #a86f12}
+button.ico{padding:8px 12px;min-width:48px;min-height:46px;font-size:20px;background:rgba(14,32,18,.6);backdrop-filter:blur(4px)}
+#menu{justify-content:center;background:radial-gradient(ellipse at 50% 45%,rgba(14,32,18,.25),rgba(14,32,18,.8));backdrop-filter:blur(2.5px);-webkit-backdrop-filter:blur(2.5px)}
+#menu h1{margin:0 0 6px;font-size:clamp(46px,13vw,78px);line-height:.95;color:#f2ffe0;text-shadow:0 5px 0 #4f8f2a,0 9px 0 rgba(0,0,0,.25),0 0 40px rgba(168,224,108,.4);text-align:center;font-weight:900}
+#menu h1 span{display:block;font-size:.72em;color:var(--acc);text-shadow:0 4px 0 #a86f12,0 7px 0 rgba(0,0,0,.25)}
+#menu .sub{color:var(--dim);margin:8px 18px 20px;text-align:center;max-width:380px;font-size:16px}
+#menuInfo{color:var(--acc);margin:6px 0 4px;font-weight:700;text-align:center}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.deco{font-size:54px;margin-bottom:10px;animation:bob 2.6s ease-in-out infinite;filter:drop-shadow(0 0 14px rgba(255,209,102,.5))}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px 18px 16px;width:min(92vw,430px);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+h2{margin:0 0 12px;text-align:center;font-size:26px}
+.top{display:flex;align-items:center;justify-content:space-between;width:min(94vw,560px);padding:14px 0 8px;position:sticky;top:0;z-index:2}
+.top h2{margin:0}
+#levels,#skins,#settings{background:linear-gradient(180deg,#24452c,#13281a)}
+.world{width:min(94vw,560px);margin:8px 0 4px;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.06);border:1px solid var(--line)}
+.world h3{margin:0 0 10px;display:flex;justify-content:space-between;font-size:18px}
+.world h3 small{color:var(--acc);font-weight:700}
+.world p{margin:-6px 0 10px;color:var(--dim);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.lv{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;border-radius:14px;font-weight:800;font-size:20px}
+.lv small{font-size:11px;letter-spacing:1px;color:var(--acc);height:14px}
+.lv.lock{opacity:.35}
+.lv.cur{outline:3px solid var(--acc)}
+.sks{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:min(94vw,520px);padding-bottom:30px}
+.sk{display:flex;flex-direction:column;align-items:center;gap:8px;padding:14px 6px}
+.sk i{display:flex;gap:2px}
+.sk i u{width:16px;height:16px;border-radius:50%;display:block}
+.sk.on{outline:3px solid var(--acc)}
+.sk small{color:var(--dim);font-size:12px}
+.set{display:flex;justify-content:space-between;align-items:center;padding:10px 2px;border-bottom:1px solid var(--line);gap:12px}
+.set:last-child{border:none}
+.set button{min-width:96px}
+#hud{position:fixed;left:0;right:0;top:0;display:none;align-items:flex-start;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;z-index:3;pointer-events:none}
+#hud.on{display:flex}
+#hud button{pointer-events:auto}
+#hud .mid{text-align:center;text-shadow:0 2px 6px rgba(0,0,0,.7)}
+#hud .mid b{display:block;font-size:20px}
+#hud .mid small{color:var(--dim);font-size:14px}
+#tools{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:center;gap:12px;padding:8px 10px calc(10px + env(safe-area-inset-bottom));z-index:3}
+#tools.on{display:flex}
+#tools button{min-width:64px;min-height:50px;font-size:20px;padding:6px 12px;background:rgba(14,32,18,.7)}
+#tools button small{display:block;font-size:11px;color:var(--dim)}
+#bHint{position:relative}
+#bHint b{position:absolute;top:-6px;right:-6px;background:var(--acc);color:#3d2200;border-radius:10px;font-size:12px;padding:1px 6px}
+#tip{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top));transform:translateX(-50%);z-index:3;background:rgba(20,44,26,.94);border:1px solid var(--line);border-radius:14px;padding:9px 14px;font-size:15px;max-width:min(92vw,440px);text-align:center;display:none;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#tip.on{display:block;animation:pop .35s ease}
+#tip b{color:var(--acc)}
+#hand{position:fixed;z-index:3;font-size:34px;pointer-events:none;display:none;animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+#win{justify-content:center;background:rgba(10,24,14,.5)}
+#win .panel{text-align:center;animation:pop .45s ease}
+#win .stars{font-size:46px;letter-spacing:6px;margin:4px 0 8px;color:#4f6652}
+#win .stars .s{color:var(--acc);text-shadow:0 0 18px rgba(255,209,102,.7);display:inline-block;animation:pop .4s ease both}
+#win p{color:var(--dim);margin:4px 0 12px}
+#toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(20,44,26,.97);border:1px solid var(--line);border-radius:14px;padding:9px 16px;z-index:6;display:none;font-weight:700;text-align:center;max-width:92vw}
+#toast.on{display:block;animation:pop .3s ease}
+@media (max-height:700px){.deco{display:none}#menu .sub{margin:4px 18px 10px}}
+#news{margin-top:10px;font-size:13px;color:var(--dim);text-align:center;padding:0 16px}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><button class="ico" id="bBack" aria-label="Menu">☰</button><div class="mid"><b id="hTitle"></b><small id="hSub"></small></div><button class="ico" id="bReset" aria-label="Restart">↺</button></div>
+<div id="tools"><button id="bUndo" aria-label="Undo">↶<small data-t="undo"></small></button><button id="bHint" aria-label="Hint">💡<small data-t="hint"></small><b id="hintN">0</b></button></div>
+<div id="tip"></div>
+<div id="hand">👆</div>
+<div id="toast"></div>
+
+<div class="screen on" id="menu">
+  <div class="deco">🐛</div>
+  <h1>Nibble<span>Trail</span></h1>
+  <div class="sub" data-t="sub"></div>
+  <button class="big pri" id="bPlay"></button>
+  <button class="big" id="bDaily"></button>
+  <button class="big" id="bLevels"></button>
+  <div class="row"><button id="bSkins" class="ico" aria-label="Caterpillars">🎨</button><button id="bSettings" class="ico" aria-label="Settings">⚙️</button><button id="bLang" class="ico" aria-label="Language">RO</button></div>
+  <div id="menuInfo"></div>
+  <div id="news"></div>
+</div>
+
+<div class="screen" id="levels"><div class="top"><button class="ico" data-back aria-label="Back">←</button><h2 data-t="levels"></h2><span id="lvStars" style="min-width:48px;text-align:right;color:var(--acc);font-weight:800"></span></div><div id="worlds" style="padding-bottom:30px"></div></div>
+<div class="screen" id="skins"><div class="top"><button class="ico" data-back aria-label="Back">←</button><h2 data-t="skins"></h2><span id="skStars" style="min-width:48px;text-align:right;color:var(--acc);font-weight:800"></span></div><div class="sks" id="skList"></div></div>
+<div class="screen" id="settings"><div class="top"><button class="ico" data-back aria-label="Back">←</button><h2 data-t="settings"></h2><span style="min-width:48px"></span></div>
+  <div class="panel">
+    <div class="set"><span data-t="music"></span><button id="sMusic"></button></div>
+    <div class="set"><span data-t="sound"></span><button id="sSound"></button></div>
+    <div class="set"><span data-t="vibe"></span><button id="sVibe"></button></div>
+    <div class="set"><span data-t="tut"></span><button id="sTut"></button></div>
+    <div class="set"><span data-t="lang"></span><button id="sLang"></button></div>
+    <div class="set"><span data-t="keys"></span><small style="color:var(--dim);text-align:right">← ↑ → ↓ / WASD · Z ↶ · H 💡 · R ↺ · Esc</small></div>
+    <div class="set"><span data-t="reset"></span><button id="sReset" style="color:#ff9a9a"></button></div>
+  </div></div>
+<div class="screen" id="win"><div class="panel"><h2 id="wTitle"></h2><div class="stars" id="wStars"></div><p id="wInfo"></p><div class="row"><button class="ico" id="wMenu" aria-label="Levels">▦</button><button class="ico" id="wAgain" aria-label="Replay">↺</button><button class="big pri" id="wNext" style="width:auto;padding:12px 26px;margin:0"></button></div></div></div>
+
+<script>
+'use strict';
+const VERSION = '1.0';
+// ---------- texte ----------
+const TX = {
+  ro: { sub: 'O omidă flămândă într-o grădină de primăvară. Mănâncă toate frunzele dintr-o singură plimbare, fără să treci de două ori prin același loc, și zboară ca fluture.', play: 'Joacă', daily: 'Grădina zilei', levels: 'Niveluri', skins: 'Omizi', settings: 'Setări', music: 'Muzică', sound: 'Sunete', vibe: 'Vibrații', tut: 'Tutorial', lang: 'Limba', keys: 'Tastatură', reset: 'Șterge progresul', on: 'Pornit', off: 'Oprit', erase: 'Șterge', sure: 'Apasă din nou ca să ștergi', undo: 'Înapoi', hint: 'Indiciu', level: 'Grădina', back: 'Pași înapoi', w: ['Primele frunze', 'Pietricele', 'Coconul', 'Fructe de pădure'], wsub: ['mănâncă fiecare frunză, o singură dată', 'pietrele nu se mănâncă — ocolește-le', 'creanga cu cocon 🌿 e ultima frunză', 'fructele se mănâncă în ordinea numerelor'], done: 'Ai zburat ca fluture!', next: 'Următoarea', noHints: 'Nu mai ai indicii — termină o grădină nouă ca să primești unul.', gotHint: '+1 indiciu', dailyDone: 'Grădina zilei e gata! Serie: ', unlock: 'Se deblochează la', use: 'Folosește', used: 'Folosită', newSkin: 'Omidă nouă: ', locked: 'Termină grădina anterioară', gift: 'Cadou zilnic: +2 indicii', blockEnd: 'Coconul e ultimul — mai întâi restul frunzelor.', blockBer: 'Fructele se mănâncă în ordine: acum urmează ', noWay: 'Pe acolo nu se poate — trage înapoi pe corp ca să te întorci.', news: '',
+    steps: ['<b>1/3</b> Atinge sau trage spre frunza de lângă capul omizii.', '<b>2/3</b> Ai greșit drumul? Trage înapoi pe corp (sau ↶) ca să te întorci un pas.', '<b>3/3</b> Mănâncă toate frunzele. Nu poți trece de două ori prin același loc.'],
+    tips: { hint: 'Blocat? 💡 Indiciul te duce pe drumul bun câțiva pași (maxim 2 stele).', stone: 'Pietricelele nu se mănâncă. Ocolește-le, dar nu uita nicio frunză.', end: 'Creanga cu cocon 🌿 trebuie să fie ultima: acolo omida devine fluture.', ber: 'Fructele de pădure au numere: mănâncă-le în ordine, 1, 2, 3…' } },
+  en: { sub: 'A hungry caterpillar in a spring garden. Eat every leaf in one single walk, never crossing your own trail, then fly away as a butterfly.', play: 'Play', daily: 'Daily Garden', levels: 'Levels', skins: 'Caterpillars', settings: 'Settings', music: 'Music', sound: 'Sounds', vibe: 'Vibration', tut: 'Tutorial', lang: 'Language', keys: 'Keyboard', reset: 'Reset progress', on: 'On', off: 'Off', erase: 'Reset', sure: 'Tap again to erase', undo: 'Undo', hint: 'Hint', level: 'Garden', back: 'Steps back', w: ['First Leaves', 'Pebbles', 'The Cocoon', 'Wild Berries'], wsub: ['eat every leaf, exactly once', 'pebbles are not food — walk around them', 'the cocoon twig 🌿 is the very last leaf', 'eat the berries in number order'], done: 'You flew off as a butterfly!', next: 'Next', noHints: 'No hints left — finish a new garden to earn one.', gotHint: '+1 hint', dailyDone: 'Daily Garden done! Streak: ', unlock: 'Unlocks at', use: 'Use', used: 'In use', newSkin: 'New caterpillar: ', locked: 'Finish the previous garden', gift: 'Daily gift: +2 hints', blockEnd: 'The cocoon comes last — eat the other leaves first.', blockBer: 'Berries go in order: next is ', noWay: 'You can\'t go there — drag back onto your body to step back.', news: '',
+    steps: ['<b>1/3</b> Tap or drag to the leaf next to the caterpillar\'s head.', '<b>2/3</b> Wrong way? Drag back onto the body (or ↶) to step back.', '<b>3/3</b> Eat every leaf. You can never cross your own trail.'],
+    tips: { hint: 'Stuck? 💡 Hint walks you a few steps down a good path (max 2 stars).', stone: 'Pebbles are not food. Walk around them, but don\'t miss a single leaf.', end: 'The cocoon twig 🌿 must be last: that\'s where the caterpillar becomes a butterfly.', ber: 'Wild berries are numbered: eat them in order, 1, 2, 3…' } },
+  ru: { sub: 'Голодная гусеница в весеннем саду. Съешьте все листья за одну прогулку, не пересекая свой след, и улетите бабочкой.', play: 'Играть', daily: 'Сад дня', levels: 'Уровни', skins: 'Гусеницы', settings: 'Настройки', music: 'Музыка', sound: 'Звуки', vibe: 'Вибрация', tut: 'Обучение', lang: 'Язык', keys: 'Клавиатура', reset: 'Сбросить прогресс', on: 'Вкл', off: 'Выкл', erase: 'Сбросить', sure: 'Нажмите ещё раз', undo: 'Назад', hint: 'Подсказка', level: 'Сад', back: 'Шаги назад', w: ['Первые листья', 'Камешки', 'Кокон', 'Лесные ягоды'], wsub: ['съешьте каждый лист ровно один раз', 'камешки несъедобны — обходите их', 'ветка с коконом 🌿 — самый последний лист', 'ягоды едят по порядку номеров'], done: 'Вы улетели бабочкой!', next: 'Дальше', noHints: 'Подсказки закончились — пройдите новый сад.', gotHint: '+1 подсказка', dailyDone: 'Сад дня пройден! Серия: ', unlock: 'Откроется при', use: 'Выбрать', used: 'Выбрано', newSkin: 'Новая гусеница: ', locked: 'Пройдите предыдущий сад', gift: 'Подарок дня: +2 подсказки', blockEnd: 'Кокон — последний. Сначала съешьте остальные листья.', blockBer: 'Ягоды по порядку: следующая ', noWay: 'Туда нельзя — потяните назад на тело, чтобы вернуться.', news: '',
+    steps: ['<b>1/3</b> Нажмите или потяните к листу рядом с головой гусеницы.', '<b>2/3</b> Не туда? Потяните назад на тело (или ↶), чтобы вернуться на шаг.', '<b>3/3</b> Съешьте все листья. Нельзя пересекать свой след.'],
+    tips: { hint: 'Застряли? 💡 Подсказка проведёт вас несколько шагов по верному пути (максимум 2 звезды).', stone: 'Камешки несъедобны. Обходите их, но не пропустите ни одного листа.', end: 'Ветка с коконом 🌿 должна быть последней: там гусеница становится бабочкой.', ber: 'У ягод есть номера: ешьте их по порядку, 1, 2, 3…' } }
+};
+const LANGS = ['ro', 'en', 'ru'];
+const SKINS = [
+  { c: '#9bd35a', c2: '#c8ec7c', h: '#ffd166', need: 0, name: { ro: 'Frunză', en: 'Leaf', ru: 'Листик' } },
+  { c: '#ff9f6b', c2: '#ffd0a8', h: '#ff7b54', need: 15, name: { ro: 'Caisă', en: 'Apricot', ru: 'Абрикос' } },
+  { c: '#7cc8ff', c2: '#c4e6ff', h: '#ffe08a', need: 35, name: { ro: 'Cer', en: 'Sky', ru: 'Небо' } },
+  { c: '#c99bff', c2: '#ead8ff', h: '#ffb3e1', need: 60, name: { ro: 'Liliac', en: 'Lilac', ru: 'Сирень' } },
+  { c: '#ffd166', c2: '#3b3b3b', h: '#ffd166', need: 95, name: { ro: 'Albinuță', en: 'Bumble', ru: 'Шмель' } },
+  { c: '#ff7aa8', c2: '#ffd1e1', h: '#ff4f86', need: 130, name: { ro: 'Bujor', en: 'Peony', ru: 'Пион' } },
+  { c: '#5ed1b0', c2: '#f2ff9a', h: '#ff9f6b', need: 160, name: { ro: 'Mentă', en: 'Mint', ru: 'Мята' } },
+  { c: '#f4f1e8', c2: '#ffb347', h: '#ff6a6a', need: 180, name: { ro: 'Ie', en: 'Embroidery', ru: 'Вышивка' } }
+];
+// ---------- logica ----------
+// direcții: 0 sus, 1 dreapta, 2 jos, 3 stânga
+const DX = [0, 1, 0, -1], DY = [-1, 0, 1, 0];
+function rnd(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function nb(L, i, d) { const x = i % L.w + DX[d], y = ((i / L.w) | 0) + DY[d]; if (x < 0 || y < 0 || x >= L.w || y >= L.h) return -1; const n = y * L.w + x; return L.hole[n] ? -1 : n; }
+const adj = (L, a, b) => [0, 1, 2, 3].some(d => nb(L, a, d) === b);
+// poate omida să intre în j când drumul are lungimea len și a mâncat eat fructe?
+function legal(L, on, j, len, eat) {
+  if (j < 0 || L.hole[j] || on[j]) return false;
+  if (j === L.end && len !== L.n - 1) return false;
+  const b = L.bi[j]; if (b >= 0 && b !== eat) return false;
+  return true;
+}
+// rezolvitor: DFS cu tăieri (conectivitate + capete moarte), ordine Warnsdorff
+function solve(L, path, cap, r) {
+  const N = L.w * L.h, on = new Uint8Array(N); path = path.slice(); path.forEach(i => on[i] = 1);
+  let eat = path.filter(i => L.bi[i] >= 0).length, nodes = 0;
+  const q = new Int16Array(N), seen = new Uint8Array(N);
+  function ok(head) {
+    const left = L.n - path.length; if (!left) return true;
+    seen.fill(0); let qn = 0, cnt = 0; seen[head] = 1; q[qn++] = head;
+    for (let k = 0; k < qn; k++) { const i = q[k]; for (let d = 0; d < 4; d++) { const j = nb(L, i, d); if (j >= 0 && !on[j] && !seen[j]) { seen[j] = 1; cnt++; q[qn++] = j; } } }
+    if (cnt !== left) return false;
+    let dead = 0;
+    for (let i = 0; i < N; i++) {
+      if (L.hole[i] || on[i]) continue; let k = 0, nh = false;
+      for (let d = 0; d < 4; d++) { const j = nb(L, i, d); if (j < 0) continue; if (!on[j]) k++; else if (j === head) nh = true; }
+      if (k === 0 && !(nh && left === 1)) return false;
+      if (k + (nh ? 1 : 0) <= 1 || (k === 1 && !nh)) { dead++; if (dead > 1 || (L.end >= 0 && i !== L.end)) return false; }
+    }
+    return true;
+  }
+  function go() {
+    if (path.length === L.n) return true;
+    if (++nodes > cap) return false;
+    const h = path[path.length - 1], c = [];
+    for (let d = 0; d < 4; d++) { const j = nb(L, h, d); if (legal(L, on, j, path.length, eat)) { let k = 0; for (let e = 0; e < 4; e++) { const t = nb(L, j, e); if (t >= 0 && !on[t] && t !== j) k++; } c.push([k + (r ? r() * 0.9 : 0), j]); } }
+    c.sort((a, b) => a[0] - b[0]);
+    for (const [, j] of c) {
+      on[j] = 1; path.push(j); const be = L.bi[j] >= 0; if (be) eat++;
+      if (ok(j) && go()) return true;
+      on[j] = 0; path.pop(); if (be) eat--;
+    }
+    return false;
+  }
+  if (!path.length) return null;
+  return ok(path[path.length - 1]) && go() ? path : null;
+}
+function turnsOf(L, p) { let t = 0; for (let k = 2; k < p.length; k++) if (p[k] - p[k - 1] !== p[k - 1] - p[k - 2]) t++; return t; }
+function gen(seed, P) {
+  const r = rnd(seed), N = P.w * P.h; let best = null, bestSc = -1, found = 0;
+  for (let a = 0; a < 80 && found < 5; a++) {
+    const L = { w: P.w, h: P.h, hole: new Uint8Array(N), end: -1, ber: [], bi: new Int8Array(N).fill(-1) };
+    let tries = 0, nh = 0; while (nh < (P.holes || 0) && tries++ < 300) {
+      const c = (r() * N) | 0; if (L.hole[c]) continue;
+      // nu lipi pietrele (arată mai bine răsfirate)
+      if ([0, 1, 2, 3].some(d => { const x = c % P.w + DX[d], y = ((c / P.w) | 0) + DY[d]; return x >= 0 && y >= 0 && x < P.w && y < P.h && L.hole[y * P.w + x]; }) && r() < 0.8) continue;
+      L.hole[c] = 1; nh++;
+    }
+    const free = []; let b0 = 0; for (let i = 0; i < N; i++) if (!L.hole[i]) { free.push(i); if (((i % P.w) + ((i / P.w) | 0)) % 2 === 0) b0++; }
+    L.n = free.length; const b1 = L.n - b0; if (Math.abs(b0 - b1) > 1) continue;
+    let s; if (P.corner) s = 0; else { s = free[(r() * free.length) | 0]; }
+    const sc0 = ((s % P.w) + ((s / P.w) | 0)) % 2 === 0; if ((b0 > b1 && !sc0) || (b1 > b0 && sc0)) continue;
+    const sol = solve(L, [s], 6000, r); if (!sol) continue; found++;
+    let score = turnsOf(L, sol) + r() * 2;
+    if (score > bestSc) { bestSc = score; best = L; L.sol = sol; }
+  }
+  const L = best; L.start = L.sol[0];
+  if (P.end) L.end = L.sol[L.n - 1];
+  if (P.ber) { const k = P.ber, span = (L.n - 3) / k; for (let q = 0; q < k; q++) { const idx = 2 + Math.floor(q * span + r() * span * 0.8); L.ber.push(L.sol[idx]); L.bi[L.sol[idx]] = q; } }
+  return L;
+}
+function params(world, j) {
+  const S0 = [[3, 3], [3, 4], [4, 4], [4, 4], [4, 5], [4, 5], [5, 5], [5, 5], [5, 6], [5, 6], [5, 6], [6, 6], [6, 6], [6, 7], [6, 7]];
+  if (world === 0) return { w: S0[j][0], h: S0[j][1], corner: j < 2 };
+  if (world === 1) return { w: 5 + (j > 4) + (j > 10), h: 6 + (j > 7), holes: 2 + ((j / 4) | 0) };
+  if (world === 2) return { w: 5 + (j > 5), h: 6 + (j > 9), holes: 1 + ((j / 5) | 0), end: 1 };
+  return { w: 5 + (j > 4) + (j > 11), h: 6 + (j > 8), holes: (j / 4) | 0, ber: 3 + ((j / 6) | 0) };
+}
+const LEVELS = [];
+for (let i = 0; i < 60; i++) { const w = (i / 15) | 0, L = gen(5113 + i * 7919, params(w, i % 15)); L.world = w; L.idx = i; L.tip = i === 3 ? 'hint' : i === 15 ? 'stone' : i === 30 ? 'end' : i === 45 ? 'ber' : null; LEVELS.push(L); }
+function dayKey(d = new Date()) { return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+function dailyLevel(dk) { const w = 1 + dk % 3, L = gen(dk * 31 + 17, params(w, 9)); L.world = w; L.idx = -1; L.daily = dk; L.tip = null; return L; }
+// ---------- salvare ----------
+const SK = 'nibble-trail-v1';
+const FRESH = () => ({ lang: null, done: [], stars: [], hints: 5, skin: 0, music: 1, sound: 1, vibe: 1, tut: 1, daily: 0, streak: 0, gift: 0, tips: {}, seen: '' });
+let S = FRESH();
+try { Object.assign(S, JSON.parse(localStorage.getItem(SK) || '{}')); } catch (e) {}
+if (!S.lang) { const n = (navigator.language || 'en').slice(0, 2); S.lang = LANGS.includes(n) ? n : n === 'uk' || n === 'be' ? 'ru' : 'en'; }
+function save() { try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} }
+const T = k => TX[S.lang][k];
+const totalStars = () => S.stars.reduce((a, b) => a + (b || 0), 0);
+// ---------- sunet ----------
+let AC = null;
+function ac() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {} return AC; }
+function tone(f, d = 0.12, type = 'sine', v = 0.12, delay = 0, f2, bus = 'sound') {
+  if (!S[bus]) return; const A = ac(); if (!A) return;
+  try { const t = A.currentTime + delay, o = A.createOscillator(), g = A.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(A.destination); o.start(t); o.stop(t + d + 0.02); } catch (e) {}
+}
+const NOTES = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+const SFX = { munch: n => { tone(260 + (n % 5) * 30, 0.05, 'triangle', 0.07, 0, 180); tone(NOTES[n % 8], 0.08, 'sine', 0.03, 0.03); }, back: () => tone(300, 0.07, 'sine', 0.05, 0, 420), berry: () => tone(988, 0.18, 'sine', 0.09, 0, 1318), win: () => [523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, 0.3, 'sine', 0.09, i * 0.08)), no: () => tone(160, 0.15, 'sawtooth', 0.04, 0, 120) };
+const buzz = ms => { if (S.vibe && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} };
+// muzică: arpegiu pentatonic liniștit, pornește după prima atingere
+const MEL = [392, 440, 523, 587, 659, 784, 659, 587, 523, 440, 523, 587]; let mStep = 0, mNext = 0;
+function musicTick(now) { if (!S.music || !AC || AC.state !== 'running' || now < mNext) return; mNext = now + 520; const f = MEL[mStep % MEL.length]; tone(f, 0.9, 'sine', 0.025, 0, 0, 'music'); if (mStep % 4 === 0) tone(f / 2, 1.4, 'triangle', 0.02, 0, 0, 'music'); mStep++; }
+// ---------- stare joc ----------
+const cv = document.getElementById('c'), cx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, CS = 40, BX = 0, BY = 0, mode = 'menu', LI = 0, G = null, FAST = false, demo = null, parts = [], petals = [], flies = [];
+function newGame(L, isDemo) {
+  const g = { L, path: [L.start], on: new Uint8Array(L.w * L.h), eat: 0, back: 0, hints: 0, done: false, demo: !!isDemo, mt: 0, into: 0, step: 0, glow: new Set() };
+  g.on[L.start] = 1; return g;
+}
+function layout() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!G) return; const L = G.L, top = 72, bot = 86, pad = 24;
+  CS = Math.floor(Math.min((W - pad) / L.w, (H - top - bot - pad) / L.h, 84));
+  BX = Math.round((W - CS * L.w) / 2); BY = Math.round(top + (H - top - bot - CS * L.h) / 2);
+  pointer();
+}
+addEventListener('resize', layout);
+function tutOn() { return G && !G.demo && LI === 0 && !G.L.daily && S.tut && !S.tips.t3; }
+function startLevel(i) {
+  LI = i; const L = i < 0 ? dailyLevel(dayKey()) : LEVELS[i];
+  G = newGame(L); mode = 'game'; layout(); show(null); hud(); tip();
+}
+function tip() {
+  const el = document.getElementById('tip');
+  if (tutOn()) { el.innerHTML = T('steps')[G.step]; el.classList.add('on'); pointer(); return; }
+  const k = G.L.tip; if (k && !S.tips[k] && S.tut) { el.textContent = T('tips')[k]; el.classList.add('on'); } else el.classList.remove('on');
+  pointer();
+}
+function hideTip() { const k = G && G.L.tip; if (k && !S.tips[k]) { S.tips[k] = 1; save(); } if (!tutOn()) document.getElementById('tip').classList.remove('on'); }
+// mâna din tutorial arată spre următoarea frunză bună
+function pointer() {
+  const h = document.getElementById('hand');
+  if (!tutOn() || G.done || G.step !== 0 || cur) { h.style.display = 'none'; return; }
+  const t = G.L.sol[G.path.length]; h.style.display = 'block';
+  h.style.left = (BX + (t % G.L.w + 0.5) * CS) + 'px'; h.style.top = (BY + (((t / G.L.w) | 0) + 0.6) * CS) + 'px';
+}
+function tutAdvance(ev) {
+  if (!tutOn()) return;
+  if (G.step === 0 && ev === 'move') G.step = 1;
+  else if (G.step === 1 && ev === 'back') G.step = 2;
+  else if (G.step === 1 && ev === 'move' && G.path.length >= 5) G.step = 2; // a înțeles mișcarea, nu-l bloca
+  else return;
+  tip();
+}
+function hud() {
+  if (!G) return; const L = G.L;
+  document.getElementById('hTitle').textContent = L.daily ? T('daily') : T('level') + ' ' + (LI + 1);
+  document.getElementById('hSub').textContent = '🍃 ' + G.path.length + '/' + L.n + (L.ber.length ? ' · 🫐 ' + G.eat + '/' + L.ber.length : '') + ' · ↶ ' + G.back;
+  document.getElementById('hintN').textContent = S.hints;
+  document.getElementById('bUndo').disabled = G.path.length < 2;
+}
+const head = () => G.path[G.path.length - 1];
+// un pas spre celula j (vecină cu capul); întoarce true dacă s-a mișcat
+function move(j, quiet) {
+  if (!G || G.done) return false; const L = G.L, h = head();
+  if (G.path.length > 1 && j === G.path[G.path.length - 2]) return stepBack();
+  if (!adj(L, h, j)) return false;
+  if (!legal(L, G.on, j, G.path.length, G.eat)) {
+    if (!quiet && !G.demo && j >= 0 && !G.on[j] && !L.hole[j]) { SFX.no(); buzz(15); toast(j === L.end ? T('blockEnd') : L.bi[j] >= 0 ? T('blockBer') + (G.eat + 1) : T('noWay')); }
+    return false;
+  }
+  G.on[j] = 1; G.path.push(j); G.mt = FAST ? 0 : performance.now(); G.glow.delete(j);
+  if (L.bi[j] >= 0) { G.eat++; SFX.berry(); burst(j, '#7b5cff', 10); } else SFX.munch(G.path.length);
+  if (!FAST) burst(j, '#a8e06c', 4, 0.9);
+  if (!G.demo) { hideTip(); tutAdvance('move'); }
+  hud(); pointer(); if (G.path.length === L.n) win(); return true;
+}
+function stepBack() {
+  if (!G || G.done || G.path.length < 2) return false;
+  const j = G.path.pop(); G.on[j] = 0; if (G.L.bi[j] >= 0) G.eat--; G.back++; G.mt = FAST ? 0 : performance.now();
+  if (!G.demo) { SFX.back(); tutAdvance('back'); }
+  hud(); pointer(); return true;
+}
+function cutTo(k) { while (G.path.length > k + 1) stepBack(); }
+// merge spre o celulă pe aceeași linie sau coloană, pas cu pas
+function walkTo(t) {
+  if (!G || G.done || t < 0) return; const L = G.L;
+  for (let guard = 0; guard < 20 && head() !== t; guard++) {
+    const h = head(); if (G.path.length > 1 && t === G.path[G.path.length - 2]) { stepBack(); return; }
+    const hx = h % L.w, hy = (h / L.w) | 0, tx = t % L.w, ty = (t / L.w) | 0, dx = Math.sign(tx - hx), dy = Math.sign(ty - hy);
+    let d; if (Math.abs(tx - hx) >= Math.abs(ty - hy)) d = dx > 0 ? 1 : 3; else d = dy > 0 ? 2 : 0;
+    const j = nb(L, h, d); if (j < 0) return;
+    if (!move(j, guard > 0 || !adj(L, h, t))) return;
+  }
+}
+function restart() { if (!G || G.demo) return; G = newGame(G.L); layout(); hud(); tip(); }
+function undo() { if (!G || G.demo) return; stepBack(); }
+function hint() {
+  if (!G || G.done || G.demo) return; hideTip();
+  if (S.hints <= 0) { toast(T('noHints')); return; }
+  const L = G.L; let way = solve(L, G.path, 25000);
+  if (!way) { // drumul curent nu mai are ieșire: întoarce-te pe drumul știut
+    let k = 0; while (k < G.path.length && G.path[k] === L.sol[k]) k++;
+    cutTo(Math.max(0, k - 1)); way = L.sol;
+  }
+  S.hints--; G.hints++; save(); tone(990, 0.15, 'sine', 0.08);
+  for (let s = 0; s < 3 && G.path.length < L.n && !G.done; s++) { const j = way[G.path.length]; burst(j, '#ffd166', 6); move(j, true); }
+  for (let s = 0; s < 2 && G.path.length + s < L.n; s++) G.glow.add(way[G.path.length + s]);
+  hud();
+}
+function starsFor(L, back, hints) { let s = back <= Math.ceil(L.n * 0.3) ? 3 : back <= L.n * 1.5 ? 2 : 1; if (hints) s = Math.min(s, 2); return s; }
+function win() {
+  const L = G.L; G.done = true; G.into = performance.now(); pointer();
+  const hc = head(); flies.push({ x: BX + (hc % L.w + 0.5) * CS, y: BY + (((hc / L.w) | 0) + 0.5) * CS, t: performance.now(), c: sk().c });
+  if (G.demo) { setTimeout(() => { if (mode === 'menu') startDemo(); }, 1800); return; }
+  if (LI === 0 && !S.tips.t3) { S.tips.t3 = 1; document.getElementById('tip').classList.remove('on'); }
+  SFX.win(); buzz([20, 40, 30]); G.path.forEach((c, k) => setTimeout(() => burst(c, k % 2 ? sk().c : sk().c2, 3, 1.6), FAST ? 0 : k * 14));
+  const st = starsFor(L, G.back, G.hints); let info = T('back') + ': ' + G.back + (G.hints ? ' · 💡 ' + G.hints : '');
+  if (L.daily) {
+    if (S.daily !== L.daily) { const y = new Date(); y.setDate(y.getDate() - 1); S.streak = S.daily === dayKey(y) ? S.streak + 1 : 1; S.daily = L.daily; }
+    info += ' · 🔥 ' + S.streak;
+  } else {
+    const before = totalStars(), first = !S.done[LI];
+    S.done[LI] = 1; S.stars[LI] = Math.max(S.stars[LI] || 0, st);
+    if (first) { S.hints++; info += ' · ' + T('gotHint'); }
+    const nsk = SKINS.find(s => s.need > before && s.need <= totalStars()); if (nsk) setTimeout(() => toast(T('newSkin') + nsk.name[S.lang]), 900);
+  }
+  save();
+  setTimeout(() => {
+    document.getElementById('wTitle').textContent = L.daily ? T('dailyDone') + S.streak : T('done');
+    document.getElementById('wStars').innerHTML = [0, 1, 2].map(i => i < st ? `<span class="s" style="animation-delay:${i * 0.15}s">★</span>` : '★').join('');
+    document.getElementById('wInfo').textContent = info;
+    document.getElementById('wNext').style.display = L.daily || LI >= 59 ? 'none' : '';
+    show('win');
+  }, FAST ? 0 : 1300);
+}
+// ---------- particule ----------
+const sk = () => SKINS[S.skin] || SKINS[0];
+function burst(c, col, n, sp = 1.4) { if (!G || FAST) return; const x = BX + (c % G.L.w + 0.5) * CS, y = BY + (((c / G.L.w) | 0) + 0.5) * CS; for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = (0.4 + Math.random()) * sp; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.8, life: 1, col, r: 1.5 + Math.random() * 2.5 }); } }
+for (let i = 0; i < 26; i++) petals.push({ x: Math.random(), y: Math.random(), s: 0.4 + Math.random() * 0.6, p: Math.random() * 6.28, c: ['#ffd1e1', '#fff3b0', '#ffffff', '#d8f5b0'][i % 4] });
+// ---------- desen ----------
+function rr(x, y, w, h, r) { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); }
+const ctr = i => [BX + (i % G.L.w + 0.5) * CS, BY + (((i / G.L.w) | 0) + 0.5) * CS];
+function leaf(x, y, s, a, col) {
+  cx.save(); cx.translate(x, y); cx.rotate(a);
+  cx.fillStyle = col; cx.beginPath(); cx.moveTo(0, -s * .34); cx.quadraticCurveTo(s * .3, -s * .1, 0, s * .34); cx.quadraticCurveTo(-s * .3, -s * .1, 0, -s * .34); cx.fill();
+  cx.strokeStyle = 'rgba(30,70,20,.45)'; cx.lineWidth = Math.max(1, s * .03); cx.beginPath(); cx.moveTo(0, -s * .28); cx.lineTo(0, s * .38); cx.stroke();
+  cx.restore();
+}
+function drawFly(f, now) {
+  const k = (now - f.t) / 1600; if (k > 1.6) return false; const x = f.x + Math.sin(k * 9) * 18, y = f.y - k * 140, flap = Math.abs(Math.sin(now / 70));
+  cx.save(); cx.translate(x, y); cx.globalAlpha = Math.max(0, Math.min(1, 1.6 - k));
+  for (const sx of [-1, 1]) { cx.fillStyle = f.c; cx.beginPath(); cx.ellipse(sx * 11 * flap, -5, 11 * flap + 2, 12, sx * .4, 0, 6.28); cx.fill(); cx.fillStyle = '#ffd166'; cx.beginPath(); cx.ellipse(sx * 8 * flap, 9, 7 * flap + 1.5, 8, -sx * .4, 0, 6.28); cx.fill(); }
+  cx.fillStyle = '#3b2a1a'; rr(-2.5, -12, 5, 26, 2.5); cx.fill(); cx.restore(); cx.globalAlpha = 1; return true;
+}
+function draw(now) {
+  const g = cx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#8fd0e8'); g.addColorStop(0.35, '#bfe6c4'); g.addColorStop(1, '#5c9a4a'); cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+  // dealuri
+  cx.fillStyle = '#7cb85a'; cx.beginPath(); cx.moveTo(0, H * .42); for (let x = 0; x <= W; x += 20) cx.lineTo(x, H * .42 + Math.sin(x / 160) * 18); cx.lineTo(W, H); cx.lineTo(0, H); cx.fill();
+  cx.fillStyle = '#5f9c45'; cx.beginPath(); cx.moveTo(0, H * .55); for (let x = 0; x <= W; x += 20) cx.lineTo(x, H * .55 + Math.sin(x / 110 + 2) * 14); cx.lineTo(W, H); cx.lineTo(0, H); cx.fill();
+  for (const f of petals) { f.y += 0.0006 * f.s; f.x += Math.sin(now / 1500 + f.p) * 0.0005; if (f.y > 1) { f.y = 0; f.x = Math.random(); } cx.save(); cx.translate(f.x * W, f.y * H); cx.rotate(now / 900 + f.p); cx.fillStyle = f.c; cx.globalAlpha = 0.75; cx.beginPath(); cx.ellipse(0, 0, 3 + f.s * 3, 1.6 + f.s * 1.5, 0, 0, 6.28); cx.fill(); cx.restore(); }
+  cx.globalAlpha = 1;
+  if (!G) return; const L = G.L, s = CS;
+  rr(BX - 10, BY - 10, s * L.w + 20, s * L.h + 20, 18); cx.fillStyle = '#6b4a2e'; cx.fill(); cx.strokeStyle = 'rgba(0,0,0,.25)'; cx.lineWidth = 3; cx.stroke();
+  for (let i = 0; i < L.w * L.h; i++) {
+    const x = i % L.w, y = (i / L.w) | 0, px = BX + x * s, py = BY + y * s, [cxp, cyp] = ctr(i);
+    if (L.hole[i]) { // pietricică
+      cx.fillStyle = 'rgba(0,0,0,.22)'; cx.beginPath(); cx.ellipse(cxp, py + s * .78, s * .36, s * .1, 0, 0, 6.28); cx.fill();
+      cx.fillStyle = '#9aa29c'; rr(px + s * .14, py + s * .22, s * .72, s * .56, s * .26); cx.fill();
+      cx.fillStyle = 'rgba(255,255,255,.35)'; cx.beginPath(); cx.ellipse(cxp - s * .12, py + s * .34, s * .12, s * .06, -.4, 0, 6.28); cx.fill();
+      continue;
+    }
+    const eaten = G.on[i];
+    cx.fillStyle = eaten ? ((x + y) & 1 ? '#7a5636' : '#82603d') : ((x + y) & 1 ? '#4f8f3a' : '#56993f'); rr(px + 1.5, py + 1.5, s - 3, s - 3, s * .18); cx.fill();
+    if (!eaten) {
+      const sw = Math.sin(now / 900 + i) * 0.08, isEnd = i === L.end, b = L.bi[i];
+      if (G.glow.has(i)) { cx.strokeStyle = 'rgba(255,209,102,' + (0.5 + 0.4 * Math.sin(now / 200)) + ')'; cx.lineWidth = 3; rr(px + 4, py + 4, s - 8, s - 8, s * .16); cx.stroke(); }
+      if (isEnd) { // creanga cu cocon
+        cx.strokeStyle = '#6b4a2e'; cx.lineWidth = s * .07; cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(px + s * .15, py + s * .25); cx.lineTo(px + s * .85, py + s * .3); cx.stroke(); cx.lineCap = 'butt';
+        leaf(px + s * .25, py + s * .2, s * .5, -1.1, '#8fd15a');
+        cx.fillStyle = '#f2e6c8'; cx.beginPath(); cx.ellipse(cxp + s * .08, cyp + s * .08 + Math.sin(now / 500) * 2, s * .14, s * .26, Math.sin(now / 700) * .15, 0, 6.28); cx.fill();
+        cx.strokeStyle = 'rgba(150,120,80,.6)'; cx.lineWidth = 1.2; for (let k = -1; k <= 1; k++) { cx.beginPath(); cx.moveTo(cxp - s * .04, cyp + s * (.08 + k * .09)); cx.lineTo(cxp + s * .2, cyp + s * (.08 + k * .09)); cx.stroke(); }
+      } else if (b >= 0) { // fruct de pădure numerotat
+        leaf(cxp - s * .14, cyp + s * .12, s * .55, -0.8 + sw, '#6fbf4a');
+        const next = b === G.eat;
+        cx.fillStyle = next ? '#6a4cff' : '#5340b8'; cx.beginPath(); cx.arc(cxp + s * .04, cyp - s * .02, s * .24, 0, 6.28); cx.fill();
+        if (next) { cx.strokeStyle = 'rgba(255,255,255,' + (0.5 + 0.4 * Math.sin(now / 250)) + ')'; cx.lineWidth = 2.5; cx.stroke(); }
+        cx.fillStyle = '#fff'; cx.font = `900 ${Math.round(s * .3)}px Trebuchet MS,sans-serif`; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText(b + 1, cxp + s * .04, cyp - s * .01);
+      } else {
+        leaf(cxp, cyp, s * 1.05, 0.6 + sw, ['#9bd35a', '#8bc94f', '#a8e06c'][i % 3]);
+      }
+    } else { // firimituri
+      cx.fillStyle = 'rgba(160,210,100,.5)'; for (let k = 0; k < 3; k++) { cx.beginPath(); cx.arc(px + s * (.25 + ((i * 7 + k * 13) % 50) / 100), py + s * (.25 + ((i * 11 + k * 17) % 50) / 100), s * .03, 0, 6.28); cx.fill(); }
+    }
+  }
+  // omida
+  const P = G.path, K = P.length, mk = G.mt ? Math.min(1, (now - G.mt) / 110) : 1, skn = sk();
+  const pts = P.map(ctr); if (K > 1 && mk < 1) { const [ax, ay] = pts[K - 2], [bx, by] = pts[K - 1]; pts[K - 1] = [ax + (bx - ax) * mk, ay + (by - ay) * mk]; }
+  if (!(G.done && !G.demo && now - G.into > 500)) {
+    if (K > 1) { cx.strokeStyle = 'rgba(0,0,0,.18)'; cx.lineWidth = s * .5; cx.lineCap = 'round'; cx.lineJoin = 'round'; cx.beginPath(); pts.forEach(([x, y], k) => k ? cx.lineTo(x + 2, y + 4) : cx.moveTo(x + 2, y + 4)); cx.stroke(); }
+    for (let k = 0; k < K - 1; k++) { const [x, y] = pts[k], wob = Math.sin(now / 180 - k * .7) * s * .02; cx.fillStyle = k % 2 ? skn.c2 : skn.c; cx.beginPath(); cx.arc(x, y + wob, s * (k === 0 ? .2 : .27), 0, 6.28); cx.fill(); const nx = pts[k + 1]; cx.beginPath(); cx.arc((x + nx[0]) / 2, (y + nx[1]) / 2 + wob, s * .22, 0, 6.28); cx.fill(); }
+    const [hx, hy] = pts[K - 1]; let dir = 2; if (K > 1) { const a = P[K - 2], b = P[K - 1]; dir = b - a === 1 ? 1 : b - a === -1 ? 3 : b > a ? 2 : 0; }
+    cx.save(); cx.translate(hx, hy); cx.rotate([Math.PI, -Math.PI / 2, 0, Math.PI / 2][dir]);
+    cx.strokeStyle = '#3b2a1a'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(-s * .1, s * .2); cx.quadraticCurveTo(-s * .2, s * .38, -s * .14, s * .44); cx.moveTo(s * .1, s * .2); cx.quadraticCurveTo(s * .2, s * .38, s * .14, s * .44); cx.stroke();
+    cx.fillStyle = skn.h; cx.beginPath(); cx.arc(-s * .14, s * .44, s * .045, 0, 6.28); cx.arc(s * .14, s * .44, s * .045, 0, 6.28); cx.fill();
+    cx.fillStyle = skn.c; cx.beginPath(); cx.arc(0, 0, s * .33, 0, 6.28); cx.fill();
+    cx.fillStyle = '#fff'; cx.beginPath(); cx.arc(-s * .12, s * .1, s * .09, 0, 6.28); cx.arc(s * .12, s * .1, s * .09, 0, 6.28); cx.fill();
+    cx.fillStyle = '#222'; cx.beginPath(); cx.arc(-s * .11, s * .13, s * .045, 0, 6.28); cx.arc(s * .13, s * .13, s * .045, 0, 6.28); cx.fill();
+    cx.fillStyle = 'rgba(255,120,120,.55)'; cx.beginPath(); cx.arc(-s * .21, s * .0, s * .05, 0, 6.28); cx.arc(s * .21, s * .0, s * .05, 0, 6.28); cx.fill();
+    cx.restore(); cx.lineCap = 'butt'; cx.lineJoin = 'miter';
+  }
+  flies = flies.filter(f => drawFly(f, now));
+}
+function frame(now) {
+  draw(now); musicTick(now);
+  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.03; p.life -= 0.02; cx.globalAlpha = Math.max(0, p.life); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.28); cx.fill(); }
+  cx.globalAlpha = 1; parts = parts.filter(p => p.life > 0);
+  if (mode === 'menu' && demo && G && G.demo && !G.done && now > demo.next) { move(G.L.sol[G.path.length], true); demo.next = now + 230; }
+  requestAnimationFrame(frame);
+}
+function startDemo() { G = newGame(LEVELS[12], true); demo = { next: performance.now() + 900 }; layout(); }
+// ---------- intrare ----------
+function cellAt(x, y) { if (!G) return -1; const a = Math.floor((x - BX) / CS), b = Math.floor((y - BY) / CS); if (a < 0 || b < 0 || a >= G.L.w || b >= G.L.h) return -1; return b * G.L.w + a; }
+let drag = false;
+cv.addEventListener('pointerdown', e => {
+  ac(); if (mode !== 'game' || !G || G.done) return; const i = cellAt(e.clientX, e.clientY); if (i < 0) return;
+  drag = true; try { cv.setPointerCapture(e.pointerId); } catch (er) {}
+  const k = G.path.indexOf(i);
+  if (k >= 0) { if (k < G.path.length - 1) cutTo(k); } else walkTo(i);
+});
+cv.addEventListener('pointermove', e => { if (!drag || !G || G.done) return; const i = cellAt(e.clientX, e.clientY); if (i < 0 || i === head()) return; walkTo(i); });
+const endDrag = () => { drag = false; };
+cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+addEventListener('keydown', e => {
+  ac(); const k = e.key.toLowerCase();
+  if (k === 'escape') { if (mode === 'game' && !cur) toMenu(); else if (cur && cur !== 'menu') back(); return; }
+  if (mode !== 'game' || !G || cur) return;
+  const m = { arrowup: 0, w: 0, arrowright: 1, d: 1, arrowdown: 2, s: 2, arrowleft: 3, a: 3 }[k];
+  if (m !== undefined) { e.preventDefault(); const j = nb(G.L, head(), m); if (j >= 0) move(j); else if (!G.demo) SFX.no(); }
+  else if (k === 'z' || k === 'backspace') undo(); else if (k === 'h') hint(); else if (k === 'r') restart();
+});
+// ---------- ecrane ----------
+let cur = 'menu';
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); cur = id;
+  const g = mode === 'game' && !id; document.getElementById('hud').classList.toggle('on', g); document.getElementById('tools').classList.toggle('on', g);
+  if (!g) document.getElementById('tip').classList.remove('on');
+  pointer();
+}
+function back() { if (mode === 'game') { show(null); tip(); } else toMenu(); }
+function toMenu() { mode = 'menu'; startDemo(); show('menu'); texts(); }
+let toastT = 0;
+function toast(m) { const el = document.getElementById('toast'); el.textContent = m; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2400); }
+function nextLevel() { for (let i = 0; i < 60; i++) if (!S.done[i]) return i; return 59; }
+function texts() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-t]').forEach(e => e.textContent = T(e.dataset.t));
+  $('bPlay').textContent = T('play');
+  $('bDaily').textContent = '🌼 ' + T('daily') + (S.daily === dayKey() ? ' ✓' : '');
+  $('bLevels').textContent = T('levels');
+  $('bLang').textContent = S.lang.toUpperCase();
+  $('wNext').textContent = T('next');
+  $('sMusic').textContent = S.music ? T('on') : T('off');
+  $('sSound').textContent = S.sound ? T('on') : T('off');
+  $('sVibe').textContent = S.vibe ? T('on') : T('off');
+  $('sTut').textContent = S.tut ? T('on') : T('off');
+  $('sLang').textContent = S.lang.toUpperCase();
+  $('sReset').textContent = T('erase');
+  menuInfo(); hud();
+}
+function menuInfo() { $('menuInfo').textContent = '★ ' + totalStars() + '/180' + (S.streak ? ' · 🔥 ' + S.streak : ''); $('news').textContent = S.seen !== VERSION ? T('news') : ''; }
+function renderLevels() {
+  const el = $('worlds'); let h = ''; const nx = nextLevel();
+  for (let w = 0; w < 4; w++) {
+    let st = 0; for (let i = w * 15; i < w * 15 + 15; i++) st += S.stars[i] || 0;
+    h += `<div class="world"><h3>${T('w')[w]}<small>★ ${st}/45</small></h3><p>${T('wsub')[w]}</p><div class="grid">`;
+    for (let i = w * 15; i < w * 15 + 15; i++) { const lock = i > 0 && !S.done[i - 1] && !S.done[i]; h += `<button class="lv${lock ? ' lock' : ''}${i === nx && !S.done[i] ? ' cur' : ''}" data-lv="${i}">${i + 1}<small>${'★'.repeat(S.stars[i] || 0)}</small></button>`; }
+    h += '</div></div>';
+  }
+  el.innerHTML = h; $('lvStars').textContent = '★ ' + totalStars();
+}
+function renderSkins() {
+  const t = totalStars(); $('skStars').textContent = '★ ' + t;
+  $('skList').innerHTML = SKINS.map((s, i) => `<button class="sk${S.skin === i ? ' on' : ''}" data-sk="${i}"><i>${[s.c, s.c2, s.c, s.c2].map(c => `<u style="background:${c}"></u>`).join('')}<u style="background:${s.c};width:20px;height:20px;margin-top:-2px;box-shadow:inset -5px -3px 0 rgba(0,0,0,.1)"></u></i><b>${s.name[S.lang]}</b><small>${t >= s.need ? (S.skin === i ? T('used') : T('use')) : T('unlock') + ' ★ ' + s.need}</small></button>`).join('');
+}
+const $ = id => document.getElementById(id);
+$('worlds').addEventListener('click', e => { const b = e.target.closest('.lv'); if (!b) return; const i = +b.dataset.lv; if (b.classList.contains('lock')) { toast(T('locked')); return; } startLevel(i); });
+$('skList').addEventListener('click', e => { const b = e.target.closest('.sk'); if (!b) return; const i = +b.dataset.sk; if (totalStars() < SKINS[i].need) { toast(T('unlock') + ' ★ ' + SKINS[i].need); return; } S.skin = i; save(); renderSkins(); });
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => { show('menu'); texts(); });
+$('bPlay').onclick = () => { S.seen = VERSION; save(); startLevel(nextLevel()); };
+$('bDaily').onclick = () => startLevel(-1);
+$('bLevels').onclick = () => { renderLevels(); show('levels'); };
+$('bSkins').onclick = () => { renderSkins(); show('skins'); };
+$('bSettings').onclick = () => { texts(); show('settings'); };
+const cycleLang = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); texts(); };
+$('bLang').onclick = cycleLang; $('sLang').onclick = cycleLang;
+$('sMusic').onclick = () => { S.music ^= 1; save(); texts(); };
+$('sSound').onclick = () => { S.sound ^= 1; save(); texts(); };
+$('sVibe').onclick = () => { S.vibe ^= 1; save(); texts(); };
+$('sTut').onclick = () => { S.tut ^= 1; if (S.tut) S.tips = {}; save(); texts(); };
+let sure = 0; $('sReset').onclick = () => { if (!sure) { sure = 1; $('sReset').textContent = T('sure'); setTimeout(() => { sure = 0; texts(); }, 2500); return; } const l = S.lang; S = Object.assign(FRESH(), { lang: l, gift: dayKey(), seen: VERSION }); save(); sure = 0; texts(); };
+$('bBack').onclick = toMenu; $('bReset').onclick = restart; $('bUndo').onclick = undo; $('bHint').onclick = hint;
+$('wNext').onclick = () => startLevel(Math.min(59, LI + 1));
+$('wAgain').onclick = () => startLevel(LI);
+$('wMenu').onclick = () => { mode = 'menu'; startDemo(); renderLevels(); show('levels'); };
+// ---------- pornire ----------
+layout(); startDemo(); texts();
+if (S.gift !== dayKey()) { const first = !S.gift; S.gift = dayKey(); if (!first) { S.hints += 2; setTimeout(() => toast(T('gift')), 600); } save(); }
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
