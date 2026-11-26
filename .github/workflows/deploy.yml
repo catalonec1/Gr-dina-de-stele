@@ -76,6 +76,8 @@ jobs:
         run: node grove/tests/v11.js
       - name: Teste Cocoon Garden
         run: node cocoon/tests/run.js
+      - name: Teste Nibble Trail
+        run: node trail/tests/run.js
       - name: Teste site erori ORA
         run: node ora/tests/run.js
 
@@ -130,6 +132,10 @@ jobs:
         run: |
           mkdir -p dist/web/cocoon
           cp cocoon/index.html cocoon/launch/cover-630x500.png cocoon/launch/icon-512.png dist/web/cocoon/
+      - name: Adaugă Nibble Trail în /trail/
+        run: |
+          mkdir -p dist/web/trail
+          cp trail/index.html trail/launch/cover-630x500.png trail/launch/icon-512.png dist/web/trail/
       - name: Pagini SQL Pocket (politică de confidențialitate)
         run: cp -r sql-pocket dist/web/
       - name: Pagini extensii Pocket (suport + confidențialitate)
