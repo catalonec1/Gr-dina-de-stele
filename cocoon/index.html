@@ -29,6 +29,7 @@ button.ico{padding:6px 10px;min-width:44px;min-height:42px;font-size:19px;backgr
 @keyframes poke{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,10px)}}
 #menu h1{margin:0 0 6px;font-size:clamp(46px,13vw,78px);line-height:.95;color:#f6ffe6;text-shadow:0 5px 0 #4f8f2a,0 9px 0 rgba(0,0,0,.25),0 0 40px rgba(168,224,108,.4);text-align:center;font-weight:900}
 #menu h1 span{display:block;font-size:.72em;color:var(--acc);text-shadow:0 4px 0 #a86f12,0 7px 0 rgba(0,0,0,.25)}
+#news{margin-top:10px;font-size:13px;color:var(--dim);text-align:center;padding:0 16px;max-width:420px}
 #menu .sub{color:var(--dim);margin:8px 18px 18px;text-align:center;max-width:390px;font-size:16px}
 .deco{font-size:54px;margin-bottom:8px;animation:bob 2.6s ease-in-out infinite}
 .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
@@ -94,6 +95,7 @@ h2{margin:0 0 12px;text-align:center;font-size:24px}
   <button class="big" id="bNew" style="display:none"></button>
   <div class="row"><button id="bSettings" class="ico" aria-label="Settings">⚙️</button><button id="bLang" class="ico" aria-label="Language">RO</button></div>
   <div id="menuInfo" style="color:var(--acc);margin-top:10px;font-weight:700"></div>
+  <div id="news"></div>
 </div>
 <div class="screen" id="settings"><div class="panelbox"><h2 data-t="settings"></h2>
   <div class="set"><span data-t="music"></span><button id="sMusic"></button></div>
@@ -110,24 +112,27 @@ h2{margin:0 0 12px;text-align:center;font-size:24px}
 
 <script>
 'use strict';
-const VERSION = '1.0';
+const VERSION = '1.1';
 // ---------- texte ----------
 const TX = {
   ro: { sub: 'O grădină liniștită care crește și când nu ești aici. Scutură stejarul, crește omizi, gărgărițe și albine, prinde fluturi aurii și pleacă în migrație.', play: 'Joacă', cont: 'Continuă', newg: 'Joc nou', settings: 'Setări', music: 'Muzică', sound: 'Sunete', tut: 'Tutorial', lang: 'Limba', fx: 'Efecte', keys: 'Tastatură', reset: 'Șterge progresul', on: 'Pornit', off: 'Oprit', erase: 'Șterge', sure: 'Apasă din nou', close: 'Închide', buy: 'Cumpără', perSec: '/s', tabs: ['Creaturi', 'Îmbunătățiri', 'Migrație', 'Trofee'], seasons: ['Primăvară', 'Vară', 'Toamnă', 'Iarnă'], boost: '×2: ', own: 'ai', each: 'fiecare', tap: 'Atingere', up: 'Îmbunătățire', need: 'apare la', noUps: 'Cumpără mai multe creaturi ca să apară îmbunătățiri noi.', bought: 'Cumpărat', rush: 'Ploaie de polen ×7', gift: 'Fluturele a lăsat ', butterfly: 'Fluture auriu!', awayT: 'Bine ai revenit!', away: 'Cât ai lipsit ({t}), grădina a strâns ', ok: 'Super', migT: 'Migrația fluturilor', migP: 'Fluturii pleacă spre sud și lasă praf de aripi. Frunzele, creaturile și îmbunătățirile se resetează, dar fiecare 🌟 praf dă +5% producție pentru totdeauna.', migNow: 'Pleacă în migrație: +{d} 🌟', migNeed: 'Ai nevoie de 1 M 🍃 strânse în această grădină (acum {x}).', dust: 'Praf de aripi', mult: 'bonus producție', cfMig: 'Pornești migrația?', yes: 'Da', no: 'Nu', newConf: 'Ștergi grădina și începi de la zero?', achGot: 'Trofeu: ', achInfo: 'Fiecare trofeu dă +2% producție.',
     steps: ['<b>1/3</b> Atinge stejarul ca să scuturi frunze ({n}/10).', '<b>2/3</b> Cumpără o omidă: mănâncă frunze și le adună singură.', '<b>3/3</b> Un fluture auriu! Atinge-l repede pentru un bonus.'],
     gens: ['Omidă', 'Gărgăriță', 'Melc', 'Albină', 'Arici', 'Broscuță', 'Bufniță', 'Floarea lunii'], gdesc: ['ronțăie frunze toată ziua', 'culege frunze de pe tufe', 'încet, dar nu se oprește', 'aduce și polen', 'adună grămezi de frunze', 'prinde frunze din iaz', 'veghează livada noaptea', 'înflorește doar la lună plină'],
     ups: ['Mandibule ascuțite', 'Puncte norocoase', 'Cochilie lucioasă', 'Fagure dublu', 'Ace moi', 'Salt lung', 'Ochi de noapte', 'Rouă de argint'], clickUp: 'Crengi mai grele', clickD: 'atingerea dă ×2 și +1% din producție',
-    achs: ['Primele 100 de frunze', '10 000 de frunze', 'Un milion', 'Un miliard', 'Un trilion', 'Prima omidă', '50 de omizi', '100 de omizi', 'Câte una din toate', '25 din fiecare', '1 000 de atingeri', 'Primul fluture', '10 fluturi', 'Prima migrație', '100/s', '1 M/s'] },
+    achs: ['Primele 100 de frunze', '10 000 de frunze', 'Un milion', 'Un miliard', 'Un trilion', 'Prima omidă', '50 de omizi', '100 de omizi', 'Câte una din toate', '25 din fiecare', '1 000 de atingeri', 'Primul fluture', '10 fluturi', 'Prima migrație', '100/s', '1 M/s', '50 de fluturi', '5 migrații', 'Toate îmbunătățirile', 'Un cvadrilion'],
+    news: 'Nou în v1.1: 4 trofee noi — 50 de fluturi, 5 migrații, toate îmbunătățirile și un cvadrilion de frunze (fiecare +2%).' },
   en: { sub: 'A quiet garden that keeps growing while you are away. Shake the old oak, raise caterpillars, ladybugs and bees, catch golden butterflies and migrate south.', play: 'Play', cont: 'Continue', newg: 'New game', settings: 'Settings', music: 'Music', sound: 'Sounds', tut: 'Tutorial', lang: 'Language', fx: 'Effects', keys: 'Keyboard', reset: 'Reset progress', on: 'On', off: 'Off', erase: 'Reset', sure: 'Tap again', close: 'Close', buy: 'Buy', perSec: '/s', tabs: ['Creatures', 'Upgrades', 'Migration', 'Trophies'], seasons: ['Spring', 'Summer', 'Autumn', 'Winter'], boost: '×2: ', own: 'own', each: 'each', tap: 'Tap', up: 'Upgrade', need: 'appears at', noUps: 'Get more creatures to unlock new upgrades.', bought: 'Bought', rush: 'Pollen rush ×7', gift: 'The butterfly left ', butterfly: 'Golden butterfly!', awayT: 'Welcome back!', away: 'While you were away ({t}), the garden gathered ', ok: 'Lovely', migT: 'Butterfly migration', migP: 'The butterflies fly south and leave wing dust behind. Leaves, creatures and upgrades reset, but every 🌟 dust gives +5% production forever.', migNow: 'Migrate now: +{d} 🌟', migNeed: 'You need 1 M 🍃 gathered in this garden (now {x}).', dust: 'Wing dust', mult: 'production bonus', cfMig: 'Start the migration?', yes: 'Yes', no: 'No', newConf: 'Erase this garden and start over?', achGot: 'Trophy: ', achInfo: 'Every trophy gives +2% production.',
     steps: ['<b>1/3</b> Tap the oak to shake down leaves ({n}/10).', '<b>2/3</b> Buy a caterpillar: it munches leaves for you.', '<b>3/3</b> A golden butterfly! Tap it quickly for a bonus.'],
     gens: ['Caterpillar', 'Ladybug', 'Snail', 'Bee', 'Hedgehog', 'Frog', 'Owl', 'Moonflower'], gdesc: ['munches leaves all day', 'picks leaves off the bushes', 'slow, but never stops', 'brings pollen too', 'rolls up piles of leaves', 'catches leaves on the pond', 'watches the orchard at night', 'blooms only under a full moon'],
     ups: ['Sharp nibblers', 'Lucky spots', 'Shiny shell', 'Double comb', 'Soft spines', 'Long jump', 'Night eyes', 'Silver dew'], clickUp: 'Heavier branches', clickD: 'taps give ×2 and +1% of production',
-    achs: ['First 100 leaves', '10,000 leaves', 'A million', 'A billion', 'A trillion', 'First caterpillar', '50 caterpillars', '100 caterpillars', 'One of everything', '25 of everything', '1,000 taps', 'First butterfly', '10 butterflies', 'First migration', '100/s', '1 M/s'] },
+    achs: ['First 100 leaves', '10,000 leaves', 'A million', 'A billion', 'A trillion', 'First caterpillar', '50 caterpillars', '100 caterpillars', 'One of everything', '25 of everything', '1,000 taps', 'First butterfly', '10 butterflies', 'First migration', '100/s', '1 M/s', '50 butterflies', '5 migrations', 'Every upgrade', 'A quadrillion'],
+    news: 'New in v1.1: 4 new trophies — 50 butterflies, 5 migrations, every upgrade and a quadrillion leaves (+2% each).' },
   ru: { sub: 'Тихий сад, который растёт, даже когда вас нет. Трясите старый дуб, разводите гусениц, божьих коровок и пчёл, ловите золотых бабочек и улетайте на юг.', play: 'Играть', cont: 'Продолжить', newg: 'Новая игра', settings: 'Настройки', music: 'Музыка', sound: 'Звуки', tut: 'Обучение', lang: 'Язык', fx: 'Эффекты', keys: 'Клавиатура', reset: 'Сбросить прогресс', on: 'Вкл', off: 'Выкл', erase: 'Сбросить', sure: 'Ещё раз', close: 'Закрыть', buy: 'Купить', perSec: '/с', tabs: ['Существа', 'Улучшения', 'Миграция', 'Трофеи'], seasons: ['Весна', 'Лето', 'Осень', 'Зима'], boost: '×2: ', own: 'есть', each: 'каждый', tap: 'Нажатие', up: 'Улучшение', need: 'появится при', noUps: 'Купите больше существ, чтобы открыть улучшения.', bought: 'Куплено', rush: 'Пыльцевой дождь ×7', gift: 'Бабочка оставила ', butterfly: 'Золотая бабочка!', awayT: 'С возвращением!', away: 'Пока вас не было ({t}), сад собрал ', ok: 'Отлично', migT: 'Миграция бабочек', migP: 'Бабочки улетают на юг и оставляют пыльцу крыльев. Листья, существа и улучшения сбрасываются, но каждая 🌟 даёт +5% производства навсегда.', migNow: 'Улететь: +{d} 🌟', migNeed: 'Нужно собрать 1 M 🍃 в этом саду (сейчас {x}).', dust: 'Пыльца крыльев', mult: 'бонус производства', cfMig: 'Начать миграцию?', yes: 'Да', no: 'Нет', newConf: 'Стереть сад и начать заново?', achGot: 'Трофей: ', achInfo: 'Каждый трофей даёт +2% производства.',
     steps: ['<b>1/3</b> Нажмите на дуб, чтобы стряхнуть листья ({n}/10).', '<b>2/3</b> Купите гусеницу: она собирает листья сама.', '<b>3/3</b> Золотая бабочка! Скорее нажмите на неё.'],
     gens: ['Гусеница', 'Божья коровка', 'Улитка', 'Пчела', 'Ёжик', 'Лягушка', 'Сова', 'Лунный цветок'], gdesc: ['жуёт листья весь день', 'собирает листья с кустов', 'медленно, но без остановки', 'приносит и пыльцу', 'катает кучи листьев', 'ловит листья на пруду', 'сторожит сад ночью', 'цветёт только в полнолуние'],
     ups: ['Острые челюсти', 'Счастливые точки', 'Блестящая раковина', 'Двойные соты', 'Мягкие иголки', 'Длинный прыжок', 'Ночное зрение', 'Серебряная роса'], clickUp: 'Тяжёлые ветви', clickD: 'нажатие ×2 и +1% от производства',
-    achs: ['Первые 100 листьев', '10 000 листьев', 'Миллион', 'Миллиард', 'Триллион', 'Первая гусеница', '50 гусениц', '100 гусениц', 'Каждого по одному', 'Каждого по 25', '1 000 нажатий', 'Первая бабочка', '10 бабочек', 'Первая миграция', '100/с', '1 M/с'] }
+    achs: ['Первые 100 листьев', '10 000 листьев', 'Миллион', 'Миллиард', 'Триллион', 'Первая гусеница', '50 гусениц', '100 гусениц', 'Каждого по одному', 'Каждого по 25', '1 000 нажатий', 'Первая бабочка', '10 бабочек', 'Первая миграция', '100/с', '1 M/с', '50 бабочек', '5 миграций', 'Все улучшения', 'Квадриллион'],
+    news: 'Новое в v1.1: 4 новых трофея — 50 бабочек, 5 миграций, все улучшения и квадриллион листьев (+2% каждый).' }
 };
 const LANGS = ['ro', 'en', 'ru'];
 // ---------- economie ----------
@@ -144,12 +149,13 @@ function maxBuy(g, own, money) { const r = GROWTH, b = GENS[g].base * Math.pow(r
 const ACHS = [
   s => s.life >= 100, s => s.life >= 1e4, s => s.life >= 1e6, s => s.life >= 1e9, s => s.life >= 1e12,
   s => s.own[0] >= 1, s => s.own[0] >= 50, s => s.own[0] >= 100, s => s.own.every(n => n >= 1), s => s.own.every(n => n >= 25),
-  s => s.clicks >= 1000, s => s.flies >= 1, s => s.flies >= 10, s => s.migs >= 1, () => prod() >= 100, () => prod() >= 1e6
+  s => s.clicks >= 1000, s => s.flies >= 1, s => s.flies >= 10, s => s.migs >= 1, () => prod() >= 100, () => prod() >= 1e6,
+  s => s.flies >= 50, s => s.migs >= 5, s => s.ups.every(u => u >= 5), s => s.life >= 1e15 // v1.1
 ];
-const ACH_E = ['🍃', '🌿', '🌳', '🌲', '🏞️', '🐛', '🐛', '👑', '🎒', '🏆', '👆', '🦋', '🦋', '🌟', '⚡', '🌈'];
+const ACH_E = ['🍃', '🌿', '🌳', '🌲', '🏞️', '🐛', '🐛', '👑', '🎒', '🏆', '👆', '🦋', '🦋', '🌟', '⚡', '🌈', '✨', '🧭', '💎', '🌌'];
 // ---------- salvare ----------
 const SK = 'cocoon-garden-v1';
-const FRESH = () => ({ lang: null, leaves: 0, run: 0, life: 0, own: [0, 0, 0, 0, 0, 0, 0, 0], ups: [0, 0, 0, 0, 0, 0, 0, 0], clickUps: 0, clicks: 0, flies: 0, dust: 0, migs: 0, ach: [], time: 0, rushT: 0, music: 1, sound: 1, fx: 1, tut: 1, step: 0, last: 0, started: 0 });
+const FRESH = () => ({ lang: null, leaves: 0, run: 0, life: 0, own: [0, 0, 0, 0, 0, 0, 0, 0], ups: [0, 0, 0, 0, 0, 0, 0, 0], clickUps: 0, clicks: 0, flies: 0, dust: 0, migs: 0, ach: [], time: 0, rushT: 0, music: 1, sound: 1, fx: 1, tut: 1, step: 0, last: 0, started: 0, seen: '' });
 let S = FRESH();
 try { const o = JSON.parse(localStorage.getItem(SK) || '{}'); Object.assign(S, o); } catch (e) {}
 if (!S.lang) { const n = (navigator.language || 'en').slice(0, 2); S.lang = LANGS.includes(n) ? n : n === 'uk' || n === 'be' ? 'ru' : 'en'; }
@@ -220,7 +226,7 @@ function buyUp(g) {
 function buyClick() { const c = CLICK_COST[S.clickUps]; if (c === undefined || S.leaves < c) { SFX.no(); return false; } S.leaves -= c; S.clickUps++; SFX.up(); renderList(); save(); return true; }
 function migrate() {
   const d = migGain(); if (!d) return false;
-  const keep = { lang: S.lang, music: S.music, sound: S.sound, fx: S.fx, tut: S.tut, life: S.life, clicks: S.clicks, flies: S.flies, ach: S.ach, time: S.time, step: S.step, started: S.started };
+  const keep = { lang: S.lang, music: S.music, sound: S.sound, fx: S.fx, tut: S.tut, life: S.life, clicks: S.clicks, flies: S.flies, ach: S.ach, time: S.time, step: S.step, started: S.started, seen: S.seen };
   const dust = S.dust + d, migs = S.migs + 1; S = Object.assign(FRESH(), keep, { dust, migs }); checkAch();
   SFX.fly(); for (let i = 0; i < 30; i++) setTimeout(() => { const A = arena(); burst(A.x + Math.random() * A.w, A.y + A.h * 0.7, ['#ffd166', '#ff9f6b', '#c99bff'][i % 3], 6, 2); }, i * 40);
   save(); renderList(); return true;
@@ -380,11 +386,12 @@ function texts() {
   for (const k of ['music', 'sound', 'fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).textContent = S[k] ? T('on') : T('off');
   $('sReset').textContent = T('erase'); $('sClose').textContent = T('close'); $('awayOk').textContent = T('ok'); $('cfYes').textContent = T('yes'); $('cfNo').textContent = T('no');
   $('menuInfo').textContent = has ? '🍃 ' + fmt(S.life) + (S.dust ? ' · 🌟 ' + S.dust : '') + ' · 🏆 ' + S.ach.length + '/' + ACHS.length : '';
+  $('news').textContent = S.seen !== VERSION ? T('news') : '';
   renderList(); hud();
 }
-function play() { ac(); S.started = 1; started = true; save(); show(null); texts(); }
+function play() { ac(); S.seen = VERSION; S.started = 1; started = true; save(); show(null); texts(); }
 $('bPlay').onclick = play;
-$('bNew').onclick = () => ask(T('newConf'), '', () => { const l = S.lang; S = Object.assign(FRESH(), { lang: l }); crawlers = []; fly = null; flyNext = 60; save(); play(); });
+$('bNew').onclick = () => ask(T('newConf'), '', () => { const l = S.lang; S = Object.assign(FRESH(), { lang: l, seen: VERSION }); crawlers = []; fly = null; flyNext = 60; save(); play(); });
 $('bMenu').onclick = () => { save(); show('menu'); texts(); };
 $('bSet').onclick = $('bSettings').onclick = () => { texts(); show('settings'); };
 $('sClose').onclick = () => show(started ? null : 'menu');
@@ -392,12 +399,12 @@ $('awayOk').onclick = () => show(started ? null : 'menu');
 const cycleLang = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); texts(); };
 $('bLang').onclick = cycleLang; $('sLang').onclick = cycleLang;
 for (const k of ['music', 'sound', 'fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).onclick = () => { S[k] ^= 1; if (k === 'tut' && S.tut && S.step >= 3) S.step = 0; save(); texts(); };
-let sure = 0; $('sReset').onclick = () => { if (!sure) { sure = 1; $('sReset').textContent = T('sure'); setTimeout(() => { sure = 0; texts(); }, 2500); return; } const l = S.lang; S = Object.assign(FRESH(), { lang: l }); crawlers = []; fly = null; started = false; sure = 0; save(); show('menu'); texts(); };
+let sure = 0; $('sReset').onclick = () => { if (!sure) { sure = 1; $('sReset').textContent = T('sure'); setTimeout(() => { sure = 0; texts(); }, 2500); return; } const l = S.lang; S = Object.assign(FRESH(), { lang: l, seen: VERSION }); crawlers = []; fly = null; started = false; sure = 0; save(); show('menu'); texts(); };
 addEventListener('visibilitychange', () => { if (document.hidden && started) save(); });
 addEventListener('pagehide', () => { if (started) save(); });
 setInterval(() => { if (started) save(); }, 5000);
 // ---------- pornire ----------
-layout(); texts(); offline(); if (S.started && cur === 'menu') texts();
+layout(); texts(); offline(); checkAch(); texts(); // v1.1: trofeele noi deja meritate se acordă la încărcare
 requestAnimationFrame(frame);
 </script>
 </body>

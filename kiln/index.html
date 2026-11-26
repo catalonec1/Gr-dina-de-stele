@@ -1,0 +1,630 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Clay &amp; Kiln</title>
+<meta name="description" content="A cozy idle pottery game. Tap the wheel to throw bowls, jugs, crocks and plates, hire apprentices, fire the kiln at the perfect glow, fill village orders and open new workshops. Keeps working while you are away.">
+<meta name="theme-color" content="#7a3018">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23b5532f'/%3E%3Cpath d='M22 12h20l-3 7q11 6 9 20t-16 17q-14-3-16-17t9-20z' fill='%23f7ecd8'/%3E%3Cpath d='M17 34h30' stroke='%23b3261e' stroke-width='4'/%3E%3Cpath d='M18 41l5-4 5 4 5-4 5 4 5-4 4 3' stroke='%232a1a14' stroke-width='2' fill='none'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#6e2c17;--paper:#f7ecd8;--paper2:#efdcbf;--ink:#3b2216;--dim:#7d5a44;--terra:#b5532f;--terra2:#8f3a1e;--red:#b3261e;--gold:#e2a23b;--line:rgba(59,34,22,.18);
+--orn:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='12'%3E%3Crect width='24' height='12' fill='%23f7ecd8'/%3E%3Cpath d='M12 1l5 5-5 5-5-5z' fill='%23b3261e'/%3E%3Cpath d='M12 4l2 2-2 2-2-2z' fill='%23f7ecd8'/%3E%3Cpath d='M0 3l3 3-3 3zM24 3l-3 3 3 3z' fill='%232a1a14'/%3E%3Crect y='0' width='24' height='1' fill='%232a1a14'/%3E%3Crect y='11' width='24' height='1' fill='%232a1a14'/%3E%3C/svg%3E")}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
+svg.i{width:1em;height:1em;vertical-align:-.15em;flex:none}
+button{font:inherit;color:inherit;background:#fff8ea;border:1px solid var(--line);border-radius:14px;padding:10px 14px;cursor:pointer;transition:transform .08s,background .15s}
+button:hover{background:#fffdf6}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+button.big{font-size:21px;padding:14px 0;width:min(80vw,310px);margin:6px 0;font-weight:800}
+button.pri{background:linear-gradient(180deg,#d86b3e,#a7431f);color:#fff4e0;border:none;box-shadow:0 5px 0 #6e2812,0 8px 20px rgba(0,0,0,.3);text-shadow:0 1px 0 rgba(0,0,0,.3)}
+button.pri:hover{background:linear-gradient(180deg,#e37a4b,#b14b25)}
+button.pri:active{transform:translateY(3px);box-shadow:0 2px 0 #6e2812}
+button.ico{padding:6px 10px;min-width:44px;min-height:42px;font-size:19px;background:rgba(59,34,22,.72);color:#fff4e0;border-color:rgba(255,240,220,.25)}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:8;overflow:auto;background:rgba(40,16,8,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.screen.on{display:flex;animation:fade .25s ease}
+#menu{background:radial-gradient(ellipse at 50% 35%,#c5643a 0%,#8f3a1e 55%,#4e1d0e 100%)}
+#menu::before{content:"";position:absolute;inset:0;opacity:.13;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cpath d='M32 4l14 14-14 14-14-14zM32 32l14 14-14 14-14-14z' fill='none' stroke='%23fff3dc' stroke-width='3'/%3E%3Cpath d='M32 13l5 5-5 5-5-5zM32 41l5 5-5 5-5-5zM0 28l4 4-4 4zM64 28l-4 4 4 4z' fill='%23fff3dc'/%3E%3C/svg%3E")}
+#menu>*{position:relative}
+#menu .band{position:absolute;left:0;right:0;height:14px;background:var(--orn) repeat-x;background-size:28px 14px}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-7px) rotate(4deg)}}
+@keyframes poke{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,10px)}}
+#menu h1{margin:0 0 4px;font-family:Georgia,"DejaVu Serif",serif;font-size:clamp(48px,14vw,84px);line-height:.92;color:#fff3dc;text-shadow:0 5px 0 #5a2010,0 10px 18px rgba(0,0,0,.35);text-align:center;font-weight:900;letter-spacing:1px}
+#menu h1 span{display:block;font-size:.5em;color:#ffd08a;letter-spacing:6px;margin:4px 0}
+#menu .sub{color:#ffe7c9;margin:10px 18px 18px;text-align:center;max-width:390px;font-size:16px;line-height:1.35}
+.deco{width:96px;height:96px;margin-bottom:6px;animation:bob 2.8s ease-in-out infinite;filter:drop-shadow(0 8px 10px rgba(0,0,0,.35))}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+#ver{position:absolute;right:12px;bottom:20px;color:#ffd9b0;opacity:.7;font-size:12px}
+.panelbox{background:var(--paper);border-radius:22px;padding:22px 18px 18px;width:min(92vw,430px);box-shadow:0 20px 60px rgba(0,0,0,.5);animation:pop .35s ease;position:relative;overflow:hidden}
+.panelbox::before{content:"";position:absolute;left:0;right:0;top:0;height:10px;background:var(--orn) repeat-x;background-size:20px 10px}
+h2{margin:0 0 12px;text-align:center;font-size:24px;font-family:Georgia,"DejaVu Serif",serif;color:var(--terra2)}
+.set{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);gap:12px}
+.set:last-child{border:none}
+.set button{min-width:96px}
+.set input[type=range]{width:150px;accent-color:var(--terra);height:28px;cursor:pointer}
+#hud{position:fixed;left:0;top:0;z-index:4;padding:calc(8px + env(safe-area-inset-top)) 10px 0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+#hud button{pointer-events:auto}
+#hud .mid{text-align:center;color:#fff6e6;text-shadow:0 2px 0 rgba(70,25,10,.55),0 0 10px rgba(70,25,10,.5);background:rgba(90,38,18,.55);border-radius:16px;padding:4px 14px 6px;border:1px solid rgba(255,230,200,.25)}
+#coins{font-size:27px;font-weight:900;display:block;line-height:1.1}
+#rate{font-size:13px;color:#ffe2bd}
+#boost{display:none;margin-top:4px;font-size:13px;padding:3px 10px;border-radius:12px;background:linear-gradient(90deg,#ffb347,#ff7a2f);color:#4a1a00;font-weight:800;text-shadow:none}
+#shapes{position:fixed;z-index:4;display:flex;gap:6px;padding:5px;border-radius:16px;background:rgba(59,34,22,.6);border:1px solid rgba(255,230,200,.2)}
+#shapes button{width:44px;height:44px;padding:4px;border-radius:12px;background:rgba(255,248,234,.14);border:1px solid transparent;font-size:30px;display:flex;align-items:center;justify-content:center}
+#shapes button.on{background:#fff3dc;border-color:var(--gold);box-shadow:0 0 0 2px rgba(226,162,59,.5)}
+#side{position:fixed;z-index:5;background:var(--paper);display:flex;flex-direction:column;box-shadow:0 -6px 18px rgba(0,0,0,.25)}
+#side::before{content:"";height:12px;flex:none;background:var(--orn) repeat-x;background-size:24px 12px}
+#tabs{display:flex;gap:3px;padding:6px 6px 0;background:var(--paper2)}
+#tabs button{flex:1;padding:7px 1px 6px;font-size:12px;border-radius:12px 12px 0 0;border-bottom:none;background:rgba(255,255,255,.35);line-height:1.1;position:relative;min-width:0}
+#tabs button .ti{display:block;font-size:19px;height:22px}
+#tabs button.on{background:var(--paper);color:var(--terra2);font-weight:800}
+#tabs .badge{position:absolute;top:2px;right:4px;background:var(--red);color:#fff;border-radius:9px;font-size:11px;padding:0 5px;font-weight:800;line-height:16px}
+#buyMode{display:flex;gap:6px;padding:7px 8px 3px;align-items:center;font-size:13px;color:var(--dim)}
+#buyMode button{padding:4px 10px;font-size:13px;border-radius:10px}
+#buyMode button.on{background:var(--terra);color:#fff4e0;border-color:transparent;font-weight:800}
+#list{flex:1;overflow-y:auto;padding:4px 8px calc(10px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.it{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:5px 0;padding:7px 10px;border-radius:14px;box-shadow:0 2px 0 rgba(59,34,22,.12)}
+.it .e{font-size:36px;width:40px;height:40px;text-align:center;flex:none;display:flex;align-items:center;justify-content:center;background:#f3e0c2;border-radius:11px}
+.it .t{flex:1;min-width:0}
+.it .t b{display:block;font-size:15px}
+.it .t small{display:block;color:var(--dim);font-size:12px;line-height:1.3}
+.it .c{text-align:right;font-weight:800;color:var(--terra2);font-size:14px;white-space:nowrap}
+.it .c small{display:block;color:var(--dim);font-weight:400;font-size:11px}
+.it.no .c{color:#b98a78}
+.it.no{background:#f6eadb}
+.it.lock{opacity:.4}
+.cm{background:#fff8ea;border:1px solid var(--line);border-radius:14px;padding:9px 10px;margin:6px 0;display:flex;gap:10px;align-items:center;box-shadow:0 2px 0 rgba(59,34,22,.12)}
+.cm .e{font-size:40px;width:44px;height:44px;flex:none;display:flex;align-items:center;justify-content:center;background:#f3e0c2;border-radius:12px}
+.cm .t{flex:1;min-width:0}
+.cm .t b{display:block;font-size:14px}
+.cm .t small{display:block;color:var(--dim);font-size:12px}
+.bar{height:8px;border-radius:5px;background:#ead4b4;margin:4px 0 2px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,#c9612f,#e2a23b);border-radius:5px}
+.cm.done{border-color:var(--gold);background:#fff3d6}
+.cm button{padding:8px 10px;font-size:13px;font-weight:800;min-width:84px}
+.cm.wait{opacity:.6;justify-content:center;color:var(--dim);font-size:13px;min-height:54px}
+.ach{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:6px 0}
+.ach div{aspect-ratio:1;border-radius:14px;background:#f1e0c6;display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--line);filter:grayscale(1);opacity:.4}
+.ach div.got{filter:none;opacity:1;background:#ffe9bd;border-color:var(--gold)}
+.note{color:var(--dim);font-size:13px;text-align:center;margin:8px 4px}
+.card{background:#fff8ea;border:1px solid var(--line);border-radius:18px;padding:14px;margin:8px 0;text-align:center}
+#tip{position:fixed;z-index:6;background:#fff3dc;color:var(--ink);border:2px solid var(--terra);border-radius:14px;padding:9px 14px;font-size:15px;text-align:center;display:none;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35);transform:translateX(-50%)}
+#tip.on{display:block;animation:pop .35s ease}
+#tip b{color:var(--red)}
+#hand{position:fixed;z-index:7;font-size:34px;pointer-events:none;display:none;animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+#toast{pointer-events:none;position:fixed;left:50%;top:calc(96px + env(safe-area-inset-top));transform:translateX(-50%);background:#fff3dc;color:var(--ink);border:2px solid var(--gold);border-radius:14px;padding:8px 16px;z-index:9;display:none;font-weight:800;text-align:center;max-width:92vw;box-shadow:0 8px 20px rgba(0,0,0,.3)}
+#toast.on{display:block;animation:pop .3s ease}
+@media (max-height:640px){.deco{display:none}}
+</style>
+</head>
+<body>
+<svg id="defs" width="0" height="0" style="position:absolute;width:0;height:0" aria-hidden="true"></svg>
+<canvas id="c"></canvas>
+<div id="hud"><button class="ico" id="bMenu" aria-label="Menu">☰</button><div class="mid"><span id="coins">0</span><span id="rate"></span><br><span id="boost"></span></div><button class="ico" id="bSet" aria-label="Settings">⚙</button></div>
+<div id="shapes"></div>
+<div id="side">
+  <div id="tabs"><button data-tab="gen" class="on"></button><button data-tab="up"></button><button data-tab="cm"></button><button data-tab="ach"></button><button data-tab="ws"></button></div>
+  <div id="buyMode"><span data-t="buy"></span><button data-n="1" class="on">×1</button><button data-n="10">×10</button><button data-n="0">Max</button></div>
+  <div id="list"></div>
+</div>
+<div id="tip"></div>
+<div id="hand">👆</div>
+<div id="toast"></div>
+
+<div class="screen on" id="menu">
+  <div class="band" style="top:0"></div><div class="band" style="bottom:0"></div>
+  <div class="deco" id="deco"></div>
+  <h1>Clay<span>&amp;</span>Kiln</h1>
+  <div class="sub" data-t="sub"></div>
+  <button class="big pri" id="bPlay"></button>
+  <button class="big" id="bNew" style="display:none"></button>
+  <div class="row"><button id="bSettings" class="ico" aria-label="Settings">⚙</button><button id="bLang" class="ico" aria-label="Language">RO</button></div>
+  <div id="menuInfo" style="color:#ffe2bd;margin-top:12px;font-weight:700"></div>
+  <div id="ver"></div>
+</div>
+<div class="screen" id="settings"><div class="panelbox"><h2 data-t="settings"></h2>
+  <div class="set"><span data-t="music"></span><input type="range" id="sMusic" min="0" max="100" step="1"></div>
+  <div class="set"><span data-t="sound"></span><input type="range" id="sSfx" min="0" max="100" step="1"></div>
+  <div class="set"><span data-t="fx"></span><button id="sFx"></button></div>
+  <div class="set"><span data-t="tut"></span><button id="sTut"></button></div>
+  <div class="set"><span data-t="lang"></span><button id="sLang"></button></div>
+  <div class="set"><span data-t="full"></span><button id="sFull"></button></div>
+  <div class="set"><span data-t="keys"></span><small style="color:var(--dim);text-align:right">Space · S · F · 1–8 · Esc</small></div>
+  <div class="set"><span data-t="reset"></span><button id="sReset" style="color:var(--red)"></button></div>
+  <div class="row"><button class="big pri" id="sClose" style="margin:0"></button></div>
+</div></div>
+<div class="screen" id="away"><div class="panelbox" style="text-align:center"><h2 data-t="awayT"></h2><div id="awayIco" style="font-size:56px"></div><p id="awayInfo" style="color:var(--dim)"></p><button class="big pri" id="awayOk" style="margin:0 auto"></button></div></div>
+<div class="screen" id="confirm"><div class="panelbox" style="text-align:center"><h2 id="cfT"></h2><p id="cfP" style="color:var(--dim)"></p><div class="row"><button id="cfNo"></button><button class="pri" id="cfYes"></button></div></div></div>
+
+<script>
+'use strict';
+const VERSION = '1.0';
+// ---------- texte ----------
+const TX = {
+  ro: { sub: 'Un mic atelier de olărit dintr-un sat cu dealuri. Învârte roata, angajează ucenici, arde vasele la flacăra perfectă și umple comenzile satului.', play: 'Joacă', cont: 'Continuă', newg: 'Joc nou', settings: 'Setări', music: 'Muzică', sound: 'Sunete', tut: 'Tutorial', lang: 'Limba', fx: 'Efecte', full: 'Ecran complet', keys: 'Tastatură', reset: 'Șterge progresul', on: 'Pornit', off: 'Oprit', erase: 'Șterge', sure: 'Apasă din nou', close: 'Închide', buy: 'Cumpără', perSec: '/s', tabs: ['Atelier', 'Unelte', 'Comenzi', 'Trofee', 'Renume'], own: 'ai', each: 'fiecare', need: 'apare la', noUps: 'Angajează mai mulți meșteri ca să apară unelte noi.', awayT: 'Bine ai revenit!', away: 'Cât ai lipsit ({t}), ucenicii au câștigat ', ok: 'Minunat', yes: 'Da', no: 'Nu', newConf: 'Ștergi atelierul și începi de la zero?', achGot: 'Trofeu: ', achInfo: 'Fiecare trofeu dă +2% producție.',
+    pots: ['Străchini', 'Ulcioare', 'Oale', 'Farfurii'], potsPS: 'vase/s',
+    steps: ['<b>1/3</b> Atinge roata olarului ca să modelezi vase și să câștigi monede ({n}/10).', '<b>2/3</b> Angajează un ucenic: modelează vase și singur.', '<b>3/3</b> Cuptorul e încins! Atinge-l când flacăra e la vârf.'],
+    gens: ['Ucenic', 'A doua roată', 'Cuptor cu lemne', 'Laborator de glazuri', 'Tarabă la piață', 'Căruța de pe râu', 'Pictor popular', 'Cort de festival'],
+    gdesc: ['modelează străchini toată ziua', 'învârte de două ori mai mult lut', 'arde o șarjă întreagă odată', 'amestecă albastru de cobalt', 'vinde trecătorilor', 'duce lăzi pe râu în jos', 'pictează cocoși și spirale', 'adună lume din trei sate'],
+    ups: ['Mâini sigure', 'Pedală de picior', 'Lemn de fag', 'Rețeta de cobalt', 'Firmă pictată', 'Osie mai tare', 'Pensule din păr de cal', 'Lăutari și horă'], clickUp: 'Lut mai fin', clickD: 'atingerea dă ×2 monede, +1 vas și +1% din producție',
+    kiln: 'Cuptorul e încins! Atinge la vârf', tap: 'ACUM!', fire: ['Ardere caldă ×1.5', 'Ardere bună ×2', 'Ardere perfectă ×3'],
+    cmT: 'Comenzile satului', cmP: 'Livrează vasele cerute înainte să expire timpul. Alege forma de pe roată cu butoanele de sub atelier.', cmWait: 'O comandă nouă sosește în {s}s…', cmOff: 'Comenzile apar după tutorial.', deliver: 'Livrează', cmReady: 'Comandă gata: ', cmLeft: 'rămas', reward: 'Răsplată',
+    cust: ['Nunta primarului', 'Târgul de duminică', 'Bucătăria mănăstirii', 'Hanul de lângă pod', 'O familie de ciobani', 'Școala din sat', 'Sărbătoarea recoltei', 'Un călător de la oraș'],
+    wsT: 'Deschide un atelier nou', wsP: 'Îți iei cele mai bune unelte și te muți într-un sat mai mare. Monedele, meșterii și uneltele se resetează, dar fiecare sigiliu de meșter dă +5% producție pentru totdeauna.', wsNow: 'Atelier nou: +{d} sigilii', wsNeed: 'Ai nevoie de 1 M monede câștigate în acest atelier (acum {x}).', seals: 'Sigilii de meșter', mult: 'bonus producție', cfWs: 'Deschizi un atelier nou?',
+    achs: ['Primele 100 de monede', '10 000 de monede', 'Un milion', 'Un miliard', 'Un trilion', 'Primul ucenic', 'Câte unul din toate', 'Câte 25 din toate', '1 000 de atingeri', '1 000 de vase', 'Prima ardere', 'Ardere perfectă', 'Prima comandă', '25 de comenzi', 'Un atelier nou', '1 M/s'] },
+  en: { sub: 'A small pottery studio in a hillside village. Spin the wheel, hire apprentices, fire the kiln at the perfect glow and fill the village orders.', play: 'Play', cont: 'Continue', newg: 'New game', settings: 'Settings', music: 'Music', sound: 'Sounds', tut: 'Tutorial', lang: 'Language', fx: 'Effects', full: 'Fullscreen', keys: 'Keyboard', reset: 'Reset progress', on: 'On', off: 'Off', erase: 'Reset', sure: 'Tap again', close: 'Close', buy: 'Buy', perSec: '/s', tabs: ['Studio', 'Upgrades', 'Orders', 'Trophies', 'Renown'], own: 'own', each: 'each', need: 'appears at', noUps: 'Hire more workers to unlock new upgrades.', awayT: 'Welcome back!', away: 'While you were away ({t}), your apprentices earned ', ok: 'Lovely', yes: 'Yes', no: 'No', newConf: 'Erase this studio and start over?', achGot: 'Trophy: ', achInfo: 'Every trophy gives +2% production.',
+    pots: ['Bowls', 'Jugs', 'Crocks', 'Plates'], potsPS: 'pots/s',
+    steps: ['<b>1/3</b> Tap the potter\'s wheel to shape pots and earn coins ({n}/10).', '<b>2/3</b> Hire an apprentice: they shape pots for you.', '<b>3/3</b> The kiln is hot! Tap it when the glow peaks.'],
+    gens: ['Apprentice', 'Second wheel', 'Wood kiln', 'Glaze lab', 'Market stall', 'River cart', 'Folk painter', 'Festival booth'],
+    gdesc: ['shapes little bowls all day', 'spins twice the clay', 'fires a whole batch at once', 'mixes cobalt blue glaze', 'sells to passers-by', 'carries crates down the river', 'paints roosters and spirals', 'draws crowds from three villages'],
+    ups: ['Steady hands', 'Kick pedal', 'Beech firewood', 'Cobalt recipe', 'Painted sign', 'Stronger axle', 'Horsehair brushes', 'Fiddlers & dancers'], clickUp: 'Finer clay', clickD: 'taps give ×2 coins, +1 pot and +1% of production',
+    kiln: 'The kiln is hot! Tap at the peak', tap: 'NOW!', fire: ['Warm firing ×1.5', 'Good firing ×2', 'Perfect firing ×3'],
+    cmT: 'Village orders', cmP: 'Deliver the pots before time runs out. Pick the wheel\'s shape with the buttons under the studio.', cmWait: 'A new order arrives in {s}s…', cmOff: 'Orders open after the tutorial.', deliver: 'Deliver', cmReady: 'Order ready: ', cmLeft: 'left', reward: 'Reward',
+    cust: ['The mayor\'s wedding', 'Sunday fair', 'The monastery kitchen', 'The inn by the bridge', 'A shepherd family', 'The village school', 'The harvest feast', 'A traveller from town'],
+    wsT: 'Open a new workshop', wsP: 'Pack your best tools and move to a bigger village. Coins, workers and upgrades reset, but every master\'s seal gives +5% production forever.', wsNow: 'New workshop: +{d} seals', wsNeed: 'You need 1 M coins earned in this workshop (now {x}).', seals: 'Master\'s seals', mult: 'production bonus', cfWs: 'Open a new workshop?',
+    achs: ['First 100 coins', '10,000 coins', 'A million', 'A billion', 'A trillion', 'First apprentice', 'One of everything', '25 of everything', '1,000 taps', '1,000 pots', 'First firing', 'Perfect firing', 'First order', '25 orders', 'A new workshop', '1 M/s'] },
+  ru: { sub: 'Маленькая гончарная мастерская в деревне среди холмов. Крутите круг, нанимайте подмастерьев, обжигайте в идеальный момент и выполняйте заказы села.', play: 'Играть', cont: 'Продолжить', newg: 'Новая игра', settings: 'Настройки', music: 'Музыка', sound: 'Звуки', tut: 'Обучение', lang: 'Язык', fx: 'Эффекты', full: 'Полный экран', keys: 'Клавиатура', reset: 'Сбросить прогресс', on: 'Вкл', off: 'Выкл', erase: 'Сбросить', sure: 'Ещё раз', close: 'Закрыть', buy: 'Купить', perSec: '/с', tabs: ['Цех', 'Улучшения', 'Заказы', 'Трофеи', 'Слава'], own: 'есть', each: 'каждый', need: 'появится при', noUps: 'Наймите больше мастеров, чтобы открыть улучшения.', awayT: 'С возвращением!', away: 'Пока вас не было ({t}), подмастерья заработали ', ok: 'Отлично', yes: 'Да', no: 'Нет', newConf: 'Стереть мастерскую и начать заново?', achGot: 'Трофей: ', achInfo: 'Каждый трофей даёт +2% производства.',
+    pots: ['Миски', 'Кувшины', 'Горшки', 'Тарелки'], potsPS: 'сосудов/с',
+    steps: ['<b>1/3</b> Нажимайте на гончарный круг, чтобы лепить сосуды и получать монеты ({n}/10).', '<b>2/3</b> Наймите подмастерья: он лепит сам.', '<b>3/3</b> Печь раскалена! Нажмите, когда жар на пике.'],
+    gens: ['Подмастерье', 'Второй круг', 'Дровяная печь', 'Глазурная', 'Прилавок на рынке', 'Речная повозка', 'Народный художник', 'Ярмарочный шатёр'],
+    gdesc: ['весь день лепит миски', 'крутит вдвое больше глины', 'обжигает целую партию', 'смешивает кобальтовую глазурь', 'продаёт прохожим', 'возит ящики вниз по реке', 'рисует петухов и спирали', 'собирает людей из трёх сёл'],
+    ups: ['Твёрдая рука', 'Ножной привод', 'Буковые дрова', 'Рецепт кобальта', 'Расписная вывеска', 'Крепкая ось', 'Кисти из конского волоса', 'Скрипачи и хоровод'], clickUp: 'Глина тоньше', clickD: 'нажатие: ×2 монет, +1 сосуд и +1% производства',
+    kiln: 'Печь раскалена! Жмите на пике', tap: 'СЕЙЧАС!', fire: ['Тёплый обжиг ×1.5', 'Хороший обжиг ×2', 'Идеальный обжиг ×3'],
+    cmT: 'Заказы села', cmP: 'Сдайте сосуды, пока не вышло время. Форму на круге выбирайте кнопками под мастерской.', cmWait: 'Новый заказ через {s} с…', cmOff: 'Заказы откроются после обучения.', deliver: 'Сдать', cmReady: 'Заказ готов: ', cmLeft: 'осталось', reward: 'Награда',
+    cust: ['Свадьба старосты', 'Воскресная ярмарка', 'Монастырская кухня', 'Трактир у моста', 'Семья пастухов', 'Сельская школа', 'Праздник урожая', 'Гость из города'],
+    wsT: 'Открыть новую мастерскую', wsP: 'Берите лучшие инструменты и переезжайте в большое село. Монеты, мастера и улучшения сбрасываются, но каждая печать мастера даёт +5% производства навсегда.', wsNow: 'Новая мастерская: +{d} печ.', wsNeed: 'Нужно заработать 1 M монет в этой мастерской (сейчас {x}).', seals: 'Печати мастера', mult: 'бонус производства', cfWs: 'Открыть новую мастерскую?',
+    achs: ['Первые 100 монет', '10 000 монет', 'Миллион', 'Миллиард', 'Триллион', 'Первый подмастерье', 'Всех по одному', 'Всех по 25', '1 000 нажатий', '1 000 сосудов', 'Первый обжиг', 'Идеальный обжиг', 'Первый заказ', '25 заказов', 'Новая мастерская', '1 M/с'] }
+};
+const LANGS = ['ro', 'en', 'ru'];
+// ---------- icoane SVG ----------
+const SV = (b, c = '') => `<svg class="i ${c}" viewBox="0 0 40 40">${b}</svg>`;
+const POTP = [ // profiluri: [y 0..1 de jos, jumătate de lățime], înălțime relativă
+  { h: .55, p: [[0, .34], [.25, .62], [.65, .82], [1, .9]] },
+  { h: 1, p: [[0, .24], [.15, .36], [.42, .4], [.64, .3], [.78, .14], [.92, .13], [1, .19]], handle: 1 },
+  { h: .82, p: [[0, .3], [.2, .44], [.55, .48], [.82, .38], [.9, .32], [1, .36]] },
+  { h: .2, p: [[0, .42], [.55, .82], [1, 1]] }];
+function potPath(t) { // contur în unități (y negativ în sus)
+  const P = POTP[t], L = P.p.map(([y, w]) => [-w, -y * P.h]), R = P.p.slice().reverse().map(([y, w]) => [w, -y * P.h]), pts = L.concat(R);
+  let d = `M${pts[0][0].toFixed(3)} 0`;
+  for (let i = 1; i < pts.length - 1; i++) { const a = pts[i], b = pts[i + 1], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]; d += `Q${a[0].toFixed(3)} ${a[1].toFixed(3)} ${m[0].toFixed(3)} ${m[1].toFixed(3)}`; }
+  return d + `L${pts[pts.length - 1][0].toFixed(3)} 0Z`;
+}
+const POT_D = [0, 1, 2, 3].map(potPath), POT_P2 = POT_D.map(d => new Path2D(d));
+document.getElementById('defs').innerHTML = '<defs>' + POT_D.map((d, t) => `<clipPath id="pc${t}"><path d="${d}"/></clipPath>`).join('') + '</defs>';
+function potSvg(t) {
+  if (t === 3) return SV('<circle cx="20" cy="20" r="16" fill="#c9612f"/><circle cx="20" cy="20" r="12.5" fill="#f7ecd8"/><circle cx="20" cy="20" r="9" fill="none" stroke="#2f5d8a" stroke-width="2" stroke-dasharray="3 2"/><path d="M20 13l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#b3261e"/>');
+  const P = POTP[t], s = Math.min(32 / P.h, 34 / (2 * Math.max(...P.p.map(q => q[1])))), y0 = 20 + P.h * s / 2;
+  const hd = P.handle ? `<path d="M.12 -.8C.7 -.86 .66 -.4 .36 -.34" fill="none" stroke="#a7431f" stroke-width=".09"/>` : '';
+  return SV(`<g transform="translate(20 ${y0.toFixed(1)}) scale(${(s * 1.0).toFixed(2)})">${hd}<path d="${POT_D[t]}" fill="#c9612f"/><g clip-path="url(#pc${t})"><rect x="-1" y="${(-P.h * .62).toFixed(2)}" width="2" height="${(P.h * .2).toFixed(2)}" fill="#f7ecd8"/><path d="M-1 ${(-P.h * .47).toFixed(2)}l.15 -.08l.15 .08l.15 -.08l.15 .08l.15 -.08l.15 .08l.15 -.08l.15 .08l.15 -.08l.15 .08l.15 -.08l.15 .08l.15 -.08" fill="none" stroke="#b3261e" stroke-width=".05"/><rect x="-1" y="${(-P.h * .3).toFixed(2)}" width="2" height=".04" fill="#3b2216"/></g></g>`);
+}
+const GICO = [
+  '<circle cx="20" cy="13" r="7" fill="#e8b48a"/><path d="M12.5 11.5q7.5-10 15 0z" fill="#b3261e"/><path d="M7 39q1-15 13-15t13 15z" fill="#2f5d8a"/><path d="M15 25h10l2 14H13z" fill="#f7ecd8"/><path d="M15 30h10" stroke="#b3261e" stroke-width="2"/>',
+  '<rect x="17.5" y="28" width="5" height="11" fill="#5a3520"/><ellipse cx="20" cy="27" rx="17" ry="6" fill="#6e4127"/><ellipse cx="20" cy="25" rx="17" ry="6" fill="#a8683f"/><path d="M13 24q-2-11 7-16q9 5 7 16z" fill="#d9875a"/><path d="M14 18h12M13.5 21h13" stroke="#b9663e" stroke-width="1"/>',
+  '<rect x="26" y="3" width="6" height="14" fill="#6e4127"/><path d="M4 38V25a16 16 0 0 1 32 0v13z" fill="#b5532f"/><path d="M5 26h30M5 32h30M12 20v6M22 15v5M28 26v6M16 32v6" stroke="#7d321b" stroke-width="1.2"/><path d="M13 38v-7a7 7 0 0 1 14 0v7z" fill="#2a1410"/><path d="M15 38q2-9 5-4q3-7 5 4z" fill="#ffb347"/><path d="M17.5 38q2.5-6 5 0z" fill="#ff6a2a"/>',
+  '<path d="M16 4h8v10l9 17a5 5 0 0 1-4.5 7.5h-17A5 5 0 0 1 7 31l9-17z" fill="#f7ecd8" stroke="#3b2216" stroke-width="2"/><path d="M11 26h18l3.4 6.3a3.5 3.5 0 0 1-3 4.7H10.6a3.5 3.5 0 0 1-3-4.7z" fill="#2f5d8a"/><circle cx="17" cy="31" r="1.6" fill="#9cc3e8"/><circle cx="23" cy="29" r="1" fill="#9cc3e8"/>',
+  '<rect x="4" y="5" width="32" height="8" fill="#b3261e"/><path d="M10 5v8M18 5v8M26 5v8M34 5v8" stroke="#f7ecd8" stroke-width="3"/><path d="M4 13q4 5 8 0q4 5 8 0q4 5 8 0q4 5 8 0z" fill="#b3261e"/><rect x="7" y="16" width="3" height="22" fill="#6e4127"/><rect x="30" y="16" width="3" height="22" fill="#6e4127"/><rect x="5" y="27" width="30" height="10" fill="#a8683f"/><path d="M11 27q0-7 4-7t4 7z" fill="#d9875a"/><path d="M22 27q0-6 3.5-6t3.5 6z" fill="#e2a23b"/>',
+  '<path d="M1 37q9-4 19 0t19 0" stroke="#2f5d8a" stroke-width="2.5" fill="none"/><rect x="5" y="17" width="27" height="10" rx="1" fill="#a8683f"/><path d="M5 21h27" stroke="#6e4127"/><path d="M10 17q0-8 4-8t4 8zM20 17q0-6 3.5-6t3.5 6z" fill="#d9875a"/><circle cx="12" cy="30" r="5.5" fill="none" stroke="#3b2216" stroke-width="3"/><circle cx="26" cy="30" r="5.5" fill="none" stroke="#3b2216" stroke-width="3"/><path d="M32 20l7-5" stroke="#3b2216" stroke-width="3"/>',
+  '<path d="M9 14q-5 11 2 24h16q7-13 2-24z" fill="#d9875a"/><path d="M8 22h24" stroke="#f7ecd8" stroke-width="4"/><path d="M8.5 23l3-3 3 3 3-3 3 3 3-3 3 3 3-3 3 3" stroke="#b3261e" fill="none" stroke-width="1.6"/><path d="M31 3l-8 14" stroke="#6e4127" stroke-width="3"/><path d="M23 17l-2.4 4.2" stroke="#2f5d8a" stroke-width="4" stroke-linecap="round"/><circle cx="19" cy="31" r="3" fill="#4f7a3a"/>',
+  '<path d="M1 9q19 8 38 0" stroke="#3b2216" fill="none"/><path d="M5 10l2 5 3-4zM15 12l2 5 3-4zM25 12l2 5 3-4z" fill="#2f5d8a"/><path d="M10 11l2 5 3-4zM20 13l2 5 3-4zM30 11l2 5 3-4z" fill="#e2a23b"/><path d="M20 12L5 24h30z" fill="#b3261e"/><path d="M20 12l-5 12h10z" fill="#f7ecd8"/><rect x="8" y="24" width="24" height="14" fill="#e2a23b"/><path d="M16 38V28h8v10z" fill="#3b2216"/><path d="M8 24h24" stroke="#8f3a1e" stroke-width="2"/>'];
+const COIN = SV('<circle cx="20" cy="20" r="17" fill="#c98a1e"/><circle cx="20" cy="20" r="14.5" fill="#f2c14e"/><circle cx="20" cy="20" r="10" fill="none" stroke="#c98a1e" stroke-width="2"/><path d="M20 12.5l3 7.5-3 7.5-3-7.5z" fill="#b3261e"/>');
+const SEAL = SV('<path d="M20 2l4 4 5.5-1 1.5 5.5 5 2.5-2 5.2 2 5.2-5 2.5-1.5 5.5L24 34l-4 4-4-4-5.5 1L9 29.5 4 27l2-5.2L4 16.6 9 14l1.5-5.5L16 6z" fill="#b3261e"/><circle cx="20" cy="20" r="10" fill="#8f1c16"/><path d="M20 12l2.4 5.2 5.6.6-4.2 3.8 1.2 5.5L20 24.3l-5 2.8 1.2-5.5-4.2-3.8 5.6-.6z" fill="#f2c14e"/>');
+const FIRE = SV('<path d="M20 3q4 9 10 14t2 16q-4 6-12 6T8 33q-4-9 3-16 1 5 4 6-2-10 5-20z" fill="#ff7a2f"/><path d="M20 18q3 6 5 9t-1 8q-2 3-4 3t-4-3q-3-5 1-9 1 3 2 3-1-6 1-11z" fill="#ffd166"/>');
+// ---------- economie ----------
+const GENS = [
+  { base: 12, rate: 0.25 }, { base: 120, rate: 1.4 }, { base: 1300, rate: 10 }, { base: 14000, rate: 55 },
+  { base: 160000, rate: 300 }, { base: 2e6, rate: 1750 }, { base: 2.4e7, rate: 9800 }, { base: 3.3e8, rate: 56000 }];
+const PPS = [0.3, 0.3, 0.4, 0.4, 0.5, 0.5, 0.6, 0.6]; // vase/s pe bucată; forma = g % 4
+const UP_AT = [10, 25, 50, 100, 150], UP_K = [10, 50, 500, 5000, 50000];
+const CLICK_COST = [100, 1500, 25000, 4e5, 8e6, 2e8, 6e9, 2e11];
+const GROWTH = 1.15, WS_MIN = 1e6, FIRE_WIN = 14, GLOW_P = 1.6, OFF_MAX = 8 * 3600, OFF_K = 0.5;
+const FIRE_T = [{ m: 1.5, d: 15 }, { m: 2, d: 25 }, { m: 3, d: 30 }];
+const costOf = (g, n) => GENS[g].base * Math.pow(GROWTH, n);
+function costN(g, own, k) { const r = GROWTH; return GENS[g].base * Math.pow(r, own) * (Math.pow(r, k) - 1) / (r - 1); }
+function maxBuy(g, own, money) { const r = GROWTH, b = GENS[g].base * Math.pow(r, own); return Math.max(0, Math.floor(Math.log(money * (r - 1) / b + 1) / Math.log(r) + 1e-9)); }
+const ACHS = [
+  s => s.life >= 100, s => s.life >= 1e4, s => s.life >= 1e6, s => s.life >= 1e9, s => s.life >= 1e12,
+  s => s.own[0] >= 1, s => s.own.every(n => n >= 1), s => s.own.every(n => n >= 25), s => s.clicks >= 1000, s => s.pots.reduce((a, b) => a + b, 0) >= 1000,
+  s => s.fires >= 1, s => s.perfect >= 1, s => s.cmDone >= 1, s => s.cmDone >= 25, s => s.shops >= 1, () => prod() >= 1e6];
+const ACH_E = ['🪙', '💰', '💎', '👑', '🌟', '🙋', '🎒', '🏆', '👆', '🏺', '🔥', '✨', '📜', '📦', '🏡', '⚡'];
+// ---------- salvare ----------
+const SK = 'clay-and-kiln-v1';
+const FRESH = () => ({ v: VERSION, lang: null, coins: 0, run: 0, life: 0, own: [0, 0, 0, 0, 0, 0, 0, 0], ups: [0, 0, 0, 0, 0, 0, 0, 0], clickUps: 0, clicks: 0, pots: [0, 0, 0, 0], shape: 0, seals: 0, shops: 0, ach: [], fires: 0, perfect: 0, boostT: 0, boostM: 1, fireIn: 60, fireT: -1, cms: [null, null, null], cmNext: [1, 4, 8], cmDone: 0, seed: 20240917, music: 0.6, sfx: 0.8, fx: 1, tut: 1, step: 0, last: 0, started: 0 });
+let S = FRESH();
+try { const o = JSON.parse(localStorage.getItem(SK) || '{}'); Object.assign(S, o); } catch (e) {}
+if (!S.lang) { const n = (navigator.language || 'en').slice(0, 2); S.lang = LANGS.includes(n) ? n : n === 'uk' || n === 'be' ? 'ru' : 'en'; }
+function save() { S.last = Date.now(); try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} }
+const T = (k, v) => { let s = TX[S.lang][k]; if (v) for (const x in v) s = s.replace('{' + x + '}', v[x]); return s; };
+function rnd() { let t = (S.seed = (S.seed + 0x6D2B79F5) | 0); t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; }
+// ---------- formule ----------
+function genMult(g) { return Math.pow(2, S.ups[g]); }
+function globalMult() { return (1 + 0.05 * S.seals) * (1 + 0.02 * S.ach.length) * (S.boostT > 0 ? S.boostM : 1); }
+function genRate(g) { return GENS[g].rate * genMult(g) * globalMult(); }
+function prod() { let p = 0; for (let g = 0; g < 8; g++) p += S.own[g] * GENS[g].rate * genMult(g); return p * globalMult(); }
+function potRate(t) { let p = 0; for (let g = t; g < 8; g += 4) p += S.own[g] * PPS[g]; return p; }
+function clickPower() { return Math.pow(2, S.clickUps) + 0.01 * S.clickUps * prod(); }
+const potsPerTap = () => 1 + S.clickUps;
+const glow = t => 0.5 - 0.5 * Math.cos(2 * Math.PI * t / GLOW_P);
+const fireOn = () => S.step >= 2 || !S.tut, cmOn = () => S.step >= 3 || !S.tut;
+function sealsFor(run) { return Math.floor(Math.sqrt(run / WS_MIN)); }
+const wsGain = () => S.run >= WS_MIN ? Math.max(1, sealsFor(S.run)) : 0;
+const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  if (!isFinite(n)) return '∞'; if (n < 10) return (Math.floor(n * 10) / 10).toString(); if (n < 1000) return Math.floor(n).toString();
+  const e = Math.floor(Math.log10(n) / 3); if (e >= SUF.length) return n.toExponential(2).replace('+', '');
+  const v = n / Math.pow(1000, e); return (v < 100 ? v.toFixed(v < 10 ? 2 : 1) : Math.floor(v)) + ' ' + SUF[e];
+}
+function fmtTime(s) { s = Math.max(0, Math.floor(s)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm ' + (s % 60) + 's' : s + 's'; }
+// ---------- sunet (WebAudio procedural, două magistrale) ----------
+let AC = null, BUS = {};
+function ac() {
+  try { if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); for (const b of ['music', 'sfx']) { BUS[b] = AC.createGain(); BUS[b].connect(AC.destination); } vol(); } if (AC.state === 'suspended') AC.resume(); } catch (e) {} return AC;
+}
+function vol() { if (!AC) return; BUS.music.gain.value = S.music; BUS.sfx.gain.value = S.sfx; }
+function tone(f, d = 0.12, type = 'sine', v = 0.1, delay = 0, f2, bus = 'sfx') {
+  if (!AC || !S[bus]) return;
+  try { const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.01); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(BUS[bus]); o.start(t); o.stop(t + d + 0.03); } catch (e) {}
+}
+function noise(d = 0.2, v = 0.05, fq = 800) {
+  if (!AC || !S.sfx) return;
+  try { const n = AC.createBuffer(1, AC.sampleRate * d, AC.sampleRate), a = n.getChannelData(0); for (let i = 0; i < a.length; i++) a[i] = (Math.random() * 2 - 1) * (1 - i / a.length); const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = n; f.type = 'bandpass'; f.frequency.value = fq; g.gain.value = v; s.connect(f).connect(g).connect(BUS.sfx); s.start(); } catch (e) {}
+}
+const SFX = { tap: () => { noise(0.07, 0.08, 500 + Math.random() * 300); tone(180 + Math.random() * 40, 0.08, 'triangle', 0.05, 0, 140); }, pot: () => [392, 587].forEach((f, i) => tone(f, 0.18, 'triangle', 0.06, i * 0.05)), buy: () => { tone(660, 0.08, 'sine', 0.08); tone(990, 0.12, 'sine', 0.06, 0.06); }, up: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.15, 'triangle', 0.06, i * 0.06)), fire: q => { noise(0.6, 0.12, 300); [294, 440, 587, 880].slice(0, 2 + q).forEach((f, i) => tone(f, 0.3, 'sawtooth', 0.03, 0.1 + i * 0.08)); }, coin: () => [1319, 1760, 2093].forEach((f, i) => tone(f, 0.12, 'sine', 0.05, i * 0.07)), no: () => tone(150, 0.12, 'square', 0.025, 0, 110), ach: () => [587, 740, 880, 1175].forEach((f, i) => tone(f, 0.25, 'triangle', 0.06, i * 0.1)) };
+// melodie de doină: re minor cu cvarta mărită (mod românesc)
+const SC = [293.7, 329.6, 349.2, 415.3, 440, 493.9, 523.3, 587.3], MEL = [4, 3, 2, 1, 0, 1, 2, 4, 5, 4, 3, 4, 2, 1, 0, -1]; let mStep = 0, mNext = 0;
+function musicTick(now) { if (!S.music || !AC || AC.state !== 'running' || now < mNext) return; mNext = now + 520; const n = MEL[mStep % MEL.length]; if (n >= 0) tone(SC[n], 0.9, 'triangle', 0.035, 0, 0, 'music'); if (mStep % 4 === 0) tone(SC[0] / 2, 2.2, 'sine', 0.04, 0, 0, 'music'); if (mStep % 8 === 6) tone(SC[4] / 2, 1.2, 'sine', 0.025, 0, 0, 'music'); mStep++; }
+// ---------- simulare (pas fix, determinist) ----------
+let parts = [], floats = [], pops = [], form = 0.2, spin = 0, spinV = 0;
+function tick(dt) {
+  if (S.boostT > 0) S.boostT = Math.max(0, S.boostT - dt);
+  const p = prod() * dt; S.coins += p; S.run += p; S.life += p;
+  for (let t = 0; t < 4; t++) { const n = potRate(t) * dt; if (n) { S.pots[t] += n; addPots(t, n); } }
+  // cuptorul
+  if (S.fireT < 0) { if (fireOn()) { S.fireIn -= dt; if (S.fireIn <= 0) S.fireT = 0; } }
+  else { S.fireT += dt; if (S.fireT > FIRE_WIN && S.step !== 2) { S.fireT = -1; S.fireIn = 40 + rnd() * 50; } }
+  // comenzi
+  if (cmOn()) for (let i = 0; i < 3; i++) {
+    const c = S.cms[i];
+    if (c) { if (!c.done) { c.left -= dt; if (c.left <= 0) { S.cms[i] = null; S.cmNext[i] = 8; if (tab === 'cm') renderList(); } } }
+    else { S.cmNext[i] -= dt; if (S.cmNext[i] <= 0) newCm(i); }
+  }
+  checkAch();
+}
+const step = tick; // alias pentru teste
+function newCm(i) {
+  const t = Math.floor(rnd() * 4), dur = 60 + Math.floor(rnd() * 7) * 15, lvl = S.cmDone;
+  const need = Math.max(8, Math.round((potRate(t) + 0.6 + 0.04 * Math.min(lvl, 25)) * dur * 0.5 / 5) * 5);
+  const rew = Math.max(40 + 20 * lvl, Math.round((prod() * 1.2 + clickPower() * 0.6) * dur));
+  S.cms[i] = { t, need, got: 0, left: dur, dur, rew, who: Math.floor(rnd() * 8), done: false };
+  if (tab === 'cm') renderList();
+}
+function addPots(t, n) {
+  for (const c of S.cms) if (c && !c.done && c.t === t) { c.got = Math.min(c.need, c.got + n); if (c.got >= c.need - 1e-9) { c.done = true; if (started) { toast('📜 ' + T('cmReady') + T('cust')[c.who]); SFX.coin(); } if (tab === 'cm') renderList(); } }
+}
+function deliver(i) {
+  const c = S.cms[i]; if (!c || !c.done) { SFX.no(); return false; }
+  S.coins += c.rew; S.run += c.rew; S.life += c.rew; S.cmDone++; S.cms[i] = null; S.cmNext[i] = 4;
+  SFX.coin(); const A = arena(); floats.push({ x: A.w / 2, y: A.h * .45, t: 0, txt: '+' + fmt(c.rew), gold: 1 }); burst(A.w / 2, A.h * .45, '#f2c14e', 22, 2.2);
+  checkAch(); renderList(); save(); return true;
+}
+function fireKiln() {
+  if (S.fireT < 0) return false;
+  const q = glow(S.fireT), tier = q >= 0.85 ? 2 : q >= 0.5 ? 1 : 0, F = FIRE_T[tier];
+  S.boostM = F.m; S.boostT = F.d; S.fires++; if (tier === 2) S.perfect++;
+  S.fireT = -1; S.fireIn = 40 + rnd() * 50;
+  SFX.fire(tier); toast('🔥 ' + T('fire')[tier]); const K = kilnBox(); burst(K.x, K.y - K.r * .5, '#ffb347', 30, 2.6); burst(K.x, K.y - K.r * .5, '#ff6a2a', 16, 1.8); flash = 1;
+  if (S.step === 2) { S.step = 3; S.cmNext = [0.5, 3, 6]; }
+  tutUI(); checkAch(); save(); return tier;
+}
+function tapWheel(x, y) {
+  const g = clickPower(), n = potsPerTap(); S.coins += g; S.run += g; S.life += g; S.clicks++; S.pots[S.shape] += n; addPots(S.shape, n);
+  SFX.tap(); spinV = Math.min(1, spinV + 0.25); form += 0.2;
+  if (form >= 1.05) { form = 0.2; const w = wheelBox(); pops.push({ x: w.x, y: w.y - w.r * .1, t: 0, s: S.shape }); SFX.pot(); }
+  if (S.fx) { floats.push({ x: x + (Math.random() - .5) * 36, y: y - Math.random() * 24, t: 0, txt: '+' + fmt(g) }); burst(x, y, '#b9663e', 5, 1.4); }
+  if (S.step === 0 && S.clicks >= 10) S.step = 1; tutUI();
+}
+function setShape(t) { S.shape = t; form = 0.2; renderShapes(); }
+function buyGen(g, n) {
+  const own = S.own[g]; let k = n || maxBuy(g, own, S.coins); if (!k) { SFX.no(); return false; }
+  const c = costN(g, own, k); if (c > S.coins + 1e-9) { SFX.no(); return false; }
+  S.coins -= c; S.own[g] += k; SFX.buy();
+  if (S.step === 1 && S.own[0] >= 1) { S.step = 2; S.fireT = 0; }
+  tutUI(); checkAch(); renderList(); save(); return true;
+}
+function upCost(g) { const k = S.ups[g]; return k < 5 ? GENS[g].base * UP_K[k] : Infinity; }
+function upReady(g) { const k = S.ups[g]; return k < 5 && S.own[g] >= UP_AT[k]; }
+function buyUp(g) { if (!upReady(g) || S.coins < upCost(g)) { SFX.no(); return false; } S.coins -= upCost(g); S.ups[g]++; SFX.up(); renderList(); save(); return true; }
+function buyClick() { const c = CLICK_COST[S.clickUps]; if (c === undefined || S.coins < c) { SFX.no(); return false; } S.coins -= c; S.clickUps++; SFX.up(); renderList(); save(); return true; }
+function newShop() {
+  const d = wsGain(); if (!d) return false;
+  const keep = { lang: S.lang, music: S.music, sfx: S.sfx, fx: S.fx, tut: S.tut, life: S.life, clicks: S.clicks, pots: S.pots, fires: S.fires, perfect: S.perfect, cmDone: S.cmDone, ach: S.ach, step: S.step, started: S.started, seed: S.seed, shape: S.shape };
+  const seals = S.seals + d, shops = S.shops + 1; S = Object.assign(FRESH(), keep, { seals, shops }); checkAch();
+  SFX.ach(); for (let i = 0; i < 30; i++) setTimeout(() => { const A = arena(); burst(A.x + Math.random() * A.w, A.y + A.h * 0.6, ['#f2c14e', '#b3261e', '#f7ecd8'][i % 3], 6, 2); }, i * 40);
+  save(); renderList(); return true;
+}
+function checkAch() {
+  for (let i = 0; i < ACHS.length; i++) if (!S.ach.includes(i) && ACHS[i](S)) { S.ach.push(i); if (started) { SFX.ach(); toast(ACH_E[i] + ' ' + T('achGot') + T('achs')[i]); } if (tab === 'ach') renderList(); }
+}
+function offline() {
+  if (!S.last) return; const dt = Math.min(OFF_MAX, (Date.now() - S.last) / 1000); if (dt < 60) return;
+  const bt = S.boostT; S.boostT = 0; const p = prod() * dt * OFF_K; S.boostT = bt; if (p <= 0) return;
+  S.coins += p; S.run += p; S.life += p;
+  for (let t = 0; t < 4; t++) S.pots[t] += potRate(t) * dt * OFF_K;
+  $('awayIco').innerHTML = COIN + potSvg(1); $('awayInfo').innerHTML = T('away', { t: fmtTime(dt) }) + '<b style="color:var(--terra2)">' + fmt(p) + '</b> ' + COIN; show('away');
+}
+// ---------- ecran ----------
+const cv = document.getElementById('c'), cx = cv.getContext('2d'), $ = id => document.getElementById(id);
+let W = 0, H = 0, DPR = 1, wide = false, started = false, tab = 'gen', buyN = 1, cur = 'menu', flash = 0;
+function arena() { return wide ? { x: 0, y: 0, w: W - 400, h: H } : { x: 0, y: 0, w: W, h: Math.round(H * 0.5) }; }
+const floorY = () => arena().h * 0.76;
+function wheelBox() { const A = arena(); return { x: A.w * (wide ? .44 : .42), y: A.h * .6, r: Math.min(A.w * .18, A.h * .2) }; }
+function kilnBox() { const A = arena(), r = Math.min(A.w * .13, A.h * .17); return { x: A.w * .8, y: floorY() + r * .12, r }; }
+function layout() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; wide = W >= 820 && W > H;
+  const A = arena(); cv.width = A.w * DPR; cv.height = A.h * DPR; cv.style.width = A.w + 'px'; cv.style.height = A.h + 'px'; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const sd = $('side'), hd = $('hud'), sh = $('shapes');
+  if (wide) Object.assign(sd.style, { left: (W - 400) + 'px', top: '0', width: '400px', height: H + 'px' });
+  else Object.assign(sd.style, { left: '0', top: A.h + 'px', width: W + 'px', height: (H - A.h) + 'px' });
+  hd.style.width = A.w + 'px'; const sw = 4 * 50 + 10; sh.style.left = Math.max(8, Math.min(A.w - sw - 8, wheelBox().x - sw / 2)) + 'px'; sh.style.top = (A.h - 64) + 'px'; $('toast').style.top = (wide ? 110 : A.h - 130) + 'px';
+  ornCache = null; tutUI();
+}
+addEventListener('resize', layout);
+function burst(x, y, col, n, sp = 1.4) { if (!S.fx) return; for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = (0.4 + Math.random()) * sp; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: 1, col, r: 2 + Math.random() * 3 }); } }
+// model popular cusut (cruciuliță): romb roșu, romb mic negru, margini negre
+let ornCache = null;
+function ornPattern(cell) {
+  if (ornCache && ornCache.cell === cell) return ornCache.pat;
+  const c = document.createElement('canvas'), P = 12; c.width = P * cell; c.height = 9 * cell; const g = c.getContext('2d');
+  g.fillStyle = '#f7ecd8'; g.fillRect(0, 0, c.width, c.height);
+  for (let x = 0; x < P; x++) for (let y = 0; y < 9; y++) {
+    const d = Math.abs(x - 6) + Math.abs(y - 4), e = Math.abs(x) + Math.abs(y - 4); let col = null;
+    if (y === 0 || y === 8) col = x % 2 ? '#2a1a14' : null; else if (d === 3 || d === 1) col = '#b3261e'; else if (d === 0) col = '#2a1a14'; else if (e <= 1 || Math.abs(x - 12) + Math.abs(y - 4) <= 1) col = '#2a1a14'; else if (d === 5 && (y === 2 || y === 6)) col = '#4f7a3a';
+    if (col) { g.fillStyle = col; g.fillRect(x * cell + .5, y * cell + .5, cell - 1, cell - 1); }
+  }
+  ornCache = { cell, pat: cx.createPattern(c, 'repeat-x') }; return ornCache.pat;
+}
+function band(y, h, x0 = 0, x1) { const A = arena(); x1 = x1 === undefined ? A.w : x1; const cell = Math.max(2, Math.round(h / 9)); cx.save(); cx.translate(x0, y); cx.fillStyle = ornPattern(cell); cx.fillRect(0, 0, x1 - x0, cell * 9); cx.restore(); return cell * 9; }
+function drawPot(t, x, y, s, wet) {
+  cx.save(); cx.translate(x, y); cx.scale(s, s); const P = POTP[t], pth = POT_P2[t];
+  if (!wet && P.handle) { cx.strokeStyle = '#8f3a1e'; cx.lineWidth = .09; cx.beginPath(); cx.moveTo(.12, -.8); cx.bezierCurveTo(.7, -.86, .66, -.4, .36, -.34); cx.stroke(); }
+  const g = cx.createLinearGradient(-1, 0, 1, 0);
+  if (wet) { g.addColorStop(0, '#8e4b2b'); g.addColorStop(.38, '#d48c5f'); g.addColorStop(1, '#7b3f22'); } else { g.addColorStop(0, '#9a3f1d'); g.addColorStop(.35, '#d4703f'); g.addColorStop(1, '#8a3418'); }
+  cx.fillStyle = g; cx.fill(pth);
+  cx.save(); cx.clip(pth);
+  if (wet) { cx.strokeStyle = 'rgba(80,35,15,.35)'; cx.lineWidth = .025; for (let k = 0; k < 7; k++) { const yy = -((k / 7 + spin * .05) % 1) * P.h; cx.beginPath(); cx.moveTo(-1, yy); cx.lineTo(1, yy); cx.stroke(); } }
+  else {
+    cx.fillStyle = '#f7ecd8'; cx.fillRect(-1, -P.h * .64, 2, P.h * .22);
+    cx.strokeStyle = '#b3261e'; cx.lineWidth = .05; cx.beginPath(); for (let k = 0; k <= 14; k++) cx.lineTo(-1 + k * .15, -P.h * .53 + (k % 2 ? -.06 : .04) * Math.min(1, P.h * 2)); cx.stroke();
+    cx.fillStyle = '#2a1a14'; cx.fillRect(-1, -P.h * .34, 2, .035); cx.fillRect(-1, -P.h * .7, 2, .03);
+    cx.fillStyle = 'rgba(255,255,255,.18)'; cx.fillRect(-.5, -P.h, .12, P.h);
+  }
+  cx.restore(); cx.restore();
+}
+function drawPlate(x, y, r, rot = 0) {
+  cx.save(); cx.translate(x, y); cx.rotate(rot); cx.fillStyle = '#a7431f'; cx.beginPath(); cx.arc(0, 0, r, 0, 6.28); cx.fill(); cx.fillStyle = '#f7ecd8'; cx.beginPath(); cx.arc(0, 0, r * .8, 0, 6.28); cx.fill();
+  cx.strokeStyle = '#2f5d8a'; cx.lineWidth = Math.max(1, r * .1); cx.setLineDash([r * .2, r * .14]); cx.beginPath(); cx.arc(0, 0, r * .58, 0, 6.28); cx.stroke(); cx.setLineDash([]);
+  cx.fillStyle = '#b3261e'; for (let k = 0; k < 4; k++) { cx.rotate(Math.PI / 2); cx.beginPath(); cx.ellipse(0, -r * .25, r * .1, r * .22, 0, 0, 6.28); cx.fill(); } cx.fillStyle = '#e2a23b'; cx.beginPath(); cx.arc(0, 0, r * .1, 0, 6.28); cx.fill(); cx.restore();
+}
+function draw(now) {
+  const A = arena(), fy = floorY(), wb = wheelBox(), K = kilnBox(); spin += 0.05 + spinV * 0.35; spinV = Math.max(0, spinV - 0.012); cx.lineJoin = "round";
+  // perete (tencuială caldă) + lambriu de lut
+  let g = cx.createLinearGradient(0, 0, 0, fy); g.addColorStop(0, '#e8c9a1'); g.addColorStop(.6, '#f2dcbc'); g.addColorStop(1, '#e6c398'); cx.fillStyle = g; cx.fillRect(0, 0, A.w, fy);
+  const wain = fy - A.h * .12; g = cx.createLinearGradient(0, wain, 0, fy); g.addColorStop(0, '#b85a34'); g.addColorStop(1, '#8f3a1e'); cx.fillStyle = g; cx.fillRect(0, wain, A.w, fy - wain);
+  band(wain - Math.max(9, A.h * .045) / 2, Math.max(9, A.h * .045));
+  // lumina de la cuptor
+  const heat = S.fireT >= 0 ? 0.35 + 0.65 * glow(S.fireT) : S.boostT > 0 ? 0.45 : 0.2;
+  g = cx.createRadialGradient(K.x, K.y - K.r * .5, 0, K.x, K.y - K.r * .5, K.r * (3 + heat * 2)); g.addColorStop(0, `rgba(255,150,60,${0.25 + heat * 0.35})`); g.addColorStop(1, 'rgba(255,150,60,0)'); cx.fillStyle = g; cx.fillRect(0, 0, A.w, A.h);
+  // ștergar drapat
+  const sx0 = A.w * .02, sx1 = A.w * .64, sy = A.h * .2, sw = Math.max(8, A.h * .04);
+  cx.save(); cx.beginPath(); for (let k = 0; k <= 30; k++) { const u = k / 30, x = sx0 + (sx1 - sx0) * u, y = sy + Math.sin(u * Math.PI) * A.h * .06; k ? cx.lineTo(x, y) : cx.moveTo(x, y); } for (let k = 30; k >= 0; k--) { const u = k / 30, x = sx0 + (sx1 - sx0) * u, y = sy + sw + Math.sin(u * Math.PI) * A.h * .06; cx.lineTo(x, y); } cx.closePath(); cx.fillStyle = '#f7ecd8'; cx.fill(); cx.clip();
+  for (let k = 0; k < 20; k++) { const u = k / 20, x = sx0 + (sx1 - sx0) * u, y = sy + Math.sin((u + .025) * Math.PI) * A.h * .06; cx.fillStyle = k % 2 ? '#b3261e' : '#2a1a14'; cx.beginPath(); cx.moveTo(x, y + sw / 2); cx.lineTo(x + (sx1 - sx0) / 40, y + sw * .15); cx.lineTo(x + (sx1 - sx0) / 20, y + sw / 2); cx.lineTo(x + (sx1 - sx0) / 40, y + sw * .85); cx.fill(); }
+  cx.restore(); cx.fillStyle = '#b3261e'; for (const x of [sx0, sx1]) for (let k = 0; k < 4; k++) cx.fillRect(x - 3 + k * 2.2, sy + sw, 1.4, A.h * .05);
+  // cort de festival: steguleţe
+  if (S.own[7] > 0) for (let k = 0; k < 14; k++) { const u = k / 13, x = A.w * u, y = A.h * .05 + Math.sin(u * Math.PI) * A.h * .07; cx.fillStyle = ['#b3261e', '#e2a23b', '#2f5d8a', '#4f7a3a'][k % 4]; cx.beginPath(); cx.moveTo(x - 9, y); cx.lineTo(x + 9, y); cx.lineTo(x, y + 16 + Math.sin(now / 400 + k) * 2); cx.fill(); }
+  // tarabă: volan cu dungi sus
+  if (S.own[4] > 0) { const vh = A.h * .045; for (let x = 0; x < A.w; x += 24) { cx.fillStyle = (x / 24) % 2 ? '#f7ecd8' : '#b3261e'; cx.beginPath(); cx.moveTo(x, 0); cx.lineTo(x + 24, 0); cx.lineTo(x + 24, vh); cx.arc(x + 12, vh, 12, 0, Math.PI); cx.fill(); } }
+  // rafturi cu vase
+  const tot = S.own.reduce((a, b) => a + b, 0) + Math.floor(S.cmDone / 3), nPots = Math.min(10, Math.ceil(Math.sqrt(tot) * 1.4) + (S.clicks > 0 ? 1 : 0));
+  const shX = A.w * .03, shW = Math.max(A.w * .22, 90), ps = A.h * .085;
+  for (let r = 0; r < 2; r++) {
+    const y = A.h * (r ? .55 : .4); cx.fillStyle = '#6e4127'; cx.fillRect(shX, y, shW, Math.max(4, A.h * .016)); cx.fillStyle = '#4e2b18'; cx.fillRect(shX + 6, y, 4, A.h * .04); cx.fillRect(shX + shW - 10, y, 4, A.h * .04);
+    for (let k = 0; k < 5; k++) { const i = r * 5 + k; if (i >= nPots) break; const t = (i * 3 + r) % 4, x = shX + shW * (k + .5) / 5; if (t === 3) drawPlate(x, y - ps * .45, ps * .42, .1 * (k - 2)); else drawPot(t, x, y, ps * (t === 0 ? .55 : .6)); }
+  }
+  // podea de lemn
+  g = cx.createLinearGradient(0, fy, 0, A.h); g.addColorStop(0, '#7a4a2c'); g.addColorStop(1, '#4e2b18'); cx.fillStyle = g; cx.fillRect(0, fy, A.w, A.h - fy);
+  cx.strokeStyle = 'rgba(0,0,0,.18)'; cx.lineWidth = 1; for (let k = 1; k < 5; k++) { const y = fy + (A.h - fy) * k * k / 20; cx.beginPath(); cx.moveTo(0, y); cx.lineTo(A.w, y); cx.stroke(); }
+  // laborator de glazuri: borcane
+  if (S.own[3] > 0) ['#2f5d8a', '#4f7a3a', '#e2a23b'].forEach((c, k) => { const x = A.w * .06 + k * A.h * .055, y = fy + A.h * .03, s = A.h * .035; cx.fillStyle = c; cx.beginPath(); cx.roundRect ? cx.roundRect(x - s * .6, y - s * 1.6, s * 1.2, s * 1.6, s * .3) : cx.rect(x - s * .6, y - s * 1.6, s * 1.2, s * 1.6); cx.fill(); cx.fillStyle = '#f7ecd8'; cx.fillRect(x - s * .65, y - s * 1.75, s * 1.3, s * .3); });
+  // roata olarului
+  const r = wb.r; cx.fillStyle = 'rgba(0,0,0,.2)'; cx.beginPath(); cx.ellipse(wb.x, fy + r * .2, r * 1.15, r * .22, 0, 0, 6.28); cx.fill();
+  cx.fillStyle = '#5a3520'; cx.fillRect(wb.x - r * .1, wb.y, r * .2, fy - wb.y + r * .1);
+  cx.fillStyle = '#6e4127'; cx.beginPath(); cx.moveTo(wb.x - r * 1.05, fy + r * .15); cx.lineTo(wb.x - r * .8, wb.y + r * .35); cx.lineTo(wb.x + r * .8, wb.y + r * .35); cx.lineTo(wb.x + r * 1.05, fy + r * .15); cx.lineTo(wb.x + r * .9, fy + r * .15); cx.lineTo(wb.x + r * .7, wb.y + r * .5); cx.lineTo(wb.x - r * .7, wb.y + r * .5); cx.lineTo(wb.x - r * .9, fy + r * .15); cx.fill();
+  cx.fillStyle = '#8a5434'; cx.fillRect(wb.x - r * 1.1, wb.y + r * .28, r * 2.2, r * .14);
+  cx.fillStyle = '#5a3520'; cx.beginPath(); cx.ellipse(wb.x, wb.y + r * .08, r, r * .25, 0, 0, 6.28); cx.fill();
+  cx.fillStyle = '#a8683f'; cx.beginPath(); cx.ellipse(wb.x, wb.y, r, r * .25, 0, 0, 6.28); cx.fill();
+  cx.strokeStyle = 'rgba(70,35,15,.45)'; cx.lineWidth = 2; for (let k = 0; k < 6; k++) { const a = spin + k * Math.PI / 3; cx.beginPath(); cx.moveTo(wb.x + Math.cos(a) * r * .3, wb.y + Math.sin(a) * r * .075); cx.lineTo(wb.x + Math.cos(a) * r * .95, wb.y + Math.sin(a) * r * .24); cx.stroke(); }
+  // lutul pe roată (forma aleasă, crește la fiecare atingere)
+  const P = POTP[S.shape], fs = r * (S.shape === 3 ? 1 : S.shape === 0 ? .85 : .8) * (0.7 + 0.3 * Math.min(1, form)), squash = 0.75 + 0.25 * Math.min(1, form);
+  cx.save(); cx.translate(wb.x, wb.y + r * .05); cx.scale(1 + (1 - squash) * .5, squash); drawPot(S.shape, 0, 0, fs, true); cx.restore();
+  // cuptorul de cărămidă
+  const kr = K.r, base = K.y, top = base - kr * 1.55;
+  cx.fillStyle = '#5a2a18'; cx.fillRect(K.x + kr * .35, A.h * .12, kr * .32, top - A.h * .12 + kr * .4);
+  cx.fillStyle = '#3b2216'; cx.fillRect(K.x + kr * .3, A.h * .12 - 6, kr * .42, 8);
+  cx.save(); cx.beginPath(); cx.moveTo(K.x - kr * 1.1, base); cx.lineTo(K.x - kr * 1.1, base - kr * .55); cx.arc(K.x, base - kr * .55, kr * 1.1, Math.PI, 0); cx.lineTo(K.x + kr * 1.1, base); cx.closePath();
+  g = cx.createLinearGradient(K.x - kr, 0, K.x + kr, 0); g.addColorStop(0, '#8f3a1e'); g.addColorStop(.45, '#c25f36'); g.addColorStop(1, '#7d321b'); cx.fillStyle = g; cx.fill(); cx.clip();
+  cx.strokeStyle = 'rgba(70,20,8,.5)'; cx.lineWidth = 1.2; const bh = kr * .2; for (let k = 0; k < 9; k++) { const y = base - k * bh; cx.beginPath(); cx.moveTo(K.x - kr * 1.2, y); cx.lineTo(K.x + kr * 1.2, y); cx.stroke(); for (let j = -3; j <= 3; j++) { const x = K.x + j * kr * .38 + (k % 2) * kr * .19; cx.beginPath(); cx.moveTo(x, y); cx.lineTo(x, y - bh); cx.stroke(); } }
+  cx.restore();
+  band(base - kr * .55 - Math.max(8, kr * .14) / 2, Math.max(8, kr * .14), K.x - kr * 1.1, K.x + kr * 1.1);
+  // gura cuptorului
+  const mw = kr * .5, mh = kr * .8; cx.fillStyle = '#2a1410'; cx.beginPath(); cx.moveTo(K.x - mw, base); cx.lineTo(K.x - mw, base - mh + mw); cx.arc(K.x, base - mh + mw, mw, Math.PI, 0); cx.lineTo(K.x + mw, base); cx.fill();
+  g = cx.createRadialGradient(K.x, base - mh * .25, 0, K.x, base - mh * .3, mh); g.addColorStop(0, `rgba(255,230,140,${.5 + heat * .5})`); g.addColorStop(.5, `rgba(255,120,40,${.4 + heat * .5})`); g.addColorStop(1, 'rgba(150,40,10,0)'); cx.fillStyle = g; cx.fillRect(K.x - mw, base - mh, mw * 2, mh);
+  for (let k = 0; k < 3; k++) { const fx = K.x + (k - 1) * mw * .5, fh = mh * (.35 + heat * .35) * (0.8 + 0.2 * Math.sin(now / (90 + k * 20) + k)); cx.fillStyle = k === 1 ? '#ffd166' : '#ff7a2f'; cx.beginPath(); cx.moveTo(fx - mw * .3, base); cx.quadraticCurveTo(fx - mw * .2, base - fh * .6, fx, base - fh); cx.quadraticCurveTo(fx + mw * .2, base - fh * .6, fx + mw * .3, base); cx.fill(); }
+  cx.fillStyle = '#3b2216'; cx.fillRect(K.x - kr * 1.2, base - 2, kr * 2.4, 6);
+  // fum
+  if (S.boostT > 0 || S.fireT >= 0) for (let k = 0; k < 4; k++) { const u = ((now / 2400) + k / 4) % 1; cx.fillStyle = `rgba(120,100,90,${.35 * (1 - u)})`; cx.beginPath(); cx.arc(K.x + kr * .51 + Math.sin(u * 6 + k) * 8, A.h * .12 - u * A.h * .12, 5 + u * 14, 0, 6.28); cx.fill(); }
+  // momentul arderii: indicator de flacără
+  if (S.fireT >= 0 && fireOn()) {
+    const gl = glow(S.fireT), bw = kr * 2.2, bx = K.x - bw / 2, by = top - kr * .55 - 16;
+    g = cx.createRadialGradient(K.x, base - kr * .6, 0, K.x, base - kr * .6, kr * 2.2); g.addColorStop(0, `rgba(255,200,90,${.15 + .5 * gl})`); g.addColorStop(1, 'rgba(255,120,40,0)'); cx.fillStyle = g; cx.fillRect(K.x - kr * 2.5, base - kr * 3, kr * 5, kr * 3.2);
+    cx.fillStyle = 'rgba(42,20,16,.85)'; rr(bx - 3, by - 3, bw + 6, 18, 9); cx.fill();
+    cx.fillStyle = 'rgba(242,193,78,.35)'; cx.fillRect(bx + bw * .85, by, bw * .15, 12);
+    g = cx.createLinearGradient(bx, 0, bx + bw, 0); g.addColorStop(0, '#ff7a2f'); g.addColorStop(1, '#ffe08a'); cx.fillStyle = g; rr(bx, by, Math.max(6, bw * gl), 12, 6); cx.fill();
+    cx.fillStyle = '#fff3dc'; cx.fillRect(bx + bw * .85 - 1, by - 3, 2, 18);
+    cx.font = `900 ${Math.round(Math.max(13, kr * .26))}px Trebuchet MS,sans-serif`; cx.textAlign = 'center'; cx.lineWidth = 4; cx.strokeStyle = 'rgba(60,20,8,.8)'; const tt = gl >= 0.85 ? T('tap') : '🔥'; cx.strokeText(tt, K.x, by - 8); cx.fillStyle = gl >= 0.85 ? '#ffe08a' : '#fff3dc'; cx.fillText(tt, K.x, by - 8);
+  }
+  // vase terminate care sar
+  for (const p of pops) { p.t += 0.02; cx.globalAlpha = Math.max(0, 1 - p.t); if (p.s === 3) drawPlate(p.x, p.y - p.t * 70, r * .3); else drawPot(p.s, p.x, p.y - p.t * 70, r * .45); }
+  pops = pops.filter(p => p.t < 1); cx.globalAlpha = 1;
+  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life -= 0.02; cx.globalAlpha = Math.max(0, p.life); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.28); cx.fill(); }
+  parts = parts.filter(p => p.life > 0);
+  cx.font = '900 19px Trebuchet MS,sans-serif'; cx.textAlign = 'center';
+  for (const f of floats) { f.t += 0.016; cx.globalAlpha = Math.max(0, 1 - f.t); cx.fillStyle = f.gold ? '#ffe08a' : '#fff8ea'; cx.strokeStyle = 'rgba(70,25,10,.6)'; cx.lineWidth = 4; cx.strokeText(f.txt, f.x, f.y - f.t * 50); cx.fillText(f.txt, f.x, f.y - f.t * 50); }
+  floats = floats.filter(f => f.t < 1); cx.globalAlpha = 1;
+  if (flash > 0) { cx.fillStyle = `rgba(255,200,120,${flash * .35})`; cx.fillRect(0, 0, A.w, A.h); flash = Math.max(0, flash - .04); }
+  // vignetă caldă
+  g = cx.createRadialGradient(A.w / 2, A.h * .55, Math.min(A.w, A.h) * .4, A.w / 2, A.h * .55, Math.max(A.w, A.h) * .8); g.addColorStop(0, 'rgba(40,12,4,0)'); g.addColorStop(1, 'rgba(40,12,4,.35)'); cx.fillStyle = g; cx.fillRect(0, 0, A.w, A.h);
+}
+function rr(x, y, w, h, r) { cx.beginPath(); cx.moveTo(x + r, y); cx.arcTo(x + w, y, x + w, y + h, r); cx.arcTo(x + w, y + h, x, y + h, r); cx.arcTo(x, y + h, x, y, r); cx.arcTo(x, y, x + w, y, r); cx.closePath(); }
+let lastT = 0, acc = 0, uiT = 0;
+function frame(now) {
+  if (!lastT) lastT = now; acc += Math.min(1, (now - lastT) / 1000); lastT = now;
+  if (started && cur !== 'menu') while (acc >= 1 / 30) { tick(1 / 30); acc -= 1 / 30; } else acc = 0;
+  draw(now); musicTick(now);
+  if (now > uiT) { uiT = now + 200; hud(); refreshList(); tutUI(); }
+  requestAnimationFrame(frame);
+}
+function hud() {
+  $('coins').innerHTML = COIN + ' ' + fmt(S.coins); $('rate').textContent = fmt(prod()) + T('perSec');
+  const b = $('boost'); if (S.boostT > 0) { b.style.display = 'inline-block'; b.innerHTML = FIRE + ' ×' + S.boostM + ' · ' + Math.ceil(S.boostT) + 's'; } else if (S.fireT >= 0 && fireOn()) { b.style.display = 'inline-block'; b.innerHTML = FIRE + ' ' + T('kiln'); } else b.style.display = 'none';
+  const n = S.cms.filter(c => c && c.done).length, tb = document.querySelector('#tabs [data-tab="cm"] .badge'); if (tb) { tb.textContent = n; tb.style.display = n ? '' : 'none'; }
+}
+function renderShapes() { $('shapes').innerHTML = [0, 1, 2, 3].map(t => `<button data-s="${t}" class="${S.shape === t ? 'on' : ''}" title="${T('pots')[t]}" aria-label="${T('pots')[t]}">${potSvg(t)}</button>`).join(''); }
+$('shapes').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { ac(); setShape(+b.dataset.s); SFX.buy(); } });
+// ---------- listă ----------
+const TI = ['🏺', '🛠', '📜', '🏆', '🏡'];
+function renderList() {
+  document.querySelectorAll('#tabs button').forEach((b, i) => { b.innerHTML = `<span class="ti">${TI[i]}</span>${T('tabs')[i]}` + (b.dataset.tab === 'cm' ? '<span class="badge" style="display:none"></span>' : ''); b.classList.toggle('on', b.dataset.tab === tab); });
+  $('buyMode').style.display = tab === 'gen' ? 'flex' : 'none';
+  const L = $('list'); let h = '';
+  if (tab === 'gen') {
+    for (let g = 0; g < 8; g++) { const vis = g === 0 || S.own[g - 1] > 0 || S.own[g] > 0 || S.life >= GENS[g].base * 0.5; h += `<button class="it${vis ? '' : ' lock'}" data-g="${g}" ${vis ? '' : 'disabled'}><span class="e">${vis ? SV(GICO[g]) : '?'}</span><span class="t"><b>${vis ? T('gens')[g] : '???'} <small style="display:inline;color:var(--terra)" data-own></small></b><small data-desc></small></span><span class="c"><span data-cost></span><small data-cnt></small></span></button>`; }
+  } else if (tab === 'up') {
+    let any = false;
+    for (let g = 0; g < 8; g++) if (upReady(g)) { any = true; h += `<button class="it" data-u="${g}"><span class="e">${SV(GICO[g])}</span><span class="t"><b>${T('ups')[g]} ${['I', 'II', 'III', 'IV', 'V'][S.ups[g]]}</b><small>${T('gens')[g]} ×2</small></span><span class="c"><span data-cost></span></span></button>`; }
+    if (CLICK_COST[S.clickUps] !== undefined) { any = true; h += `<button class="it" data-k="1"><span class="e">${potSvg(2)}</span><span class="t"><b>${T('clickUp')} ${S.clickUps + 1}</b><small>${T('clickD')}</small></span><span class="c"><span data-cost></span></span></button>`; }
+    let nx = ''; for (let g = 0; g < 8; g++) { const k = S.ups[g]; if (k < 5 && !upReady(g) && S.own[g] > 0) nx += `<div class="note">${T('ups')[g]}: ${T('need')} ${UP_AT[k]} (${S.own[g]})</div>`; }
+    h += (any ? '' : `<div class="note">${T('noUps')}</div>`) + nx;
+  } else if (tab === 'cm') {
+    h = `<div class="note"><b style="color:var(--terra2)">${T('cmT')}</b> · ${T('cmP')}</div>`;
+    if (!cmOn()) h += `<div class="cm wait">${T('cmOff')}</div>`;
+    else for (let i = 0; i < 3; i++) { const c = S.cms[i]; h += c ? `<div class="cm${c.done ? ' done' : ''}" data-ci="${i}"><span class="e">${potSvg(c.t)}</span><span class="t"><b>${T('cust')[c.who]}</b><small><span data-prog></span> ${T('pots')[c.t]}</small><div class="bar"><i data-bar></i></div><small data-left></small></span><button class="pri" data-dl="${i}"><span data-rew></span><br>${T('deliver')}</button></div>` : `<div class="cm wait" data-ci="${i}"><span data-wait></span></div>`; }
+  } else if (tab === 'ws') {
+    h = `<div class="card"><div style="font-size:44px">${SEAL}${SEAL}${SEAL}</div><h2>${T('wsT')}</h2><p class="note">${T('wsP')}</p><p style="font-size:20px;font-weight:800;color:var(--terra2)">${SEAL} ${S.seals} · +${S.seals * 5}% ${T('mult')}</p><button class="big pri" id="bWs" style="margin:0 auto"></button><p class="note" id="wsNote"></p></div>`;
+  } else {
+    h = `<div class="note">${T('achInfo')} (${S.ach.length}/${ACHS.length})</div><div class="ach">` + ACHS.map((_, i) => `<div class="${S.ach.includes(i) ? 'got' : ''}" title="${T('achs')[i]}">${ACH_E[i]}</div>`).join('') + '</div><div class="note">' + S.ach.map(i => ACH_E[i] + ' ' + T('achs')[i]).join(' · ') + '</div>';
+  }
+  L.innerHTML = h; refreshList(); hud();
+}
+function refreshList() {
+  if (tab === 'gen') document.querySelectorAll('[data-g]').forEach(b => {
+    const g = +b.dataset.g; if (b.disabled) { if (S.life >= GENS[g].base * 0.5 || (g && S.own[g - 1] > 0)) renderList(); return; }
+    const k = buyN || Math.max(1, maxBuy(g, S.own[g], S.coins)), c = costN(g, S.own[g], k);
+    b.querySelector('[data-cost]').innerHTML = COIN + ' ' + fmt(c); b.querySelector('[data-cnt]').textContent = '×' + k;
+    b.querySelector('[data-own]').textContent = S.own[g] ? T('own') + ' ' + S.own[g] : '';
+    b.querySelector('[data-desc]').textContent = T('gdesc')[g] + ' · ' + fmt(genRate(g)) + T('perSec') + ' ' + T('each');
+    b.classList.toggle('no', c > S.coins);
+  });
+  else if (tab === 'up') {
+    document.querySelectorAll('[data-u]').forEach(b => { const c = upCost(+b.dataset.u); b.querySelector('[data-cost]').innerHTML = COIN + ' ' + fmt(c); b.classList.toggle('no', c > S.coins); });
+    document.querySelectorAll('[data-k]').forEach(b => { const c = CLICK_COST[S.clickUps]; b.querySelector('[data-cost]').innerHTML = COIN + ' ' + fmt(c); b.classList.toggle('no', c > S.coins); });
+    const want = []; for (let g = 0; g < 8; g++) if (upReady(g)) want.push(g); if (want.length !== document.querySelectorAll('[data-u]').length) renderList();
+  } else if (tab === 'cm') {
+    if (!cmOn()) { if (!document.querySelector('#list .cm.wait')) renderList(); return; }
+    for (let i = 0; i < 3; i++) {
+      const c = S.cms[i], el = document.querySelector(`[data-ci="${i}"]`); if (!el || !!c === el.classList.contains('wait')) { renderList(); return; }
+      if (!c) { el.querySelector('[data-wait]').textContent = T('cmWait', { s: Math.max(1, Math.ceil(S.cmNext[i])) }); continue; }
+      if (c.done !== el.classList.contains('done')) { renderList(); return; }
+      el.querySelector('[data-prog]').textContent = Math.floor(c.got) + '/' + c.need; el.querySelector('[data-bar]').style.width = (100 * c.got / c.need) + '%';
+      el.querySelector('[data-left]').textContent = c.done ? '✓' : '⏳ ' + fmtTime(c.left) + ' ' + T('cmLeft') + ' · ' + T('reward');
+      el.querySelector('[data-rew]').innerHTML = COIN + ' ' + fmt(c.rew); el.querySelector('[data-dl]').disabled = !c.done;
+    }
+  } else if (tab === 'ws') { const d = wsGain(), b = $('bWs'); if (!b) return; b.disabled = !d; b.innerHTML = T('wsNow', { d }); $('wsNote').textContent = d ? '' : T('wsNeed', { x: fmt(S.run) }); }
+}
+$('list').addEventListener('click', e => {
+  ac(); const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.g !== undefined) buyGen(+b.dataset.g, buyN);
+  else if (b.dataset.u !== undefined) buyUp(+b.dataset.u);
+  else if (b.dataset.k) buyClick();
+  else if (b.dataset.dl !== undefined) deliver(+b.dataset.dl);
+  else if (b.id === 'bWs') ask(T('cfWs'), T('wsP'), () => { newShop(); tab = 'gen'; renderList(); });
+});
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; renderList(); });
+document.querySelectorAll('#buyMode button').forEach(b => b.onclick = () => { buyN = +b.dataset.n; document.querySelectorAll('#buyMode button').forEach(x => x.classList.toggle('on', x === b)); refreshList(); });
+// ---------- intrare ----------
+function hitKiln(x, y) { const K = kilnBox(); return Math.hypot(x - K.x, y - (K.y - K.r * .8)) < K.r * 1.35; }
+function hitWheel(x, y) { const w = wheelBox(); return Math.abs(x - w.x) < w.r * 1.15 && y > w.y - w.r * 1.1 && y < floorY() + w.r * .2; }
+cv.addEventListener('pointerdown', e => {
+  ac(); if (!started || cur !== null) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  if (S.fireT >= 0 && fireOn() && hitKiln(x, y)) { fireKiln(); return; }
+  if (hitWheel(x, y)) tapWheel(x, y);
+});
+addEventListener('keydown', e => {
+  ac(); const k = e.key.toLowerCase();
+  if (k === 'escape') { if (cur === null) { save(); show('menu'); texts(); } else if (cur === 'settings' || cur === 'away' || cur === 'confirm') show(started ? null : 'menu'); return; }
+  if (!started || cur !== null) return;
+  if (k === ' ' || k === 'enter') { e.preventDefault(); const w = wheelBox(); tapWheel(w.x + (Math.random() - .5) * w.r, w.y - w.r * .4); }
+  else if (k >= '1' && k <= '8') buyGen(+k - 1, buyN); else if (k === 'f') { if (fireOn()) fireKiln(); } else if (k === 's') setShape((S.shape + 1) % 4);
+});
+// ---------- tutorial ----------
+function tutUI() {
+  const tp = $('tip'), hd = $('hand');
+  if (!S.tut || S.step >= 3 || !started || cur !== null) { tp.classList.remove('on'); hd.style.display = 'none'; return; }
+  const A = arena(), w = wheelBox(), K = kilnBox(); tp.innerHTML = T('steps')[S.step].replace('{n}', Math.min(10, S.clicks)); tp.classList.add('on');
+  tp.style.left = (A.w / 2) + 'px'; tp.style.top = (wide ? A.h * .17 : A.h * .25) + 'px'; tp.style.maxWidth = Math.min(A.w - 24, 440) + 'px';
+  let hx, hy; if (S.step === 0) { hx = w.x; hy = w.y - w.r * .2; } else if (S.step === 1) { let b = document.querySelector('[data-g="0"]'); if (tab !== 'gen' || !b) { tab = 'gen'; renderList(); b = document.querySelector('[data-g="0"]'); } const rc = b.getBoundingClientRect(); hx = rc.right - 50; hy = rc.top + rc.height * .55; } else { hx = K.x; hy = K.y - K.r * .6; }
+  hd.style.display = 'block'; hd.style.left = hx + 'px'; hd.style.top = hy + 'px';
+}
+// ---------- ecrane ----------
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); cur = id; $('shapes').style.display = id === 'menu' ? 'none' : 'flex'; tutUI(); }
+let toastT = 0;
+function toast(m) { const el = $('toast'); el.textContent = m; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
+let askCb = null; function ask(t, p, cb) { $('cfT').textContent = t; $('cfP').textContent = p; askCb = cb; show('confirm'); }
+$('cfYes').onclick = () => { show(started ? null : 'menu'); const c = askCb; askCb = null; if (c) c(); };
+$('cfNo').onclick = () => show(started ? null : 'menu');
+function texts() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-t]').forEach(e => e.textContent = T(e.dataset.t));
+  const has = S.started; $('bPlay').textContent = has ? T('cont') : T('play'); $('bNew').textContent = T('newg'); $('bNew').style.display = has ? '' : 'none';
+  $('bLang').textContent = S.lang.toUpperCase(); $('sLang').textContent = S.lang.toUpperCase();
+  for (const k of ['fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).textContent = S[k] ? T('on') : T('off');
+  $('sMusic').value = Math.round(S.music * 100); $('sSfx').value = Math.round(S.sfx * 100); $('sFull').textContent = document.fullscreenElement ? T('on') : T('off');
+  $('sReset').textContent = T('erase'); $('sClose').textContent = T('close'); $('awayOk').textContent = T('ok'); $('cfYes').textContent = T('yes'); $('cfNo').textContent = T('no');
+  $('menuInfo').innerHTML = has ? COIN + ' ' + fmt(S.life) + (S.seals ? ' · ' + SEAL + ' ' + S.seals : '') + ' · 🏆 ' + S.ach.length + '/' + ACHS.length : '';
+  $('ver').textContent = 'v' + VERSION; renderShapes(); renderList(); hud();
+}
+function play() { ac(); S.started = 1; started = true; save(); show(null); texts(); }
+$('bPlay').onclick = play;
+$('bNew').onclick = () => ask(T('newConf'), '', () => { const l = S.lang, m = S.music, f = S.sfx; S = Object.assign(FRESH(), { lang: l, music: m, sfx: f }); pops = []; save(); play(); });
+$('bMenu').onclick = () => { save(); show('menu'); texts(); };
+$('bSet').onclick = $('bSettings').onclick = () => { texts(); show('settings'); };
+$('sClose').onclick = () => show(started ? null : 'menu');
+$('awayOk').onclick = () => show(started ? null : 'menu');
+const cycleLang = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); texts(); };
+$('bLang').onclick = cycleLang; $('sLang').onclick = cycleLang;
+for (const k of ['fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).onclick = () => { S[k] ^= 1; if (k === 'tut' && S.tut && S.step >= 3) S.step = 0; save(); texts(); };
+for (const k of ['music', 'sfx']) $('s' + k[0].toUpperCase() + k.slice(1)).addEventListener('input', e => { ac(); S[k] = (+e.target.value) / 100; vol(); save(); if (k === 'sfx') SFX.buy(); });
+$('sFull').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {} setTimeout(texts, 300); };
+let sure = 0; $('sReset').onclick = () => { if (!sure) { sure = 1; $('sReset').textContent = T('sure'); setTimeout(() => { sure = 0; texts(); }, 2500); return; } const l = S.lang; S = Object.assign(FRESH(), { lang: l }); pops = []; started = false; sure = 0; save(); show('menu'); texts(); };
+addEventListener('visibilitychange', () => { if (document.hidden && started) save(); });
+addEventListener('pagehide', () => { if (started) save(); });
+setInterval(() => { if (started) save(); }, 5000);
+// ---------- pornire ----------
+$('deco').innerHTML = potSvg(1).replace('class="i ', 'style="width:96px;height:96px" class="');
+layout(); texts(); offline(); show(cur);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

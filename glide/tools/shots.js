@@ -16,7 +16,7 @@ const play = (lv, k, skin = 1) => ALL + `S.skin=${skin};FAST=true;startLevel(${l
   const M = { width: 405, height: 720 };
   await shot('menu-mobile-en.png', M, 'en-US', ALL + 'save();menuInfo();', 1500);
   await shot('game-first-ice-en.png', M, 'en-US', play(9, 2, 0));
-  await shot('game-fish-en.png', M, 'en-US', play(24, 3, 1));
+  await shot('game-fish-en.png', M, 'en-US', play(24, 3, 8)); // v1.2: fularul Acadea
   await shot('game-thin-ice-ru.png', M, 'ru-RU', play(50, 4, 2) + 'hint();');
   await shot('win-mobile-ro.png', M, 'ro-RO', play(33, 99, 3), 1600);
   await shot('levels-mobile-en.png', M, 'en-US', ALL + "save();renderLevels();show('levels');");

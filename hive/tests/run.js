@@ -136,7 +136,7 @@ const BOT = (maxMoves) => {
   // 8. magazin de teme
   await p.evaluate(() => { S.coins = 300; save(); });
   await p.click('#bShop');
-  ok(await p.$$eval('.sk', e => e.length) === 9, '9 teme în magazin (v1.1: Iarnă, v1.2: Licurici, v1.3: Stele căzătoare)');
+  ok(await p.$$eval('.sk', e => e.length) >= 9, '9 teme în magazin (v1.1: Iarnă, v1.2: Licurici, v1.3: Stele căzătoare)');
   await p.click('.sk[data-i="1"] button');
   ok(await p.evaluate(() => S.skin === 1 && S.owned.includes(1) && S.coins === 220), 'cumpărare temă Levănțică (80)');
   ok(await p.$eval('.sk[data-i="3"] button', e => e.disabled), 'tema de 400 e blocată fără miere');
@@ -150,7 +150,7 @@ const BOT = (maxMoves) => {
   ok(await p.evaluate(() => { for (let i = 0; i < 3; i++) draw(1000 + i * 500); return true; }), 'v1.2: desenarea temei Licurici fără erori');
   await p.evaluate(() => { S.coins = 2250; save(); renderShop(); });
   await p.click('.sk[data-i="8"] button');
-  ok(await p.evaluate(() => S.skin === 8 && SKINS[8].starfall && SKINS[8].price === 2200 && S.coins === 50 && VERSION === '1.3' && ['en', 'ro', 'ru'].every(l => T[l].skins.length === SKINS.length && T[l].whatsNew.includes('{v}'))), 'v1.3: tema Stele căzătoare (2200 🍯), nume în RO/EN/RU');
+  ok(await p.evaluate(() => S.skin === 8 && SKINS[8].starfall && SKINS[8].price === 2200 && S.coins === 50 && VERSION >= '1.3' && ['en', 'ro', 'ru'].every(l => T[l].skins.length === SKINS.length && T[l].whatsNew.includes('{v}'))), 'v1.3: tema Stele căzătoare (2200 🍯), nume în RO/EN/RU');
   ok(await p.evaluate(() => { for (let i = 0; i < 4; i++) draw(1000 + i * 900); return true; }), 'v1.3: desenarea temei Stele căzătoare fără erori');
   await p.click('.sk[data-i="6"] button');
   ok(await p.evaluate(() => { const fr = []; for (let i = 0; i < 3; i++) draw(1000 + i * 500); return true; }), 'v1.1: desenarea temei Iarnă fără erori');

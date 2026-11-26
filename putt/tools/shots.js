@@ -19,6 +19,8 @@ const roll = (lv, skin, ang, pow, t) => ALL + `S.skin=${skin};startLevel(${lv});
   await shot('game-meadow-en.png', M, 'en-US', aim(9, 0, -0.35, 0.72));
   await shot('game-dunes-en.png', M, 'en-US', roll(13, 3, -1.1, 0.95, 700), 1200);
   await shot('game-moon-ru.png', M, 'ru-RU', roll(29, 4, -1.62, 0.9, 520), 1000);
+  await shot('game-icicle-ro.png', M, 'ro-RO', roll(33, 13, -1.4, 0.75, 450), 900); // v1.3: Țurțure cu urmă de fulgi
+  await shot('skins-mobile-en.png', M, 'en-US', ALL + "S.skin=12;save();show('skins');"); // v1.3
   await shot('win-mobile-ro.png', M, 'ro-RO', ALL + 'startLevel(3);G.strokes=1;finish(false);', 1600);
   await shot('levels-mobile-en.png', M, 'en-US', ALL + "save();show('levels');");
   await shot('game-desktop-en.png', { width: 1280, height: 720 }, 'en-US', roll(25, 6, -1.7, 0.8, 600), 1000);

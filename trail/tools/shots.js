@@ -22,6 +22,8 @@ const walk = (lv, k) => `startLevel(${lv});for(const j of G.L.sol.slice(1,${k}))
   await shot('game-pebbles-ro.png', M, 'ro-RO', base(PROG), walk(24, 17), 900);
   await shot('game-cocoon-ru.png', M, 'ru-RU', base(PROG), walk(38, 22), 900);
   await shot('game-berries-en.png', M, 'en-US', base(PROG), walk(52, 20), 900);
+  await shot('skins-en.png', M, 'en-US', base(Object.assign({}, PROG, { done: Array(60).fill(1), stars: Array(60).fill(3), skin: 8 })), "renderSkins();show('skins');", 500); // v1.1
+  await shot('game-snowflake-en.png', M, 'en-US', base(Object.assign({}, PROG, { skin: 8 })), walk(20, 16), 900); // v1.1
   await shot('levels-en.png', M, 'en-US', base(PROG), "renderLevels();show('levels');", 500);
   await shot('game-desktop-en.png', { width: 1280, height: 720 }, 'en-US', base(PROG), walk(47, 25), 900);
   const scene = (await shot('_s', { width: 560, height: 700 }, 'en-US', base(PROG), walk(33, 24) + "document.getElementById('hud').classList.remove('on');document.getElementById('tools').classList.remove('on');", 900, { x: 0, y: 0, width: 560, height: 700 })).toString('base64');

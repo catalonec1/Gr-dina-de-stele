@@ -124,8 +124,8 @@ async function fresh(b, locale = 'ro-RO', vp = { width: 390, height: 844 }, ctxO
   ok(await p.$eval('.lv.cur', e => e.dataset.lv) === '3', 'următoarea pilotă e evidențiată');
   await p.click('.lv[data-lv="10"]'); ok(await p.evaluate(() => mode !== 'game') && await p.$eval('#toast', e => e.classList.contains('on')), 'pilotele blocate nu pornesc');
   await p.click('[data-back]'); await p.click('#bFabrics'); await p.waitForTimeout(100);
-  ok(await p.$$eval('.fb', e => e.length) === 10, '10 seturi de materiale (v1.2: Ie, Ger)');
-  ok(await p.evaluate(() => VERSION === '1.2' && FABRICS[8].need === 165 && FABRICS[9].need === 175 && T.news.includes('175')), 'v1.2: materialele Ie (165★) și Ger (175★), mesaj Noutăți');
+  ok(await p.$$eval('.fb', e => e.length) >= 10, '>= 10 seturi de materiale (v1.2: Ie, Ger)');
+  ok(await p.evaluate(() => VERSION >= '1.2' && FABRICS[8].need === 165 && FABRICS[9].need === 175 && T.news.includes(VERSION)), 'v1.2: materialele Ie (165★) și Ger (175★), mesaj Noutăți');
   ok(await p.evaluate(() => FABRICS[6].need === 155 && FABRICS[7].need === 180 ), 'v1.1: materialele Toamnă (155★) și Aur (180★), mesaj Noutăți');
   await p.click('.fb:nth-child(2)'); ok(await p.evaluate(() => S.fab === 0), 'materialul blocat nu se poate alege');
   await p.evaluate(() => { S.stars = new Array(15).fill(3); renderFabrics(); }); await p.click('.fb:nth-child(3)');

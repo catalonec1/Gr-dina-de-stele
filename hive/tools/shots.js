@@ -24,6 +24,7 @@ const SCENE = (skin) => {
   await shot('game-mobile-en.png', { width: 405, height: 720 }, 'en-US', s => eval(s), play(0));
   await shot('game-mobile-ru.png', { width: 405, height: 720 }, 'ru-RU', s => eval(s), play(3));
   await shot('game-desktop-en.png', { width: 1280, height: 720 }, 'en-US', s => eval(s), play(5));
+  await shot('game-snow-globe-ro.png', { width: 405, height: 720 }, 'ro-RO', s => eval(s), play(9)); // v1.4
   await shot('shop-mobile-en.png', { width: 405, height: 720 }, 'en-US', () => { S.coins = 420; S.owned = [0, 1, 2]; S.skin = 2; show('shop'); });
   // coperți: fagure + titlu, fără interfață
   const cover = async (name, w, h, title = true) => {

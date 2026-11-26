@@ -30,3 +30,13 @@ A hungry little caterpillar wakes up in a spring garden. Guide it across the gri
 - English, Romanian and Russian
 
 Made with love by Star Garden Games.
+
+## Update v1.1
+
+Teste noi: `node trail/tests/v11.js` (21: omizi noi, migrarea unei salvări v1.0, deblocare la 110★ după o grădină rezolvată cu soluția generatorului, Noutăți o singură dată, RO/EN/RU, zero erori JS). `node trail/tests/run.js` (35) trece neschimbat.
+
+**EN (What's new):** Winter is here! Two new caterpillars to unlock with stars: Snowflake (110★) and Garland (170★). Your gardens, stars and streak carry over.
+
+**RO (Noutăți):** A venit iarna! Două omizi noi de deblocat cu stele: Fulg de nea (110★) și Ghirlandă (170★). Grădinile, stelele și seria ta rămân neschimbate.
+
+**RU (Что нового):** Пришла зима! Две новые гусеницы за звёзды: «Снежинка» (110★) и «Гирлянда» (170★). Ваши сады, звёзды и серия сохраняются.
