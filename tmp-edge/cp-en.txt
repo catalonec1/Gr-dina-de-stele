@@ -1,0 +1,17 @@
+Color Pocket is a small, fast color toolkit in your toolbar. It works fully offline and collects no data.
+
+CONVERT
+- Type or paste any color: #f80, #ff8800cc, rgb(255 136 0), hsl(32 100% 50%), hsv/hsb, cmyk(0,47,100,0) or a CSS color name.
+- Get HEX, RGB, HSL, HSV, CMYK, Android ARGB, Swift UIColor and decimal at once. Click a row to copy it.
+- Native color picker, plus an eyedropper to pick any pixel on screen.
+- Remembers your recent colors.
+
+CONTRAST
+- WCAG 2.x contrast ratio for text and background, with AA and AAA results for normal and large text.
+- Live preview and a swap button. Transparent colors are blended correctly.
+
+PALETTE
+- 10 shades from light to dark, complementary, analogous, triadic and tetradic harmonies.
+- Click a swatch to copy its HEX, or copy all shades as CSS variables.
+
+Right-click selected text on any page and choose "Convert color" or "Check contrast" to open it in Color Pocket. Shortcut: Alt+Shift+O.

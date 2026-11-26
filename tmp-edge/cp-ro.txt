@@ -1,0 +1,17 @@
+Color Pocket este un set mic și rapid de unelte pentru culori, direct în bara de instrumente. Funcționează complet offline și nu colectează date.
+
+CONVERSIE
+- Scrie sau lipește orice culoare: #f80, #ff8800cc, rgb(255 136 0), hsl(32 100% 50%), hsv/hsb, cmyk(0,47,100,0) sau un nume de culoare CSS.
+- Primești deodată HEX, RGB, HSL, HSV, CMYK, Android ARGB, Swift UIColor și zecimal. Un clic pe rând copiază valoarea.
+- Selector de culoare și pipetă pentru orice pixel de pe ecran.
+- Ține minte culorile recente.
+
+CONTRAST
+- Raportul de contrast WCAG 2.x pentru text și fundal, cu rezultate AA și AAA pentru text normal și mare.
+- Previzualizare live și buton de inversare. Culorile transparente sunt amestecate corect.
+
+PALETĂ
+- 10 nuanțe de la deschis la închis, armonii complementare, analoge, triadice și tetradice.
+- Clic pe o mostră copiază codul HEX; toate nuanțele se pot copia ca variabile CSS.
+
+Selectează un text pe orice pagină, clic dreapta, „Convert color” sau „Check contrast”. Scurtătură: Alt+Shift+O.
