@@ -11,9 +11,9 @@ const OLD = { done: Array(20).fill(1), stars: Array(20).fill(3), best: [], fab: 
   const errs = [];
   const page = async (locale, init) => {
     const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, locale });
-    if (init) await ctx.addInitScript(s => { if (!sessionStorage.getItem('x')) { localStorage.setItem('cozyquilt1', s); sessionStorage.setItem('x', 1); } }, JSON.stringify(init));
     const p = await ctx.newPage();
     p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
+    if (init) { await p.goto('file://' + __filename); await p.evaluate(([k, s]) => localStorage.setItem(k, s), ['cozyquilt1', JSON.stringify(init)]); } // salvare veche scrisă înainte de pornirea jocului
     await p.goto(URL); await p.waitForTimeout(400); return p;
   };
   // 1. date noi
