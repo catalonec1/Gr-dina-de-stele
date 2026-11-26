@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Lantern Harbor</title>
+<meta name="description" content="A cozy night-harbor idle game. Tap the lighthouse to make glow, hire lamplighters, fill firefly jars, send out fishing boats, ride the tides, catch the golden ship and sail on to a new harbor. Keeps glowing while you are away.">
+<meta name="theme-color" content="#0d1533">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230d1533'/%3E%3Ccircle cx='32' cy='18' r='12' fill='%23ffc86b' opacity='.35'/%3E%3Cpath d='M26 56l2-32h8l2 32z' fill='%23efe6d2'/%3E%3Cpath d='M27 44h10v5H27zM27.7 32h8.6v5h-8.6z' fill='%232f8f8a'/%3E%3Crect x='27' y='14' width='10' height='9' rx='2' fill='%23ffd88a'/%3E%3Cpath d='M25 14l7-6 7 6z' fill='%23233066'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#0d1533;--panel:rgba(14,22,50,.96);--panel2:rgba(26,38,80,.9);--line:rgba(160,190,255,.16);--ink:#f4f1e6;--dim:#aab6d8;--acc:#ffc86b;--acc2:#6fe3d6;--warm:#ff9f5a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+canvas{position:fixed;left:0;top:0;display:block;touch-action:none}
+button{font:inherit;color:inherit;background:rgba(160,190,255,.09);border:1px solid var(--line);border-radius:14px;padding:10px 14px;cursor:pointer;transition:transform .08s,background .15s,box-shadow .15s}
+button:hover{background:rgba(160,190,255,.16)}
+button:active{transform:scale(.97)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button:disabled{opacity:.45;cursor:default}
+button.big{font-size:21px;padding:15px 0;width:min(80vw,310px);margin:6px 0;font-weight:800;letter-spacing:.3px}
+button.pri{background:linear-gradient(180deg,#ffdc95,#f3a43c);color:#3d1f00;border:none;box-shadow:0 5px 0 #a3600f,0 0 26px rgba(255,190,90,.35),0 10px 22px rgba(0,0,0,.4)}
+button.pri:active{transform:translateY(3px);box-shadow:0 2px 0 #a3600f}
+button.ico{padding:6px 10px;min-width:44px;min-height:42px;font-size:19px;background:rgba(8,14,36,.62);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:8;overflow:auto;background:radial-gradient(ellipse at 50% 35%,rgba(20,30,70,.35),rgba(5,9,24,.78));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.screen.on{display:flex;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.06)}100%{transform:scale(1);opacity:1}}
+@keyframes sway{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes poke{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,10px)}}
+@keyframes shine{0%,100%{filter:drop-shadow(0 0 14px rgba(255,190,90,.55))}50%{filter:drop-shadow(0 0 26px rgba(255,190,90,.9))}}
+#menu h1{margin:0 0 6px;font-size:clamp(46px,13vw,80px);line-height:.92;color:#fff4dc;text-shadow:0 4px 0 #b4621c,0 8px 0 rgba(0,0,0,.3),0 0 46px rgba(255,190,90,.55);text-align:center;font-weight:900;letter-spacing:1px}
+#menu h1 span{display:block;font-size:.74em;color:var(--acc2);text-shadow:0 4px 0 #1c6a72,0 7px 0 rgba(0,0,0,.3),0 0 30px rgba(111,227,214,.45)}
+#menu .sub{color:var(--dim);margin:10px 18px 18px;text-align:center;max-width:390px;font-size:16px;line-height:1.35}
+.deco{width:64px;height:84px;margin-bottom:10px;transform-origin:50% 0;animation:sway 3.2s ease-in-out infinite,shine 2.4s ease-in-out infinite}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.panelbox{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;width:min(92vw,430px);box-shadow:0 20px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);animation:pop .35s ease}
+h2{margin:0 0 12px;text-align:center;font-size:24px;color:#fff4dc}
+.set{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);gap:12px;min-height:50px}
+.set:last-of-type{border:none}
+.set button{min-width:96px}
+.set input[type=range]{width:150px;accent-color:var(--acc);cursor:pointer;height:28px}
+.set .val{display:inline-block;width:38px;text-align:right;color:var(--acc);font-weight:800;font-size:14px}
+#ver{color:var(--dim);font-size:12px;text-align:center;margin-top:8px;opacity:.7}
+#hud{position:fixed;left:0;top:0;z-index:4;padding:calc(8px + env(safe-area-inset-top)) 10px 0;display:flex;justify-content:space-between;align-items:flex-start;pointer-events:none}
+#hud button{pointer-events:auto}
+#hud .mid{text-align:center;text-shadow:0 2px 8px rgba(0,0,0,.8)}
+#glow{font-size:29px;font-weight:900;display:block;line-height:1.1;color:#fff4dc}
+#rate{font-size:14px;color:var(--acc)}
+#phase{display:inline-block;margin-top:5px;font-size:13px;padding:3px 10px 5px;border-radius:12px;background:rgba(8,14,36,.62);border:1px solid var(--line);position:relative;overflow:hidden}
+#phase i{position:absolute;left:0;bottom:0;height:2px;background:var(--acc2);border-radius:2px}
+#fest{display:none;margin-top:4px;font-size:13px;padding:3px 10px;border-radius:12px;background:linear-gradient(90deg,#ffdc95,#ff9f5a);color:#3d1f00;font-weight:800;box-shadow:0 0 18px rgba(255,170,80,.6)}
+#side{position:fixed;z-index:5;background:var(--panel);border-top:1px solid var(--line);display:flex;flex-direction:column;box-shadow:0 -10px 30px rgba(0,0,0,.35)}
+#tabs{display:flex;gap:4px;padding:6px 6px 0}
+#tabs button{flex:1;padding:8px 2px;font-size:13px;border-radius:12px 12px 0 0;border-bottom:none;background:rgba(160,190,255,.05);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#tabs button.on{background:var(--panel2);color:var(--acc);font-weight:800}
+#buyMode{display:flex;gap:6px;padding:6px 8px;align-items:center;font-size:13px;color:var(--dim)}
+#buyMode button{padding:4px 10px;font-size:13px;border-radius:10px}
+#buyMode button.on{background:var(--acc);color:#3d1f00;border-color:transparent;font-weight:800}
+#list{flex:1;overflow-y:auto;padding:4px 8px calc(10px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;touch-action:pan-y}
+.it{display:flex;align-items:center;gap:10px;width:100%;text-align:left;margin:5px 0;padding:7px 10px;border-radius:16px;background:linear-gradient(180deg,rgba(40,56,108,.55),rgba(24,34,72,.55))}
+.it .e{font-size:25px;width:42px;height:42px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 45%,rgba(255,200,107,.35),rgba(255,200,107,.04) 70%);box-shadow:inset 0 0 0 1px rgba(255,200,107,.25)}
+.it .t{flex:1;min-width:0}
+.it .t b{display:block;font-size:15px}
+.it .t small{display:block;color:var(--dim);font-size:12px;line-height:1.3}
+.it .c{text-align:right;font-weight:800;color:var(--acc);font-size:14px;white-space:nowrap}
+.it .c small{display:block;color:var(--dim);font-weight:400;font-size:11px}
+.it.no .c{color:#e9a0a0}
+.it.no .e{filter:saturate(.5)}
+.it.hot{box-shadow:0 0 0 1px rgba(111,227,214,.5),0 0 14px rgba(111,227,214,.2)}
+.it.lock{opacity:.4}
+.ach{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:6px 0}
+.ach div{aspect-ratio:1;border-radius:14px;background:rgba(160,190,255,.06);display:flex;align-items:center;justify-content:center;font-size:26px;border:1px solid var(--line);filter:grayscale(1);opacity:.35}
+.ach div.got{filter:none;opacity:1;background:radial-gradient(circle,rgba(255,200,107,.25),rgba(255,200,107,.06));border-color:rgba(255,200,107,.4)}
+.note{color:var(--dim);font-size:13px;text-align:center;margin:8px 4px}
+#tip{position:fixed;z-index:6;background:rgba(12,20,46,.96);border:1px solid rgba(255,200,107,.4);border-radius:14px;padding:9px 14px;font-size:15px;text-align:center;display:none;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.45),0 0 20px rgba(255,200,107,.15);transform:translateX(-50%)}
+#tip.on{display:block;animation:pop .35s ease}
+#tip b{color:var(--acc)}
+#hand{position:fixed;z-index:7;font-size:34px;pointer-events:none;display:none;animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.6))}
+#toast{pointer-events:none;position:fixed;left:50%;top:calc(112px + env(safe-area-inset-top));transform:translateX(-50%);background:rgba(12,20,46,.97);border:1px solid rgba(255,200,107,.45);border-radius:14px;padding:9px 16px;z-index:9;display:none;font-weight:700;text-align:center;max-width:92vw;box-shadow:0 0 22px rgba(255,200,107,.2)}
+#toast.on{display:block;animation:pop .3s ease}
+@media (max-height:640px){.deco{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><button class="ico" id="bMenu" aria-label="Menu">☰</button><div class="mid"><span id="glow">0</span><span id="rate"></span><br><span id="phase"></span><br><span id="fest"></span></div><button class="ico" id="bSet" aria-label="Settings">⚙️</button></div>
+<div id="side">
+  <div id="tabs"><button data-tab="gen" class="on"></button><button data-tab="up"></button><button data-tab="pre"></button><button data-tab="ach"></button></div>
+  <div id="buyMode"><span data-t="buy"></span><button data-n="1" class="on">×1</button><button data-n="10">×10</button><button data-n="0">Max</button></div>
+  <div id="list"></div>
+</div>
+<div id="tip"></div>
+<div id="hand">👆</div>
+<div id="toast"></div>
+
+<div class="screen on" id="menu">
+  <svg class="deco" viewBox="0 0 64 84" aria-hidden="true"><path d="M32 0v10" stroke="#c9b48a" stroke-width="2"/><path d="M20 14h24l-3 6H23z" fill="#5a3a22"/><ellipse cx="32" cy="44" rx="22" ry="25" fill="#ff8a4c"/><ellipse cx="32" cy="44" rx="15" ry="25" fill="#ffb15c"/><ellipse cx="32" cy="44" rx="7" ry="25" fill="#ffd88a"/><path d="M12 33q20 5 40 0M10 44q22 5 44 0M12 55q20 5 40 0" stroke="#d4602a" stroke-width="1.5" fill="none" opacity=".7"/><path d="M22 68h20l-3 6H25z" fill="#5a3a22"/><path d="M32 74v10" stroke="#ffc86b" stroke-width="2"/></svg>
+  <h1>Lantern<span>Harbor</span></h1>
+  <div class="sub" data-t="sub"></div>
+  <button class="big pri" id="bPlay"></button>
+  <button class="big" id="bNew" style="display:none"></button>
+  <div class="row"><button id="bSettings" class="ico" aria-label="Settings">⚙️</button><button id="bLang" class="ico" aria-label="Language">EN</button></div>
+  <div id="menuInfo" style="color:var(--acc);margin-top:10px;font-weight:700"></div>
+</div>
+<div class="screen" id="settings"><div class="panelbox"><h2 data-t="settings"></h2>
+  <div class="set"><span data-t="music"></span><span><input type="range" id="sMusic" min="0" max="100" step="5"><span class="val" id="vMusic"></span></span></div>
+  <div class="set"><span data-t="sound"></span><span><input type="range" id="sSound" min="0" max="100" step="5"><span class="val" id="vSound"></span></span></div>
+  <div class="set"><span data-t="fx"></span><button id="sFx"></button></div>
+  <div class="set"><span data-t="tut"></span><button id="sTut"></button></div>
+  <div class="set"><span data-t="lang"></span><button id="sLang"></button></div>
+  <div class="set"><span data-t="full"></span><button id="sFull"></button></div>
+  <div class="set"><span data-t="keys"></span><small style="color:var(--dim);text-align:right">Space 🗼 · 1–8 · G ⛵ · Esc</small></div>
+  <div class="set"><span data-t="reset"></span><button id="sReset" style="color:#ff9a9a"></button></div>
+  <div class="row"><button class="big pri" id="sClose" style="margin:0"></button></div>
+  <div id="ver"></div>
+</div></div>
+<div class="screen" id="away"><div class="panelbox" style="text-align:center"><h2 data-t="awayT"></h2><div style="font-size:44px">🌙🏮</div><p id="awayInfo" style="color:var(--dim)"></p><button class="big pri" id="awayOk" style="margin:0 auto"></button></div></div>
+<div class="screen" id="confirm"><div class="panelbox" style="text-align:center"><h2 id="cfT"></h2><p id="cfP" style="color:var(--dim)"></p><div class="row"><button id="cfNo"></button><button class="pri" id="cfYes"></button></div></div></div>
+
+<script>
+'use strict';
+const VERSION = '1.0';
+// ---------- texte ----------
+const TX = {
+  ro: { sub: 'Un port liniștit noaptea, care strălucește și când nu ești aici. Atinge farul, angajează lampagii, trimite bărci în larg, prinde corabia aurie și pornește spre un port nou.', play: 'Joacă', cont: 'Continuă', newg: 'Joc nou', settings: 'Setări', music: 'Muzică', sound: 'Sunete', tut: 'Tutorial', lang: 'Limba', fx: 'Efecte', full: 'Ecran complet', keys: 'Tastatură', reset: 'Șterge progresul', on: 'Pornit', off: 'Oprit', erase: 'Șterge', sure: 'Apasă din nou', close: 'Închide', buy: 'Cumpără', perSec: '/s', tabs: ['Ajutoare', 'Îmbunătățiri', 'Port nou', 'Trofee'], phases: ['Flux', 'Ceață de mare', 'Ploaie de stele', 'Briză caldă'], boost: '×2: ', own: 'ai', each: 'fiecare', need: 'apare la', noUps: 'Angajează mai mulți ajutoare ca să apară îmbunătățiri noi.', fest: 'Festivalul felinarelor ×7', gift: 'Corabia aurie a lăsat ', ship: 'Corabia aurie!', awayT: 'Bine ai revenit!', away: 'Cât ai lipsit ({t}), portul a strâns ', ok: 'Minunat', preT: 'Un port nou', preP: 'Pornește spre un golf nou și întunecat și ia-o de la capăt. Lumina, ajutoarele și îmbunătățirile se resetează, dar păstrezi perlele lunii: fiecare 🦪 dă +5% lumină pentru totdeauna.', preNow: 'Ridică pânzele: +{d} 🦪', preNeed: 'Ai nevoie de 1 M ✨ strânse în acest port (acum {x}).', pearls: 'Perle ale lunii', mult: 'bonus lumină', cfPre: 'Pornești spre un port nou?', yes: 'Da', no: 'Nu', newConf: 'Ștergi portul și începi de la zero?', achGot: 'Trofeu: ', achInfo: 'Fiecare trofeu dă +2% lumină.', lensUp: 'Lentilă mai mare', lensD: 'atingerea dă ×2 și +1% din producție', ver: 'Versiunea',
+    steps: ['<b>1/3</b> Atinge farul ca să faci lumină ({n}/10).', '<b>2/3</b> Angajează un lampagiu: face lumină în locul tău.', '<b>3/3</b> O corabie aurie! Atinge-o până nu pleacă.'],
+    gens: ['Lampagiu', 'Borcan cu licurici', 'Barcă de pescuit', 'Atelier de felinare', 'Ceainărie', 'Geamandură-stea', 'Balena lunii', 'Aurora'], gdesc: ['aprinde felinarele de pe dig', 'lumină mică, dar caldă', 'aduce pește și lumină din larg', 'lipește felinare de hârtie', 'ceai fierbinte, ferestre aurii', 'clipește ca să ghideze corăbiile', 'bea lumina lunii și o dă înapoi', 'pictează cerul de deasupra portului'],
+    ups: ['Fitil lung', 'Capace de sticlă', 'Plase de argint', 'Hârtie de orez', 'Ceai de iasomie', 'Clopoței de alamă', 'Cântecul balenei', 'Panglici polare'],
+    achs: ['Primele 100 de lumini', '10 000 de lumini', 'Un milion', 'Un miliard', 'Un trilion', 'Primul lampagiu', '50 de lampagii', '100 de lampagii', 'Câte unul din toate', '25 din fiecare', '1 000 de atingeri', 'Prima corabie aurie', '10 corăbii aurii', 'Primul port nou', '100/s', '1 M/s'] },
+  en: { sub: 'A quiet night harbor that keeps glowing while you are away. Tap the lighthouse, hire lamplighters, send boats out to sea, catch the golden ship and sail on to a new harbor.', play: 'Play', cont: 'Continue', newg: 'New game', settings: 'Settings', music: 'Music', sound: 'Sounds', tut: 'Tutorial', lang: 'Language', fx: 'Effects', full: 'Fullscreen', keys: 'Keyboard', reset: 'Reset progress', on: 'On', off: 'Off', erase: 'Reset', sure: 'Tap again', close: 'Close', buy: 'Buy', perSec: '/s', tabs: ['Helpers', 'Upgrades', 'New harbor', 'Trophies'], phases: ['High tide', 'Sea mist', 'Starfall', 'Warm breeze'], boost: '×2: ', own: 'own', each: 'each', need: 'appears at', noUps: 'Hire more helpers to unlock new upgrades.', fest: 'Lantern festival ×7', gift: 'The golden ship left ', ship: 'Golden ship!', awayT: 'Welcome back!', away: 'While you were away ({t}), the harbor made ', ok: 'Lovely', preT: 'A new harbor', preP: 'Sail to a new, darker bay and start again. Glow, helpers and upgrades reset, but you keep your moon pearls: every 🦪 gives +5% glow forever.', preNow: 'Set sail: +{d} 🦪', preNeed: 'You need 1 M ✨ gathered in this harbor (now {x}).', pearls: 'Moon pearls', mult: 'glow bonus', cfPre: 'Sail to a new harbor?', yes: 'Yes', no: 'No', newConf: 'Erase this harbor and start over?', achGot: 'Trophy: ', achInfo: 'Every trophy gives +2% glow.', lensUp: 'Bigger lens', lensD: 'taps give ×2 and +1% of production', ver: 'Version',
+    steps: ['<b>1/3</b> Tap the lighthouse to make glow ({n}/10).', '<b>2/3</b> Hire a lamplighter: he makes glow for you.', '<b>3/3</b> A golden ship! Tap it before it sails away.'],
+    gens: ['Lamplighter', 'Firefly jar', 'Fishing boat', 'Lantern maker', 'Tea house', 'Star buoy', 'Moon whale', 'Aurora'], gdesc: ['lights the lamps along the pier', 'a small but cozy glow', 'brings fish and light back from sea', 'folds paper lanterns all night', 'hot tea, golden windows', 'blinks to guide the ships home', 'drinks moonlight and breathes it out', 'paints the sky above the harbor'],
+    ups: ['Long wicks', 'Glass lids', 'Silver nets', 'Rice paper', 'Jasmine tea', 'Brass bells', 'Whale song', 'Polar ribbons'],
+    achs: ['First 100 glow', '10,000 glow', 'A million glow', 'A billion glow', 'A trillion glow', 'First lamplighter', '50 lamplighters', '100 lamplighters', 'One of every helper', '25 of every helper', '1,000 taps', 'First golden ship', '10 golden ships', 'First new harbor', '100 glow/s', '1 M glow/s'] },
+  ru: { sub: 'Тихая ночная гавань, которая светится, даже когда вас нет. Нажимайте на маяк, нанимайте фонарщиков, отправляйте лодки в море, ловите золотой корабль и плывите к новой гавани.', play: 'Играть', cont: 'Продолжить', newg: 'Новая игра', settings: 'Настройки', music: 'Музыка', sound: 'Звуки', tut: 'Обучение', lang: 'Язык', fx: 'Эффекты', full: 'Полный экран', keys: 'Клавиатура', reset: 'Сбросить прогресс', on: 'Вкл', off: 'Выкл', erase: 'Сбросить', sure: 'Ещё раз', close: 'Закрыть', buy: 'Купить', perSec: '/с', tabs: ['Помощники', 'Улучшения', 'Новая гавань', 'Трофеи'], phases: ['Прилив', 'Морской туман', 'Звездопад', 'Тёплый бриз'], boost: '×2: ', own: 'есть', each: 'каждый', need: 'появится при', noUps: 'Наймите больше помощников, чтобы открыть улучшения.', fest: 'Праздник фонарей ×7', gift: 'Золотой корабль оставил ', ship: 'Золотой корабль!', awayT: 'С возвращением!', away: 'Пока вас не было ({t}), гавань собрала ', ok: 'Чудесно', preT: 'Новая гавань', preP: 'Отплывите в новую тёмную бухту и начните заново. Свет, помощники и улучшения сбрасываются, но лунные жемчужины остаются: каждая 🦪 даёт +5% света навсегда.', preNow: 'Поднять паруса: +{d} 🦪', preNeed: 'Нужно собрать 1 M ✨ в этой гавани (сейчас {x}).', pearls: 'Лунные жемчужины', mult: 'бонус света', cfPre: 'Отплыть к новой гавани?', yes: 'Да', no: 'Нет', newConf: 'Стереть гавань и начать заново?', achGot: 'Трофей: ', achInfo: 'Каждый трофей даёт +2% света.', lensUp: 'Большая линза', lensD: 'нажатие ×2 и +1% от производства', ver: 'Версия',
+    steps: ['<b>1/3</b> Нажмите на маяк, чтобы получить свет ({n}/10).', '<b>2/3</b> Наймите фонарщика: он будет светить за вас.', '<b>3/3</b> Золотой корабль! Нажмите на него, пока он не уплыл.'],
+    gens: ['Фонарщик', 'Банка светлячков', 'Рыбацкая лодка', 'Мастер фонариков', 'Чайный домик', 'Звёздный буй', 'Лунный кит', 'Северное сияние'], gdesc: ['зажигает фонари на причале', 'маленький, но тёплый свет', 'привозит рыбу и свет с моря', 'складывает бумажные фонарики', 'горячий чай, золотые окна', 'мигает, чтобы вести корабли', 'пьёт лунный свет и выдыхает его', 'раскрашивает небо над гаванью'],
+    ups: ['Длинные фитили', 'Стеклянные крышки', 'Серебряные сети', 'Рисовая бумага', 'Жасминовый чай', 'Латунные колокольчики', 'Песня кита', 'Полярные ленты'],
+    achs: ['Первые 100 света', '10 000 света', 'Миллион', 'Миллиард', 'Триллион', 'Первый фонарщик', '50 фонарщиков', '100 фонарщиков', 'Каждого по одному', 'Каждого по 25', '1 000 нажатий', 'Первый золотой корабль', '10 золотых кораблей', 'Первая новая гавань', '100/с', '1 M/с'] }
+};
+const LANGS = ['ro', 'en', 'ru'];
+// ---------- economie ----------
+// p = faza ciclului (0 flux, 1 ceață, 2 ploaie de stele, 3 briză) în care producătorul dă ×2
+const GENS = [
+  { e: '🕯️', base: 15, rate: 0.2, p: 1 }, { e: '🫙', base: 110, rate: 1.2, p: 3 }, { e: '🛶', base: 1200, rate: 9, p: 0 }, { e: '🏮', base: 13000, rate: 50, p: 1 },
+  { e: '🍵', base: 150000, rate: 280, p: 3 }, { e: '🛟', base: 1.8e6, rate: 1600, p: 2 }, { e: '🐋', base: 2.2e7, rate: 9000, p: 0 }, { e: '🌌', base: 3e8, rate: 52000, p: 2 }
+];
+const UP_AT = [10, 25, 50, 100, 150], UP_K = [10, 50, 500, 5000, 50000];
+const LENS_COST = [100, 1500, 25000, 4e5, 8e6, 2e8, 6e9, 2e11];
+const PHASE_LEN = 40, GROWTH = 1.15, PRE_MIN = 1e6, OFF_MAX = 8 * 3600, OFF_RATE = 0.5, FEST_MULT = 7, FEST_LEN = 30;
+const PHASE_E = ['🌊', '🌫️', '🌠', '🍃'];
+const costOf = (g, n) => GENS[g].base * Math.pow(GROWTH, n);
+function costN(g, own, k) { const r = GROWTH; return GENS[g].base * Math.pow(r, own) * (Math.pow(r, k) - 1) / (r - 1); }
+function maxBuy(g, own, money) { const r = GROWTH, b = GENS[g].base * Math.pow(r, own); return Math.max(0, Math.floor(Math.log(money * (r - 1) / b + 1) / Math.log(r) + 1e-9)); }
+const ACHS = [
+  s => s.life >= 100, s => s.life >= 1e4, s => s.life >= 1e6, s => s.life >= 1e9, s => s.life >= 1e12,
+  s => s.own[0] >= 1, s => s.own[0] >= 50, s => s.own[0] >= 100, s => s.own.every(n => n >= 1), s => s.own.every(n => n >= 25),
+  s => s.taps >= 1000, s => s.ships >= 1, s => s.ships >= 10, s => s.voyages >= 1, () => prod() >= 100, () => prod() >= 1e6
+];
+const ACH_E = ['✨', '🕯️', '🌟', '💫', '🌌', '🧑', '🔥', '👑', '🎒', '🏆', '👆', '⛵', '🚢', '⚓', '⚡', '🌈'];
+// ---------- salvare ----------
+const SK = 'lantern-harbor-v1';
+const FRESH = () => ({ v: VERSION, lang: null, glow: 0, run: 0, life: 0, own: [0, 0, 0, 0, 0, 0, 0, 0], ups: [0, 0, 0, 0, 0, 0, 0, 0], lens: 0, taps: 0, ships: 0, pearls: 0, voyages: 0, ach: [], time: 0, festT: 0, music: 60, sound: 80, fx: 1, tut: 1, step: 0, last: 0, started: 0, seed: 20261126 });
+let S = FRESH();
+try { const o = JSON.parse(localStorage.getItem(SK) || '{}'); Object.assign(S, o); } catch (e) {}
+if (!S.lang) { const n = (navigator.language || 'en').slice(0, 2); S.lang = LANGS.includes(n) ? n : n === 'uk' || n === 'be' ? 'ru' : 'en'; }
+function save() { S.last = Date.now(); try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} }
+const T = (k, v) => { let s = TX[S.lang][k]; if (v) for (const x in v) s = s.replace('{' + x + '}', v[x]); return s; };
+// RNG determinist pentru simulare (vizualul folosește Math.random)
+function rnd() { S.seed = (S.seed + 0x6D2B79F5) | 0; let t = S.seed; t = Math.imul(t ^ (t >>> 15), 1 | t); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }
+// ---------- formule ----------
+const phase = () => Math.floor(S.time / PHASE_LEN) % 4;
+function genMult(g) { return Math.pow(2, S.ups[g]) * (GENS[g].p === phase() ? 2 : 1); }
+function globalMult() { return (1 + 0.05 * S.pearls) * (1 + 0.02 * S.ach.length) * (S.festT > 0 ? FEST_MULT : 1); }
+function genRate(g) { return GENS[g].rate * genMult(g) * globalMult(); }
+function prod() { let p = 0; for (let g = 0; g < 8; g++) p += S.own[g] * GENS[g].rate * genMult(g); return p * globalMult(); }
+function clickPower() { return Math.pow(2, S.lens) + 0.01 * S.lens * prod(); }
+const pearlsFor = run => Math.floor(Math.sqrt(run / PRE_MIN));
+const preGain = () => S.run >= PRE_MIN ? Math.max(1, pearlsFor(S.run)) : 0;
+const SUF = ['', 'K', 'M', 'B', 'T', 'Qa', 'Qi', 'Sx', 'Sp', 'Oc', 'No', 'Dc'];
+function fmt(n) {
+  if (!isFinite(n)) return '∞'; if (n < 10) return (Math.floor(n * 10) / 10).toString(); if (n < 1000) return Math.floor(n).toString();
+  const e = Math.min(SUF.length - 1, Math.floor(Math.log10(n) / 3)); if (e === SUF.length - 1 && n >= 1e36) return n.toExponential(2).replace('+', '');
+  const v = n / Math.pow(1000, e); return (v < 100 ? v.toFixed(v < 10 ? 2 : 1) : Math.floor(v)) + ' ' + SUF[e];
+}
+function fmtTime(s) { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm' : s + 's'; }
+// ---------- sunet (WebAudio procedural, două magistrale) ----------
+let AC = null, BUS = {};
+function ac() {
+  try {
+    if (!AC) { AC = new (window.AudioContext || window.webkitAudioContext)(); for (const b of ['music', 'sound']) { BUS[b] = AC.createGain(); BUS[b].connect(AC.destination); } volumes(); }
+    if (AC.state === 'suspended') AC.resume();
+  } catch (e) {} return AC;
+}
+function volumes() { if (!AC) return; BUS.music.gain.value = (S.music / 100) * 0.9; BUS.sound.gain.value = (S.sound / 100); }
+function tone(f, d = 0.12, type = 'sine', v = 0.1, delay = 0, f2, bus = 'sound') {
+  if (!AC || !S[bus]) return;
+  try { const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + Math.min(0.02, d / 4)); g.gain.exponentialRampToValueAtTime(0.0001, t + d); o.connect(g).connect(BUS[bus]); o.start(t); o.stop(t + d + 0.03); } catch (e) {}
+}
+const SFX = {
+  tap: () => { const f = 520 + Math.random() * 160; tone(f, 0.09, 'sine', 0.07, 0, f * 1.5); tone(f * 2, 0.05, 'triangle', 0.02); },
+  buy: () => { tone(587, 0.09, 'triangle', 0.07); tone(880, 0.16, 'sine', 0.06, 0.06); },
+  up: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.18, 'sine', 0.06, i * 0.055)),
+  ship: () => [659, 880, 988, 1319, 1760].forEach((f, i) => tone(f, 0.28, 'triangle', 0.06, i * 0.07)),
+  no: () => tone(170, 0.14, 'sawtooth', 0.025, 0, 120),
+  ach: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.3, 'sine', 0.06, i * 0.09)),
+  sail: () => { for (let i = 0; i < 8; i++) tone(330 * Math.pow(1.122, i), 0.5, 'sine', 0.05, i * 0.08); }
+};
+// muzică: arpegiu pentatonic lent + bas, ca un clopoțel de port
+const CHORDS = [[220, 262, 330, 392], [196, 247, 294, 392], [175, 220, 262, 330], [196, 247, 294, 370]]; let mStep = 0, mNext = 0;
+function musicTick(now) {
+  if (!S.music || !AC || AC.state !== 'running' || now < mNext) return; mNext = now + 520;
+  const ch = CHORDS[Math.floor(mStep / 8) % 4], pat = [0, 2, 1, 3, 2, 1, 3, 2], f = ch[pat[mStep % 8]] * 2;
+  if (mStep % 8 !== 7) tone(f, 1.4, 'sine', 0.035, 0, 0, 'music');
+  if (mStep % 8 === 0) { tone(ch[0] / 2, 4, 'triangle', 0.03, 0, 0, 'music'); tone(ch[2], 4, 'sine', 0.015, 0.05, 0, 'music'); }
+  mStep++;
+}
+// ---------- simulare (pas fix, deterministă) ----------
+let ship = null, shipNext = 60, parts = [], floats = [], skyL = [], flare = 0;
+function step(dt) {
+  S.time += dt; if (S.festT > 0) S.festT = Math.max(0, S.festT - dt);
+  const p = prod() * dt; S.glow += p; S.run += p; S.life += p;
+  if (ship) { ship.t += dt; if (ship.t > ship.life) ship = null; }
+  else { shipNext -= dt; if (shipNext <= 0) spawnShip(); }
+  checkAch();
+}
+const tick = step;
+function spawnShip(life = 12) { ship = { t: 0, life, dir: rnd() < 0.5 ? 1 : -1, ph: rnd() * 6 }; shipNext = 50 + rnd() * 60; }
+function shipPos() { if (!ship) return null; const k = ship.t / ship.life, A = arena(), U = sc(); const x = A.x + A.w * (ship.dir > 0 ? 0.08 + k * 0.84 : 0.92 - k * 0.84); return { x, y: horizon() + 4 * U + Math.sin(ship.t * 1.6 + ship.ph) * 2 * U }; }
+function catchShip() {
+  if (!ship) return false; const p = shipPos(); ship = null; S.ships++;
+  if (rnd() < 0.5 && prod() > 0) { S.festT = FEST_LEN; toast('⛵ ' + T('fest')); }
+  else { const g = Math.max(25 * clickPower(), prod() * 90); S.glow += g; S.run += g; S.life += g; toast('⛵ ' + T('gift') + fmt(g) + ' ✨'); }
+  SFX.ship(); burst(p.x, p.y, '#ffd88a', 26, 2.4); if (S.step === 2) { S.step = 3; tutUI(); }
+  checkAch(); save(); return true;
+}
+function tapHouse(x, y) {
+  const g = clickPower(); S.glow += g; S.run += g; S.life += g; S.taps++;
+  SFX.tap(); flare = 1; if (S.fx) { floats.push({ x: x + (Math.random() - .5) * 40, y: y + (Math.random() - .5) * 16, t: 0, txt: '+' + fmt(g) }); const L = houseBox(); burst(L.x, L.lampY, '#ffd88a', 6, 1.6); }
+  if (S.step === 0 && S.taps >= 10) S.step = 1; tutUI();
+}
+function buyGen(g, n) {
+  const own = S.own[g]; const k = n || maxBuy(g, own, S.glow); if (!k) { SFX.no(); return false; }
+  const c = costN(g, own, k); if (c > S.glow * (1 + 1e-12) + 1e-9) { SFX.no(); return false; }
+  S.glow = Math.max(0, S.glow - c); S.own[g] += k; SFX.buy();
+  if (S.fx) { const A = arena(); burst(A.w * (0.45 + Math.random() * 0.4), A.h * 0.8, '#ffc86b', 10, 1.8); }
+  if (S.step === 1 && S.own[0] >= 1) { S.step = 2; spawnShip(18); shipNext = 30; }
+  tutUI(); checkAch(); renderList(); save(); return true;
+}
+function upCost(g) { const k = S.ups[g]; return k < 5 ? GENS[g].base * UP_K[k] : Infinity; }
+function upReady(g) { const k = S.ups[g]; return k < 5 && S.own[g] >= UP_AT[k]; }
+function buyUp(g) {
+  if (!upReady(g) || S.glow < upCost(g)) { SFX.no(); return false; }
+  S.glow -= upCost(g); S.ups[g]++; SFX.up(); renderList(); save(); return true;
+}
+function buyLens() { const c = LENS_COST[S.lens]; if (c === undefined || S.glow < c) { SFX.no(); return false; } S.glow -= c; S.lens++; SFX.up(); flare = 1.5; renderList(); save(); return true; }
+function newHarbor() {
+  const d = preGain(); if (!d) return false;
+  const keep = { lang: S.lang, music: S.music, sound: S.sound, fx: S.fx, tut: S.tut, life: S.life, taps: S.taps, ships: S.ships, ach: S.ach, time: S.time, step: S.step, started: S.started, seed: S.seed };
+  const pearls = S.pearls + d, voyages = S.voyages + 1; S = Object.assign(FRESH(), keep, { pearls, voyages }); checkAch();
+  SFX.sail(); for (let i = 0; i < 24; i++) setTimeout(() => { const A = arena(); skyL.push(newSkyLantern(A)); }, i * 60);
+  save(); renderList(); return true;
+}
+function checkAch() {
+  for (let i = 0; i < ACHS.length; i++) if (!S.ach.includes(i) && ACHS[i](S)) { S.ach.push(i); if (started) { SFX.ach(); toast(ACH_E[i] + ' ' + T('achGot') + T('achs')[i]); } if (tab === 'ach') renderList(); }
+}
+function offline() {
+  if (!S.last) return 0; const dt = Math.min(OFF_MAX, (Date.now() - S.last) / 1000); if (dt < 60) return 0;
+  const fest = S.festT; S.festT = 0; const p = prod() * dt * OFF_RATE; S.festT = 0; if (p <= 0) return 0;
+  S.glow += p; S.run += p; S.life += p; S.time += dt;
+  $('awayInfo').textContent = T('away', { t: fmtTime(dt) }) + fmt(p) + ' ✨'; show('away'); return p;
+}
+// ---------- ecran ----------
+const cv = document.getElementById('c'), cx = cv.getContext('2d'), $ = id => document.getElementById(id);
+let W = 0, H = 0, DPR = 1, wide = false, started = false, tab = 'gen', buyN = 1, cur = 'menu', tideV = 0;
+function arena() { return wide ? { x: 0, y: 0, w: W - 400, h: H } : { x: 0, y: 0, w: W, h: Math.round(H * 0.5) }; }
+function sc() { const A = arena(); return Math.min(A.w, A.h * 1.15) / 400; }
+function horizon() { const A = arena(); return A.h * (0.56 + tideV); }
+function houseBox() {
+  const A = arena(), U = sc(), x = A.w * (wide ? 0.3 : 0.27), bot = A.h * 0.69, top = bot - A.h * 0.34;
+  return { x, bot, top, w: 13 * U, lampY: top - 9 * U, dome: top - 30 * U };
+}
+function hitHouse(x, y) { const L = houseBox(), U = sc(); return Math.abs(x - L.x) < Math.max(44, L.w * 3) && y > L.dome - 30 * U && y < L.bot + 14 * U; }
+function layout() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; wide = W >= 820 && W > H;
+  const A = arena(); cv.width = A.w * DPR; cv.height = A.h * DPR; cv.style.width = A.w + 'px'; cv.style.height = A.h + 'px'; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const sd = $('side'), hd = $('hud');
+  if (wide) Object.assign(sd.style, { left: (W - 400) + 'px', top: '0', width: '400px', height: H + 'px', borderLeft: '1px solid var(--line)', borderTop: 'none' });
+  else Object.assign(sd.style, { left: '0', top: A.h + 'px', width: W + 'px', height: (H - A.h) + 'px', borderLeft: 'none', borderTop: '1px solid var(--line)' });
+  hd.style.width = A.w + 'px'; tutUI();
+}
+addEventListener('resize', layout);
+function burst(x, y, col, n, sp = 1.4) { if (!S.fx) return; for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = (0.4 + Math.random()) * sp; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.8, life: 1, col, r: 1.5 + Math.random() * 2.5 }); } }
+function newSkyLantern(A) { return { x: A.w * (0.35 + Math.random() * 0.62), y: A.h * (0.8 + Math.random() * 0.15), v: 0.25 + Math.random() * 0.35, p: Math.random() * 6, s: 0.7 + Math.random() * 0.6 }; }
+// stele fixe (pseudo-aleator, aceleași mereu)
+const STARS = []; { let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647; for (let i = 0; i < 110; i++) STARS.push({ x: r(), y: r() * r(), r: 0.4 + r() * 1.2, p: r() * 6 }); }
+const BUOY = [[0.58, 0.2], [0.84, 0.29], [0.12, 0.25], [0.7, 0.36], [0.95, 0.18], [0.46, 0.33]];
+const LCOL = ['#ff8a5c', '#ffcf5c', '#ff6f91', '#ffd29d', '#8fe3c4', '#ffb25c'];
+const SKY = [
+  ['#070c26', '#16245a', '#2e3a7a'], // flux
+  ['#0d1330', '#232c58', '#4a5378'], // ceață
+  ['#05081d', '#121a4a', '#2b2e6e'], // ploaie de stele
+  ['#0b0c2a', '#2a2160', '#6a3f7a']  // briză caldă
+];
+let skyMix = 0, lastPh = 0, petals = [], shoot = [];
+function lerpC(a, b, k) { const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16); const r = (pa >> 16) + (((pb >> 16) - (pa >> 16)) * k), g = ((pa >> 8) & 255) + ((((pb >> 8) & 255) - ((pa >> 8) & 255)) * k), bl = (pa & 255) + (((pb & 255) - (pa & 255)) * k); return `rgb(${r | 0},${g | 0},${bl | 0})`; }
+function glowAt(x, y, r, col, a = 1) { const g = cx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); cx.globalAlpha = a; cx.fillStyle = g; cx.fillRect(x - r, y - r, r * 2, r * 2); cx.globalAlpha = 1; }
+function draw(now) {
+  const A = arena(), U = sc(), ph = phase(), t = now / 1000;
+  tideV += ((ph === 0 ? -0.02 : 0) - tideV) * 0.02; const H0 = horizon();
+  if (ph !== lastPh) { skyMix = 0; lastPh = ph; } skyMix = Math.min(1, skyMix + 0.01); const prev = SKY[(ph + 3) % 4], cur2 = SKY[ph];
+  // cer
+  const g = cx.createLinearGradient(0, 0, 0, H0); for (let i = 0; i < 3; i++) g.addColorStop(i / 2, lerpC(prev[i], cur2[i], skyMix)); cx.fillStyle = g; cx.fillRect(0, 0, A.w, H0 + 2);
+  for (const s of STARS) { const y = s.y * H0 * 0.95; cx.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(t * 0.8 + s.p)); cx.fillStyle = '#fff8e6'; cx.fillRect(s.x * A.w, y, s.r * U, s.r * U); } cx.globalAlpha = 1;
+  // aurora
+  if (S.own[7] > 0) {
+    const k = Math.min(1, 0.45 + S.own[7] * 0.05); cx.globalCompositeOperation = 'lighter';
+    for (let b = 0; b < 3; b++) { const base = H0 * (0.14 + b * 0.09); for (let x = 0; x < A.w; x += 3) { const y = base + Math.sin(x / (90 * U) + t * 0.4 + b * 2) * 14 * U + Math.sin(x / (37 * U) - t * 0.7) * 5 * U, hh = (38 + 18 * Math.sin(x / 50 + t + b)) * U; const gr = cx.createLinearGradient(0, y, 0, y + hh); gr.addColorStop(0, b === 1 ? 'rgba(190,120,255,0)' : 'rgba(90,255,190,0)'); gr.addColorStop(0.3, b === 1 ? `rgba(190,120,255,${0.16 * k})` : `rgba(90,255,190,${0.2 * k})`); gr.addColorStop(1, 'rgba(60,140,255,0)'); cx.fillStyle = gr; cx.fillRect(x, y, 3, hh); } }
+    cx.globalCompositeOperation = 'source-over';
+  }
+  // lună
+  const mx = A.w * 0.8, my = H0 * 0.26, mr = 17 * U; glowAt(mx, my, mr * 5, 'rgba(255,240,200,.28)'); cx.fillStyle = '#fff3d4'; cx.beginPath(); cx.arc(mx, my, mr, 0, 6.28); cx.fill(); cx.fillStyle = 'rgba(220,200,160,.45)'; cx.beginPath(); cx.arc(mx - mr * .3, my - mr * .2, mr * .22, 0, 6.28); cx.arc(mx + mr * .35, my + mr * .3, mr * .15, 0, 6.28); cx.fill();
+  // stele căzătoare
+  if (ph === 2 && Math.random() < 0.04) shoot.push({ x: Math.random() * A.w, y: Math.random() * H0 * 0.5, l: 1 });
+  for (const s of shoot) { s.x += 6 * U; s.y += 3 * U; s.l -= 0.03; const gr = cx.createLinearGradient(s.x, s.y, s.x - 50 * U, s.y - 25 * U); gr.addColorStop(0, `rgba(255,255,230,${s.l})`); gr.addColorStop(1, 'rgba(255,255,230,0)'); cx.strokeStyle = gr; cx.lineWidth = 2 * U; cx.beginPath(); cx.moveTo(s.x, s.y); cx.lineTo(s.x - 50 * U, s.y - 25 * U); cx.stroke(); }
+  shoot = shoot.filter(s => s.l > 0);
+  // dealuri îndepărtate + orășel
+  cx.fillStyle = '#121a40'; cx.beginPath(); cx.moveTo(0, H0); for (let x = 0; x <= A.w + 20; x += 20) cx.lineTo(x, H0 - (10 + 9 * Math.sin(x / (70 * U)) + 6 * Math.sin(x / (23 * U) + 1)) * U); cx.lineTo(A.w, H0); cx.fill();
+  for (let i = 0; i < 14; i++) { const x = A.w * (0.05 + i * 0.068), y = H0 - (4 + (i * 7) % 9) * U; cx.fillStyle = i % 3 ? 'rgba(255,200,120,.7)' : 'rgba(255,230,170,.5)'; cx.fillRect(x, y, 2 * U, 2 * U); }
+  // ceainăria pe dealul din dreapta
+  cx.fillStyle = '#0e1534'; cx.beginPath(); cx.moveTo(A.w * 0.6, H0 + 1); cx.quadraticCurveTo(A.w * 0.78, H0 - 34 * U, A.w + 4, H0 - 30 * U); cx.lineTo(A.w + 4, H0 + 1); cx.fill();
+  if (S.own[4] > 0) drawTea(A.w * 0.86, H0 - 27 * U, U, t);
+  // apă
+  const wg = cx.createLinearGradient(0, H0, 0, A.h); wg.addColorStop(0, ph === 3 ? '#2a2a62' : '#1a2a62'); wg.addColorStop(1, '#070d26'); cx.fillStyle = wg; cx.fillRect(0, H0, A.w, A.h - H0);
+  cx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 26; i++) { const yy = H0 + 3 * U + (i * i) * 0.55 * U * (A.h / 360 / U); if (yy > A.h) break; const dx = Math.sin(t * 0.8 + i) * 12 * U; const ww = (8 + i * 1.2) * U; cx.fillStyle = 'rgba(255,240,200,' + (0.35 - i * 0.01) + ')'; cx.fillRect(mx - ww / 2 + dx, yy, ww, 1.4 * U); cx.fillStyle = 'rgba(140,170,255,.07)'; for (let k = 0; k < 4; k++) cx.fillRect(((i * 97 + k * 131) % 100) / 100 * A.w + Math.sin(t + i + k) * 8, yy, 20 * U, 1 * U); }
+  const L = houseBox(); for (let i = 0; i < 12; i++) { const yy = L.bot + 16 * U + i * 6 * U; if (yy > A.h) break; const ww = (10 + i * 2) * U * (0.6 + 0.4 * flare + 0.2); cx.fillStyle = `rgba(255,200,110,${0.22 - i * 0.015})`; cx.fillRect(L.x - ww / 2 + Math.sin(t * 1.3 + i) * 5 * U, yy, ww, 1.6 * U); }
+  cx.globalCompositeOperation = 'source-over';
+  // corabia aurie
+  const sp = shipPos(); if (sp) drawShip(sp.x, sp.y, U, t, ship.dir);
+  // balena lunii
+  if (S.own[6] > 0) drawWhale(A, H0, U, t);
+  // geamanduri-stea
+  for (let i = 0; i < Math.min(6, S.own[5]); i++) { const [bx, by] = BUOY[i], x = A.w * bx, y = H0 + (A.h - H0) * by + Math.sin(t * 1.4 + i) * 2 * U; cx.fillStyle = '#c7403a'; cx.beginPath(); cx.moveTo(x - 6 * U, y); cx.lineTo(x + 6 * U, y); cx.lineTo(x + 3 * U, y - 12 * U); cx.lineTo(x - 3 * U, y - 12 * U); cx.fill(); cx.fillStyle = '#f4f1e6'; cx.fillRect(x - 4.5 * U, y - 7 * U, 9 * U, 2.5 * U); const bl = 0.5 + 0.5 * Math.sin(t * 3 + i * 1.7); glowAt(x, y - 15 * U, 18 * U, 'rgba(150,240,255,.9)', bl); drawStar(x, y - 15 * U, 4 * U, '#e9fdff'); }
+  // bărci
+  for (let i = 0; i < Math.min(5, S.own[2]); i++) drawBoat(A.w * (0.44 + i * 0.115), H0 + (A.h - H0) * (0.12 + (i % 2) * 0.1), U * (0.8 + (i % 2) * 0.15), t, i);
+  // farul
+  drawLighthouse(L, U, t, A);
+  // ceață
+  if (ph === 1) { const k = skyMix; for (let i = 0; i < 4; i++) { const y = H0 - 10 * U + i * 22 * U, x = ((t * (8 + i * 3) * U + i * 200) % (A.w + 300)) - 150; cx.globalAlpha = 0.22 * k; cx.fillStyle = '#c9d3f0'; cx.beginPath(); cx.ellipse(x, y, 160 * U, 10 * U, 0, 0, 6.28); cx.ellipse(A.w - x, y + 10 * U, 120 * U, 8 * U, 0, 0, 6.28); cx.fill(); } cx.globalAlpha = 1; }
+  // ghirlanda de felinare de hârtie
+  if (S.own[3] > 0) { const n = Math.min(10, S.own[3]), x1 = A.w * 0.42, y1 = A.h * 0.66, x2 = A.w + 6, y2 = A.h * 0.62, sag = 12 * U; cx.strokeStyle = 'rgba(30,20,20,.9)'; cx.lineWidth = 1.2; cx.beginPath(); cx.moveTo(x1, y1); cx.quadraticCurveTo((x1 + x2) / 2, (y1 + y2) / 2 + sag * 2, x2, y2); cx.stroke(); for (let i = 0; i < n; i++) { const k = (i + 0.7) / (n + 0.4), x = (1 - k) * (1 - k) * x1 + 2 * k * (1 - k) * (x1 + x2) / 2 + k * k * x2, y = (1 - k) * (1 - k) * y1 + 2 * k * (1 - k) * ((y1 + y2) / 2 + sag * 2) + k * k * y2; drawPaper(x, y + 9 * U, U, LCOL[i % LCOL.length], Math.sin(t * 1.5 + i) * 0.12); } }
+  // digul cu felinare
+  drawPier(A, U, t);
+  // licurici
+  const nf = Math.min(36, S.own[1] * 3); cx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < nf; i++) { const x = A.w * (0.4 + ((i * 0.618) % 1) * 0.58) + Math.sin(t * 0.7 + i * 2.1) * 18 * U, y = A.h * (0.66 + ((i * 0.37) % 1) * 0.22) + Math.cos(t * 0.9 + i) * 10 * U, a = 0.4 + 0.6 * Math.abs(Math.sin(t * 2 + i)); glowAt(x, y, 7 * U, 'rgba(210,255,120,.9)', a); }
+  // lampioane pe cer (festival + port nou)
+  if (S.festT > 0 && Math.random() < 0.08 && skyL.length < 40) skyL.push(newSkyLantern(A));
+  for (const l of skyL) { l.y -= l.v * U; l.x += Math.sin(t + l.p) * 0.2; glowAt(l.x, l.y, 14 * U * l.s, 'rgba(255,170,80,.8)'); cx.fillStyle = '#ffcf7a'; cx.beginPath(); cx.moveTo(l.x - 4 * U * l.s, l.y - 6 * U * l.s); cx.lineTo(l.x + 4 * U * l.s, l.y - 6 * U * l.s); cx.lineTo(l.x + 3 * U * l.s, l.y + 5 * U * l.s); cx.lineTo(l.x - 3 * U * l.s, l.y + 5 * U * l.s); cx.fill(); }
+  skyL = skyL.filter(l => l.y > -20);
+  cx.globalCompositeOperation = 'source-over';
+  // petale în briza caldă
+  if (ph === 3 && petals.length < 26 && Math.random() < 0.2) petals.push({ x: -10, y: Math.random() * A.h * 0.8, v: 0.6 + Math.random(), p: Math.random() * 6 });
+  for (const q of petals) { q.x += q.v * U; q.y += Math.sin(t * 2 + q.p) * 0.4; cx.fillStyle = 'rgba(255,190,210,.8)'; cx.beginPath(); cx.ellipse(q.x, q.y, 3 * U, 1.6 * U, t + q.p, 0, 6.28); cx.fill(); }
+  petals = petals.filter(q => q.x < A.w + 10);
+  // particule și numere
+  cx.globalCompositeOperation = 'lighter';
+  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.02; p.life -= 0.018; cx.globalAlpha = Math.max(0, p.life); cx.fillStyle = p.col; cx.beginPath(); cx.arc(p.x, p.y, p.r, 0, 6.28); cx.fill(); }
+  cx.globalAlpha = 1; cx.globalCompositeOperation = 'source-over'; parts = parts.filter(p => p.life > 0);
+  cx.font = '800 ' + Math.round(17 * Math.max(1, U * 0.8)) + 'px Trebuchet MS,sans-serif'; cx.textAlign = 'center';
+  for (const f of floats) { f.t += 0.016; cx.globalAlpha = Math.max(0, 1 - f.t); cx.fillStyle = '#ffe2a6'; cx.strokeStyle = 'rgba(10,10,30,.6)'; cx.lineWidth = 3; cx.strokeText(f.txt, f.x, f.y - f.t * 50); cx.fillText(f.txt, f.x, f.y - f.t * 50); }
+  floats = floats.filter(f => f.t < 1); cx.globalAlpha = 1;
+  // vignetă
+  const vg = cx.createRadialGradient(A.w / 2, A.h * 0.5, Math.min(A.w, A.h) * 0.35, A.w / 2, A.h * 0.5, Math.max(A.w, A.h) * 0.8); vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, 'rgba(2,4,16,.55)'); cx.fillStyle = vg; cx.fillRect(0, 0, A.w, A.h);
+  flare = Math.max(0, flare - 0.03);
+}
+function drawStar(x, y, r, col) { cx.fillStyle = col; cx.beginPath(); for (let i = 0; i < 10; i++) { const a = i * Math.PI / 5 - Math.PI / 2, rr = i % 2 ? r * 0.45 : r; cx.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } cx.fill(); }
+function drawLighthouse(L, U, t, A) {
+  // insula de stâncă
+  cx.fillStyle = '#1b2240'; cx.beginPath(); cx.moveTo(L.x - 62 * U, L.bot + 16 * U); cx.quadraticCurveTo(L.x - 50 * U, L.bot - 6 * U, L.x - 20 * U, L.bot - 4 * U); cx.lineTo(L.x + 22 * U, L.bot - 3 * U); cx.quadraticCurveTo(L.x + 56 * U, L.bot - 2 * U, L.x + 70 * U, L.bot + 16 * U); cx.fill();
+  cx.fillStyle = '#2b3460'; cx.beginPath(); cx.ellipse(L.x - 30 * U, L.bot + 2 * U, 16 * U, 7 * U, -0.2, 0, 6.28); cx.ellipse(L.x + 34 * U, L.bot + 4 * U, 14 * U, 6 * U, 0.2, 0, 6.28); cx.fill();
+  cx.fillStyle = 'rgba(180,200,255,.18)'; cx.fillRect(L.x - 66 * U, L.bot + 15 * U, 140 * U, 1.5 * U);
+  // turnul cu benzi
+  const bw = L.w, tw = L.w * 0.7, h = L.bot - L.top;
+  cx.save(); cx.beginPath(); cx.moveTo(L.x - bw, L.bot); cx.lineTo(L.x - tw, L.top); cx.lineTo(L.x + tw, L.top); cx.lineTo(L.x + bw, L.bot); cx.closePath(); cx.clip();
+  cx.fillStyle = '#e9dfc6'; cx.fillRect(L.x - bw, L.top, bw * 2, h);
+  cx.fillStyle = '#2f8f8a'; for (let i = 0; i < 4; i++) { const y = L.top + h * (0.14 + i * 0.24); cx.fillRect(L.x - bw, y, bw * 2, h * 0.11); }
+  const sh = cx.createLinearGradient(L.x - bw, 0, L.x + bw, 0); sh.addColorStop(0, 'rgba(10,15,40,.05)'); sh.addColorStop(0.55, 'rgba(10,15,40,.1)'); sh.addColorStop(1, 'rgba(10,15,40,.55)'); cx.fillStyle = sh; cx.fillRect(L.x - bw, L.top, bw * 2, h);
+  cx.restore();
+  cx.fillStyle = '#ffd88a'; cx.fillRect(L.x - 2.5 * U, L.top + h * 0.45, 5 * U, 7 * U); cx.fillRect(L.x - 2.5 * U, L.top + h * 0.75, 5 * U, 7 * U);
+  cx.fillStyle = '#4a2f24'; cx.fillRect(L.x - 4 * U, L.bot - 11 * U, 8 * U, 11 * U);
+  // galerie + camera lanternei
+  cx.fillStyle = '#233066'; cx.fillRect(L.x - tw - 5 * U, L.top - 3 * U, (tw + 5 * U) * 2, 4 * U);
+  cx.strokeStyle = '#233066'; cx.lineWidth = 1.2 * U; cx.beginPath(); for (let i = -3; i <= 3; i++) { cx.moveTo(L.x + i * (tw + 4 * U) / 3, L.top - 3 * U); cx.lineTo(L.x + i * (tw + 4 * U) / 3, L.top - 9 * U); } cx.moveTo(L.x - tw - 4 * U, L.top - 9 * U); cx.lineTo(L.x + tw + 4 * U, L.top - 9 * U); cx.stroke();
+  const pulse = 0.75 + 0.25 * Math.sin(t * 3) + flare * 0.6;
+  cx.fillStyle = '#ffe9b0'; cx.fillRect(L.x - tw * 0.8, L.top - 18 * U, tw * 1.6, 15 * U);
+  cx.fillStyle = '#233066'; cx.fillRect(L.x - tw * 0.8, L.top - 18 * U, 1.5 * U, 15 * U); cx.fillRect(L.x + tw * 0.8 - 1.5 * U, L.top - 18 * U, 1.5 * U, 15 * U); cx.fillRect(L.x - 0.75 * U, L.top - 18 * U, 1.5 * U, 15 * U);
+  cx.beginPath(); cx.moveTo(L.x - tw - 2 * U, L.top - 18 * U); cx.quadraticCurveTo(L.x, L.top - 34 * U, L.x + tw + 2 * U, L.top - 18 * U); cx.fill(); cx.fillRect(L.x - 1 * U, L.top - 38 * U, 2 * U, 8 * U);
+  // raza rotitoare
+  const ang = t * 1.1 + S.taps * 0.05; cx.globalCompositeOperation = 'lighter';
+  for (const s of [1, -1]) {
+    const c = Math.cos(ang) * s, len = A.w * 1.1 * Math.abs(c), spread = (16 + 30 * (1 - Math.abs(c))) * U; if (len < 4) continue;
+    const gr = cx.createLinearGradient(L.x, L.lampY, L.x + Math.sign(c) * len, L.lampY); gr.addColorStop(0, `rgba(255,225,150,${0.32 * pulse})`); gr.addColorStop(1, 'rgba(255,225,150,0)');
+    cx.fillStyle = gr; cx.beginPath(); cx.moveTo(L.x, L.lampY - 3 * U); cx.lineTo(L.x + Math.sign(c) * len, L.lampY - spread); cx.lineTo(L.x + Math.sign(c) * len, L.lampY + spread); cx.lineTo(L.x, L.lampY + 3 * U); cx.fill();
+  }
+  const face = Math.max(0, Math.sin(ang)); glowAt(L.x, L.lampY, (34 + 40 * face + 30 * flare) * U, 'rgba(255,215,130,.95)', 0.6 + 0.4 * pulse * 0.6);
+  glowAt(L.x, L.lampY, 10 * U, 'rgba(255,255,240,1)', 1);
+  cx.globalCompositeOperation = 'source-over';
+}
+function drawShip(x, y, U, t, dir) {
+  cx.save(); cx.translate(x, y); cx.scale(dir * U * 1.1, U * 1.1);
+  cx.globalCompositeOperation = 'lighter'; glowAt(0, -16, 50, 'rgba(255,200,90,.55)'); cx.globalCompositeOperation = 'source-over';
+  cx.fillStyle = '#5a3418'; cx.beginPath(); cx.moveTo(-24, -4); cx.lineTo(26, -4); cx.quadraticCurveTo(22, 6, 14, 7); cx.lineTo(-18, 7); cx.quadraticCurveTo(-24, 3, -24, -4); cx.fill();
+  cx.fillStyle = '#ffd36b'; cx.fillRect(-22, -4, 47, 2.4);
+  cx.fillStyle = '#3a2412'; cx.fillRect(-6, -40, 2, 36); cx.fillRect(10, -32, 2, 28);
+  const sg = cx.createLinearGradient(0, -40, 0, -6); sg.addColorStop(0, '#fff3c2'); sg.addColorStop(1, '#f2b441');
+  cx.fillStyle = sg; cx.beginPath(); cx.moveTo(-4, -38); cx.quadraticCurveTo(8 + Math.sin(t * 2) * 2, -24, -4, -8); cx.closePath(); cx.fill(); cx.beginPath(); cx.moveTo(-6, -38); cx.quadraticCurveTo(-20, -22, -6, -9); cx.closePath(); cx.fill();
+  cx.beginPath(); cx.moveTo(12, -30); cx.quadraticCurveTo(24 + Math.sin(t * 2 + 1) * 2, -18, 12, -7); cx.closePath(); cx.fill();
+  cx.fillStyle = '#ff7a5a'; cx.beginPath(); cx.moveTo(-5, -40); cx.lineTo(4, -43); cx.lineTo(-5, -46); cx.fill();
+  for (let i = 0; i < 3; i++) { cx.fillStyle = `rgba(255,240,180,${0.5 + 0.5 * Math.sin(t * 5 + i * 2)})`; cx.fillRect(-28 - i * 9 + Math.sin(t * 3 + i) * 2, -14 + i * 5, 2.4, 2.4); }
+  cx.restore();
+  cx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 4; i++) { cx.fillStyle = `rgba(255,200,90,${0.3 - i * 0.06})`; cx.fillRect(x - (20 - i * 2) * U, y + (10 + i * 4) * U, (40 - i * 4) * U, 1.5 * U); } cx.globalCompositeOperation = 'source-over';
+}
+function drawBoat(x, y, U, t, i) {
+  const b = Math.sin(t * 1.2 + i * 1.3) * 2 * U, r = Math.sin(t * 1.1 + i) * 0.06; cx.save(); cx.translate(x, y + b); cx.rotate(r);
+  cx.fillStyle = '#3a2a2a'; cx.beginPath(); cx.moveTo(-18 * U, -2 * U); cx.lineTo(18 * U, -2 * U); cx.quadraticCurveTo(14 * U, 7 * U, 0, 7 * U); cx.quadraticCurveTo(-14 * U, 7 * U, -18 * U, -2 * U); cx.fill();
+  cx.fillStyle = '#7c4b33'; cx.fillRect(-17 * U, -3 * U, 34 * U, 2 * U);
+  cx.fillStyle = '#2a1e1e'; cx.fillRect(4 * U, -24 * U, 1.5 * U, 22 * U); cx.fillRect(4 * U, -24 * U, 9 * U, 1.2 * U);
+  cx.globalCompositeOperation = 'lighter'; glowAt(12 * U, -19 * U, 16 * U, 'rgba(255,180,90,.9)'); cx.globalCompositeOperation = 'source-over';
+  cx.fillStyle = '#ffcf7a'; cx.fillRect(10.5 * U, -22 * U, 3.5 * U, 5 * U);
+  cx.fillStyle = '#1d1630'; cx.beginPath(); cx.arc(-6 * U, -6 * U, 3 * U, 0, 6.28); cx.fill(); cx.fillRect(-8.5 * U, -5 * U, 5 * U, 4 * U);
+  cx.restore();
+  cx.globalCompositeOperation = 'lighter'; cx.fillStyle = 'rgba(255,180,90,.18)'; for (let k = 0; k < 4; k++) cx.fillRect(x + 12 * U - (3 + k) * U + Math.sin(t * 2 + k) * 2 * U, y + (10 + k * 4) * U, (6 + k * 2) * U, 1.2 * U); cx.globalCompositeOperation = 'source-over';
+}
+function drawPaper(x, y, U, col, sw) {
+  cx.save(); cx.translate(x, y - 9 * U); cx.rotate(sw); cx.translate(0, 9 * U);
+  cx.globalCompositeOperation = 'lighter'; glowAt(0, 0, 20 * U, col, 0.5); cx.globalCompositeOperation = 'source-over';
+  cx.strokeStyle = 'rgba(30,20,20,.9)'; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(0, -9 * U); cx.lineTo(0, -7 * U); cx.stroke();
+  cx.fillStyle = col; cx.beginPath(); cx.ellipse(0, 0, 6.5 * U, 7.5 * U, 0, 0, 6.28); cx.fill();
+  cx.fillStyle = 'rgba(255,255,230,.45)'; cx.beginPath(); cx.ellipse(0, 0, 2.6 * U, 7.2 * U, 0, 0, 6.28); cx.fill();
+  cx.fillStyle = '#2a1a1a'; cx.fillRect(-3.5 * U, -8 * U, 7 * U, 1.6 * U); cx.fillRect(-3.5 * U, 6.5 * U, 7 * U, 1.6 * U);
+  cx.restore();
+}
+function drawPier(A, U, t) {
+  const y = A.h * 0.86, x0 = A.w * 0.4;
+  cx.fillStyle = '#1d1426'; for (let x = x0 + 10 * U; x < A.w; x += 34 * U) cx.fillRect(x, y, 4 * U, A.h - y);
+  cx.fillStyle = '#4a3226'; cx.fillRect(x0, y - 4 * U, A.w - x0, 7 * U); cx.fillStyle = '#6b4a34'; cx.fillRect(x0, y - 4 * U, A.w - x0, 1.6 * U);
+  cx.fillStyle = 'rgba(0,0,0,.25)'; for (let x = x0; x < A.w; x += 9 * U) cx.fillRect(x, y - 4 * U, 1, 7 * U);
+  const lit = Math.min(6, S.own[0]);
+  for (let i = 0; i < 6; i++) {
+    const lx = x0 + (A.w - x0) * (0.08 + i * 0.17), ly = y - 34 * U; cx.fillStyle = '#1a1424'; cx.fillRect(lx - 1.2 * U, ly, 2.4 * U, 30 * U); cx.fillRect(lx - 4 * U, ly - 1 * U, 8 * U, 2 * U);
+    if (i < lit) { cx.globalCompositeOperation = 'lighter'; glowAt(lx, ly - 5 * U, 26 * U, 'rgba(255,190,100,.85)', 0.85 + 0.15 * Math.sin(t * 7 + i * 3)); cx.globalCompositeOperation = 'source-over'; cx.fillStyle = '#ffe1a0'; }
+    else cx.fillStyle = '#3a3550';
+    cx.fillRect(lx - 3 * U, ly - 9 * U, 6 * U, 8 * U); cx.fillStyle = '#1a1424'; cx.beginPath(); cx.moveTo(lx - 4.5 * U, ly - 9 * U); cx.lineTo(lx, ly - 13 * U); cx.lineTo(lx + 4.5 * U, ly - 9 * U); cx.fill();
+  }
+  // borcane cu licurici
+  for (let i = 0; i < Math.min(5, S.own[1]); i++) { const jx = x0 + (A.w - x0) * (0.16 + i * 0.17), jy = y - 4 * U; cx.globalCompositeOperation = 'lighter'; glowAt(jx, jy - 5 * U, 14 * U, 'rgba(200,255,120,.8)', 0.6 + 0.4 * Math.sin(t * 2.3 + i)); cx.globalCompositeOperation = 'source-over'; cx.fillStyle = 'rgba(200,240,170,.55)'; cx.fillRect(jx - 3.5 * U, jy - 9 * U, 7 * U, 9 * U); cx.fillStyle = '#7a5a3a'; cx.fillRect(jx - 4 * U, jy - 11 * U, 8 * U, 2.4 * U); }
+  // lampagiul care se plimbă pe dig
+  if (S.own[0] > 0) { const k = (Math.sin(t * 0.18) + 1) / 2, px = x0 + 20 * U + k * (A.w - x0 - 40 * U), py = y - 4 * U, st = Math.sin(t * 6) * 2 * U; cx.fillStyle = '#120d1c'; cx.fillRect(px - 3 * U, py - 16 * U, 6 * U, 10 * U); cx.fillRect(px - 3 * U + st * 0.5, py - 7 * U, 2 * U, 7 * U); cx.fillRect(px + 1 * U - st * 0.5, py - 7 * U, 2 * U, 7 * U); cx.beginPath(); cx.arc(px, py - 19 * U, 3.4 * U, 0, 6.28); cx.fill(); cx.fillRect(px - 5 * U, py - 23 * U, 10 * U, 1.6 * U); cx.fillRect(px - 2.5 * U, py - 27 * U, 5 * U, 4 * U); cx.strokeStyle = '#120d1c'; cx.lineWidth = 1.2 * U; cx.beginPath(); cx.moveTo(px + 3 * U, py - 12 * U); cx.lineTo(px + 12 * U, py - 34 * U); cx.stroke(); cx.globalCompositeOperation = 'lighter'; glowAt(px + 12 * U, py - 35 * U, 8 * U, 'rgba(255,200,120,1)'); cx.globalCompositeOperation = 'source-over'; }
+}
+function drawTea(x, y, U, t) {
+  const n = Math.min(6, S.own[4]);
+  cx.fillStyle = '#2a1f2e'; cx.fillRect(x - 22 * U, y - 16 * U, 44 * U, 18 * U);
+  cx.fillStyle = '#3c2238'; cx.beginPath(); cx.moveTo(x - 30 * U, y - 14 * U); cx.quadraticCurveTo(x, y - 22 * U, x + 30 * U, y - 14 * U); cx.lineTo(x + 18 * U, y - 30 * U); cx.lineTo(x - 18 * U, y - 30 * U); cx.fill();
+  cx.fillStyle = '#4c2c44'; cx.fillRect(x - 18 * U, y - 31 * U, 36 * U, 2 * U);
+  for (let i = 0; i < n; i++) { const wx = x - 18 * U + (i % 3) * 13 * U, wy = y - 12 * U + Math.floor(i / 3) * 7 * U; cx.globalCompositeOperation = 'lighter'; glowAt(wx + 3 * U, wy + 2 * U, 10 * U, 'rgba(255,190,100,.7)'); cx.globalCompositeOperation = 'source-over'; cx.fillStyle = '#ffd88a'; cx.fillRect(wx, wy, 6 * U, 4.5 * U); }
+  cx.fillStyle = 'rgba(220,220,255,.12)'; for (let i = 0; i < 4; i++) { const k = (t * 0.3 + i / 4) % 1; cx.beginPath(); cx.arc(x + 12 * U + Math.sin(k * 6 + i) * 4 * U, y - 32 * U - k * 26 * U, (2 + k * 5) * U, 0, 6.28); cx.fill(); }
+  drawPaper(x - 26 * U, y - 4 * U, U * 0.7, '#ff7a5a', Math.sin(t) * 0.1); drawPaper(x + 26 * U, y - 4 * U, U * 0.7, '#ff7a5a', Math.sin(t + 1) * 0.1);
+}
+function drawWhale(A, H0, U, t) {
+  const T2 = t % 16; if (T2 > 6) { if (T2 > 6 && T2 < 6.1) {} return; }
+  const k = T2 / 6, x = A.w * (0.5 + k * 0.4), base = H0 + (A.h - H0) * 0.28, lift = Math.sin(k * Math.PI) * 26 * U;
+  cx.save(); cx.beginPath(); cx.rect(0, 0, A.w, base); cx.clip();
+  cx.translate(x, base - lift + 26 * U); cx.rotate(-0.25 + k * 0.5);
+  cx.fillStyle = '#2d3f86'; cx.beginPath(); cx.ellipse(0, 0, 48 * U, 22 * U, 0, 0, 6.28); cx.fill();
+  cx.fillStyle = '#9fb3ff'; cx.beginPath(); cx.ellipse(6 * U, 10 * U, 34 * U, 9 * U, 0, 0, 3.14); cx.fill();
+  cx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 6; i++) glowAt(-26 * U + i * 10 * U, -10 * U + Math.sin(i) * 4 * U, 6 * U, 'rgba(170,220,255,.9)'); cx.globalCompositeOperation = 'source-over';
+  cx.fillStyle = '#0c1230'; cx.beginPath(); cx.arc(30 * U, -3 * U, 2.4 * U, 0, 6.28); cx.fill();
+  cx.restore();
+  if (lift > 18 * U) { cx.globalCompositeOperation = 'lighter'; for (let i = 0; i < 6; i++) glowAt(x + Math.sin(i * 2 + t * 4) * 8 * U, base - lift - (10 + i * 6) * U, 5 * U, 'rgba(200,230,255,.8)'); cx.globalCompositeOperation = 'source-over'; }
+  cx.fillStyle = 'rgba(200,220,255,.35)'; cx.fillRect(x - 50 * U, base, 100 * U, 1.5 * U);
+}
+let lastT = 0, acc = 0, uiT = 0;
+function frame(now) {
+  if (!lastT) lastT = now; acc += Math.min(1, (now - lastT) / 1000); lastT = now;
+  if (started && cur !== 'menu') while (acc >= 1 / 30) { step(1 / 30); acc -= 1 / 30; } else acc = 0;
+  draw(now); musicTick(now);
+  if (now > uiT) { uiT = now + 200; hud(); refreshList(); tutUI(); }
+  requestAnimationFrame(frame);
+}
+function hud() {
+  $('glow').textContent = '✨ ' + fmt(S.glow); $('rate').textContent = ' ' + fmt(prod()) + T('perSec');
+  const ph = phase(), left = PHASE_LEN - S.time % PHASE_LEN, names = GENS.map(g => g.p === ph ? g.e : '').join('');
+  $('phase').innerHTML = PHASE_E[ph] + ' ' + T('phases')[ph] + ' · ' + T('boost') + names + ' · ' + Math.ceil(left) + 's<i style="width:' + (100 * (1 - left / PHASE_LEN)).toFixed(1) + '%"></i>';
+  const r = $('fest'); if (S.festT > 0) { r.style.display = 'inline-block'; r.textContent = '🏮 ' + T('fest') + ' · ' + Math.ceil(S.festT) + 's'; } else r.style.display = 'none';
+}
+// ---------- listă ----------
+function renderList() {
+  document.querySelectorAll('#tabs button').forEach((b, i) => { b.textContent = T('tabs')[i]; b.classList.toggle('on', b.dataset.tab === tab); });
+  $('buyMode').style.display = tab === 'gen' ? 'flex' : 'none';
+  const L = $('list'); let h = '';
+  if (tab === 'gen') {
+    for (let g = 0; g < 8; g++) { const vis = g === 0 || S.own[g - 1] > 0 || S.own[g] > 0 || S.life >= GENS[g].base * 0.5; h += `<button class="it${vis ? '' : ' lock'}" data-g="${g}" ${vis ? '' : 'disabled'}><span class="e">${vis ? GENS[g].e : '❔'}</span><span class="t"><b>${vis ? T('gens')[g] : '???'} <small style="display:inline;color:var(--acc)" data-own></small></b><small data-desc></small></span><span class="c"><span data-cost></span><small data-cnt></small></span></button>`; }
+  } else if (tab === 'up') {
+    let any = false;
+    for (let g = 0; g < 8; g++) if (upReady(g)) { any = true; h += `<button class="it" data-u="${g}"><span class="e">${GENS[g].e}</span><span class="t"><b>${T('ups')[g]} ${['I', 'II', 'III', 'IV', 'V'][S.ups[g]]}</b><small>${T('gens')[g]} ×2</small></span><span class="c"><span data-cost></span></span></button>`; }
+    if (LENS_COST[S.lens] !== undefined) { any = true; h += `<button class="it" data-k="1"><span class="e">🔆</span><span class="t"><b>${T('lensUp')} ${S.lens + 1}</b><small>${T('lensD')}</small></span><span class="c"><span data-cost></span></span></button>`; }
+    let nx = ''; for (let g = 0; g < 8; g++) { const k = S.ups[g]; if (k < 5 && !upReady(g) && S.own[g] > 0) nx += `<div class="note">${GENS[g].e} ${T('ups')[g]}: ${T('need')} ${UP_AT[k]} (${S.own[g]})</div>`; }
+    h += (any ? '' : `<div class="note">${T('noUps')}</div>`) + nx;
+  } else if (tab === 'pre') {
+    h = `<div class="panelbox" style="width:auto;margin:8px 0;animation:none;text-align:center"><div style="font-size:40px">⛵🌙🦪</div><h2>${T('preT')}</h2><p class="note">${T('preP')}</p><p style="font-size:20px;font-weight:800;color:var(--acc)">🦪 ${S.pearls} · +${S.pearls * 5}% ${T('mult')}</p><button class="big pri" id="bPre" style="margin:0 auto"></button><p class="note" id="preNote"></p></div>`;
+  } else {
+    h = `<div class="note">${T('achInfo')} (${S.ach.length}/${ACHS.length})</div><div class="ach">` + ACHS.map((_, i) => `<div class="${S.ach.includes(i) ? 'got' : ''}" title="${T('achs')[i]}">${ACH_E[i]}</div>`).join('') + '</div><div class="note">' + S.ach.map(i => ACH_E[i] + ' ' + T('achs')[i]).join(' · ') + '</div>';
+  }
+  L.innerHTML = h; refreshList();
+}
+function refreshList() {
+  if (tab === 'gen') document.querySelectorAll('[data-g]').forEach(b => {
+    const g = +b.dataset.g; if (b.disabled) { if (S.life >= GENS[g].base * 0.5 || (g && S.own[g - 1] > 0)) renderList(); return; }
+    const k = buyN || Math.max(1, maxBuy(g, S.own[g], S.glow)), c = costN(g, S.own[g], k);
+    b.querySelector('[data-cost]').textContent = '✨ ' + fmt(c); b.querySelector('[data-cnt]').textContent = '×' + k;
+    b.querySelector('[data-own]').textContent = S.own[g] ? T('own') + ' ' + S.own[g] : '';
+    b.querySelector('[data-desc]').textContent = T('gdesc')[g] + ' · ' + fmt(genRate(g)) + T('perSec') + ' ' + T('each');
+    b.classList.toggle('no', c > S.glow); b.classList.toggle('hot', GENS[g].p === phase() && S.own[g] > 0);
+  });
+  else if (tab === 'up') {
+    document.querySelectorAll('[data-u]').forEach(b => { const c = upCost(+b.dataset.u); b.querySelector('[data-cost]').textContent = '✨ ' + fmt(c); b.classList.toggle('no', c > S.glow); });
+    document.querySelectorAll('[data-k]').forEach(b => { const c = LENS_COST[S.lens]; b.querySelector('[data-cost]').textContent = '✨ ' + fmt(c); b.classList.toggle('no', c > S.glow); });
+    let want = 0; for (let g = 0; g < 8; g++) if (upReady(g)) want++; if (want !== document.querySelectorAll('[data-u]').length) renderList();
+  } else if (tab === 'pre') { const d = preGain(), b = $('bPre'); if (!b) return; b.disabled = !d; b.textContent = T('preNow', { d }); $('preNote').textContent = d ? '' : T('preNeed', { x: fmt(S.run) }); }
+}
+$('list').addEventListener('click', e => {
+  ac(); const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.g !== undefined) buyGen(+b.dataset.g, buyN);
+  else if (b.dataset.u !== undefined) buyUp(+b.dataset.u);
+  else if (b.dataset.k) buyLens();
+  else if (b.id === 'bPre') ask(T('cfPre'), T('preP'), () => { newHarbor(); tab = 'gen'; renderList(); });
+});
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; renderList(); });
+document.querySelectorAll('#buyMode button').forEach(b => b.onclick = () => { buyN = +b.dataset.n; document.querySelectorAll('#buyMode button').forEach(x => x.classList.toggle('on', x === b)); refreshList(); });
+// ---------- intrare ----------
+cv.addEventListener('pointerdown', e => {
+  ac(); if (!started || cur !== null) return; const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top, f = shipPos();
+  if (f && Math.hypot(x - f.x, y - (f.y - 16 * sc())) < 50 * Math.max(1, sc() * 0.8)) { catchShip(); return; }
+  if (hitHouse(x, y)) tapHouse(x, y);
+});
+addEventListener('keydown', e => {
+  ac(); const k = e.key.toLowerCase();
+  if (k === 'escape') { if (cur === null) { save(); show('menu'); texts(); } else if (cur === 'settings' || cur === 'away' || cur === 'confirm') show(started ? null : 'menu'); return; }
+  if (!started || cur !== null) return;
+  if (k === ' ' || k === 'enter') { e.preventDefault(); const L = houseBox(); tapHouse(L.x + (Math.random() - .5) * 30, L.lampY + 10); }
+  else if (k >= '1' && k <= '8') buyGen(+k - 1, buyN); else if (k === 'g') catchShip();
+});
+// ---------- tutorial ----------
+function tutUI() {
+  const tp = $('tip'), hd = $('hand');
+  if (!S.tut || S.step >= 3 || !started || cur !== null) { tp.classList.remove('on'); hd.style.display = 'none'; return; }
+  const A = arena(), L = houseBox(); tp.innerHTML = T('steps')[S.step].replace('{n}', Math.min(10, S.taps)); tp.classList.add('on');
+  tp.style.maxWidth = Math.min(A.w - 24, 440) + 'px'; tp.style.left = (A.w / 2) + 'px'; tp.style.top = (A.h * 0.17 + 46) + 'px';
+  let hx, hy;
+  if (S.step === 0) { hx = L.x; hy = L.top + (L.bot - L.top) * 0.35; tp.style.left = Math.min(A.w - 130, Math.max(130, A.w * 0.62)) + 'px'; tp.style.top = (A.h * 0.36) + 'px'; tp.style.maxWidth = Math.min(A.w * 0.6, 300) + 'px'; }
+  else if (S.step === 1) { const b = document.querySelector('[data-g="0"]'); if (tab !== 'gen' || !b) { tab = 'gen'; renderList(); } const r = (document.querySelector('[data-g="0"]') || document.body).getBoundingClientRect(); hx = r.right - 50; hy = r.top + r.height * .55; }
+  else { if (!ship) spawnShip(18); const p = shipPos(); hx = p.x; hy = p.y + 10; }
+  hd.style.display = 'block'; hd.style.left = hx + 'px'; hd.style.top = hy + 'px';
+}
+// ---------- ecrane ----------
+function show(id) { document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); cur = id; tutUI(); }
+let toastT = 0;
+function toast(m) { const el = $('toast'); el.textContent = m; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2600); }
+let askCb = null; function ask(t, p, cb) { $('cfT').textContent = t; $('cfP').textContent = p; askCb = cb; show('confirm'); }
+$('cfYes').onclick = () => { show(started ? null : 'menu'); const c = askCb; askCb = null; if (c) c(); };
+$('cfNo').onclick = () => show(started ? null : 'menu');
+function texts() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-t]').forEach(e => e.textContent = T(e.dataset.t));
+  const has = S.started; $('bPlay').textContent = has ? T('cont') : T('play'); $('bNew').textContent = T('newg'); $('bNew').style.display = has ? '' : 'none';
+  $('bLang').textContent = S.lang.toUpperCase(); $('sLang').textContent = S.lang.toUpperCase();
+  for (const k of ['fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).textContent = S[k] ? T('on') : T('off');
+  $('sMusic').value = S.music; $('sSound').value = S.sound; $('vMusic').textContent = S.music; $('vSound').textContent = S.sound;
+  $('sFull').textContent = document.fullscreenElement ? T('on') : T('off');
+  $('sReset').textContent = T('erase'); $('sClose').textContent = T('close'); $('awayOk').textContent = T('ok'); $('cfYes').textContent = T('yes'); $('cfNo').textContent = T('no');
+  $('ver').textContent = 'Lantern Harbor · ' + T('ver') + ' ' + VERSION;
+  $('menuInfo').textContent = has ? '✨ ' + fmt(S.life) + (S.pearls ? ' · 🦪 ' + S.pearls : '') + ' · 🏆 ' + S.ach.length + '/' + ACHS.length : '';
+  renderList(); hud();
+}
+function play() { ac(); S.started = 1; started = true; save(); show(null); texts(); }
+$('bPlay').onclick = play;
+$('bNew').onclick = () => ask(T('newConf'), '', () => { const l = S.lang, m = S.music, s = S.sound; S = Object.assign(FRESH(), { lang: l, music: m, sound: s }); ship = null; shipNext = 60; skyL = []; save(); play(); });
+$('bMenu').onclick = () => { save(); show('menu'); texts(); };
+$('bSet').onclick = $('bSettings').onclick = () => { texts(); show('settings'); };
+$('sClose').onclick = () => show(started ? null : 'menu');
+$('awayOk').onclick = () => show(started ? null : 'menu');
+const cycleLang = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); texts(); };
+$('bLang').onclick = cycleLang; $('sLang').onclick = cycleLang;
+for (const k of ['fx', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).onclick = () => { S[k] ^= 1; if (k === 'tut' && S.tut && S.step >= 3) S.step = 0; save(); texts(); };
+for (const k of ['music', 'sound']) $('s' + k[0].toUpperCase() + k.slice(1)).addEventListener('input', e => { S[k] = +e.target.value; $('v' + k[0].toUpperCase() + k.slice(1)).textContent = S[k]; ac(); volumes(); if (k === 'sound') SFX.tap(); save(); });
+$('sFull').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {} setTimeout(texts, 300); };
+let sure = 0; $('sReset').onclick = () => { if (!sure) { sure = 1; $('sReset').textContent = T('sure'); setTimeout(() => { sure = 0; texts(); }, 2500); return; } const l = S.lang; S = Object.assign(FRESH(), { lang: l }); ship = null; started = false; sure = 0; save(); show('menu'); texts(); };
+addEventListener('visibilitychange', () => { if (document.hidden && started) save(); });
+addEventListener('pagehide', () => { if (started) save(); });
+setInterval(() => { if (started) save(); }, 5000);
+// ---------- pornire ----------
+layout(); texts(); offline();
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

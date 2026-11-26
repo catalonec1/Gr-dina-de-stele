@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Spice Shelf</title>
+<meta name="description" content="A cozy sorting puzzle in grandma's pantry. Move the spice jars between shelves until every spice has a shelf of its own. 60 levels in 4 kitchens, a Daily Pantry, symbols on every jar.">
+<meta name="theme-color" content="#3b2516">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%233b2516'/%3E%3Crect x='6' y='50' width='52' height='7' rx='3' fill='%23c98a4f'/%3E%3Crect x='12' y='22' width='18' height='28' rx='6' fill='%23d8432f'/%3E%3Crect x='14' y='16' width='14' height='7' rx='2' fill='%23e8c36a'/%3E%3Crect x='34' y='22' width='18' height='28' rx='6' fill='%23f2b705'/%3E%3Crect x='36' y='16' width='14' height='7' rx='2' fill='%23e8c36a'/%3E%3Crect x='15' y='31' width='12' height='10' rx='2' fill='%23fffaf0'/%3E%3Crect x='37' y='31' width='12' height='10' rx='2' fill='%23fffaf0'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#3b2516;--panel:rgba(62,38,22,.97);--line:rgba(255,235,205,.2);--ink:#fff6e6;--dim:#ecd6b8;--acc:#ffcf6e;--acc2:#e8734a}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;z-index:4;overflow:auto}
+.screen.on{display:flex;animation:fade .25s ease}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(-4deg)}50%{transform:translateY(-6px) rotate(4deg)}}
+@keyframes poke{0%,100%{transform:translate(-30%,0) scale(1)}50%{transform:translate(-30%,14px) scale(.9)}}
+button{font:inherit;color:inherit;background:rgba(255,240,220,.1);border:1px solid var(--line);border-radius:16px;padding:12px 18px;cursor:pointer;transition:transform .08s,background .15s}
+button:hover{background:rgba(255,240,220,.17)}
+button:active{transform:scale(.96)}
+button:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button:disabled{opacity:.45}
+button.big{font-size:21px;padding:15px 0;width:min(80vw,310px);margin:6px 0;font-weight:700}
+button.pri{background:linear-gradient(180deg,#ffe2a0,#f0a948);color:#4a2400;border:none;box-shadow:0 6px 0 #a5611f,0 10px 24px rgba(0,0,0,.35)}
+button.pri:active{transform:translateY(4px);box-shadow:0 2px 0 #a5611f}
+button.ico{padding:8px 12px;min-width:48px;min-height:46px;font-size:20px;background:rgba(40,22,10,.72);backdrop-filter:blur(4px)}
+#menu{justify-content:center;background:radial-gradient(ellipse at 50% 45%,rgba(40,22,10,.35),rgba(30,16,8,.86));backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+#menu h1{margin:0 0 6px;font-size:clamp(50px,14vw,84px);line-height:.92;color:#fff3dc;text-shadow:0 5px 0 #b5562c,0 9px 0 rgba(0,0,0,.28),0 0 40px rgba(255,190,110,.35);text-align:center;font-weight:900;letter-spacing:1px}
+#menu h1 span{display:block;font-size:.8em;color:var(--acc);text-shadow:0 4px 0 #a5611f,0 7px 0 rgba(0,0,0,.25)}
+#menu .sub{color:var(--dim);margin:10px 18px 18px;text-align:center;max-width:380px;font-size:15.5px;line-height:1.35}
+#menuInfo{color:var(--acc);margin:8px 0 4px;font-weight:700;text-align:center}
+.row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;justify-content:center}
+.deco{margin-bottom:6px;animation:bob 3s ease-in-out infinite;filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px 18px 16px;width:min(92vw,430px);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+h2{margin:0 0 12px;text-align:center;font-size:26px}
+.top{display:flex;align-items:center;justify-content:space-between;width:min(94vw,560px);padding:14px 0 8px;position:sticky;top:0;z-index:2}
+.top h2{margin:0}
+#levels,#styles,#settings{background:linear-gradient(180deg,#4a2e1b,#24140a)}
+.world{width:min(94vw,560px);margin:8px 0 4px;padding:12px 14px;border-radius:18px;background:rgba(255,240,220,.06);border:1px solid var(--line)}
+.world h3{margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;font-size:18px;gap:8px}
+.world h3 i{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:6px;vertical-align:-1px;border:1px solid rgba(255,255,255,.4)}
+.world h3 small{color:var(--acc);font-weight:700;white-space:nowrap}
+.world p{margin:-6px 0 10px;color:var(--dim);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+.lv{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;border-radius:14px;font-weight:800;font-size:20px}
+.lv small{font-size:11px;letter-spacing:1px;color:var(--acc);height:14px}
+.lv.lock{opacity:.35}
+.lv.cur{outline:3px solid var(--acc)}
+.sts{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:min(94vw,520px);padding-bottom:30px}
+.st{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px}
+.st canvas{width:132px;height:66px}
+.st.on{outline:3px solid var(--acc)}
+.st.lock canvas{opacity:.45;filter:grayscale(.6)}
+.st small{color:var(--dim);font-size:12px}
+.set{display:flex;justify-content:space-between;align-items:center;padding:9px 2px;border-bottom:1px solid var(--line);gap:12px}
+.set:last-child{border:none}
+.set button{min-width:96px;padding:10px 14px}
+#hud{position:fixed;left:0;right:0;top:0;display:none;align-items:flex-start;justify-content:space-between;padding:calc(10px + env(safe-area-inset-top)) 12px 10px;z-index:3;pointer-events:none}
+#hud.on{display:flex}
+#hud button{pointer-events:auto}
+#hud .mid{text-align:center;background:rgba(40,22,10,.66);border-radius:14px;padding:5px 14px;backdrop-filter:blur(4px)}
+#hud .mid b{display:block;font-size:18px}
+#hud .mid small{color:var(--dim);font-size:13.5px}
+#tools{position:fixed;left:0;right:0;bottom:0;display:none;justify-content:center;gap:12px;padding:8px 10px calc(10px + env(safe-area-inset-bottom));z-index:3}
+#tools.on{display:flex}
+#tools button{min-width:76px;min-height:54px;font-size:21px;padding:6px 12px;background:rgba(40,22,10,.8);position:relative}
+#tools button small{display:block;font-size:11.5px;color:var(--dim)}
+#tools button b{position:absolute;top:-6px;right:-6px;background:var(--acc);color:#3d2000;border-radius:10px;font-size:12px;padding:1px 6px}
+#tip{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);z-index:3;background:rgba(48,28,14,.95);border:1px solid var(--line);border-radius:14px;padding:8px 14px;font-size:14.5px;width:max-content;max-width:min(94vw,460px);text-align:center;display:none;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.35);line-height:1.3}
+#tip.on{display:block;animation:pop .35s ease}
+#tip b{color:var(--acc)}
+#hand{position:fixed;z-index:3;font-size:36px;pointer-events:none;display:none;animation:poke .9s ease-in-out infinite;filter:drop-shadow(0 3px 4px rgba(0,0,0,.5))}
+#win,#pause{justify-content:center;background:rgba(30,16,8,.55)}
+#win .panel,#pause .panel{text-align:center;animation:pop .45s ease}
+#pause .panel{display:flex;flex-direction:column;align-items:center}
+#win .stars{font-size:46px;letter-spacing:6px;margin:4px 0 8px;color:#6b5240}
+#win .stars .s{color:var(--acc);text-shadow:0 0 18px rgba(255,207,110,.7);display:inline-block;animation:pop .4s ease both}
+#win p{color:var(--dim);margin:4px 0 12px}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:rgba(48,28,14,.97);border:1px solid var(--line);border-radius:14px;padding:9px 16px;z-index:6;display:none;font-weight:700;text-align:center;width:max-content;max-width:92vw}
+#toast.on{display:block;animation:pop .3s ease}
+#news{margin-top:10px;font-size:13px;color:var(--dim);text-align:center;padding:0 16px}
+@media (max-height:700px){.deco{display:none}#menu .sub{margin:4px 18px 10px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><button class="ico" id="bPause" aria-label="Pause">☰</button><div class="mid"><b id="hTitle"></b><small id="hSub"></small></div><button class="ico" id="bReset" aria-label="Restart">↺</button></div>
+<div id="tools"><button id="bUndo" aria-label="Undo">↶<small data-t="undo"></small></button><button id="bExtra" aria-label="Spare shelf">➕<small data-t="extra"></small><b id="hintN">0</b></button></div>
+<div id="tip"></div>
+<div id="hand">👆</div>
+<div id="toast"></div>
+
+<div class="screen on" id="menu">
+  <div class="deco"><svg width="112" height="84" viewBox="0 0 112 84" aria-hidden="true"><rect x="2" y="72" width="108" height="10" rx="4" fill="#c98a4f"/><rect x="2" y="78" width="108" height="4" rx="2" fill="#8a5530"/><g><rect x="10" y="26" width="28" height="46" rx="9" fill="#d8432f"/><rect x="13" y="17" width="22" height="10" rx="3" fill="#e8c36a"/><rect x="14" y="40" width="20" height="16" rx="3" fill="#fffaf0"/><circle cx="24" cy="48" r="5" fill="#9c2a1b"/></g><g><rect x="42" y="18" width="28" height="54" rx="9" fill="#4f9a3a"/><rect x="45" y="9" width="22" height="10" rx="3" fill="#e8c36a"/><rect x="46" y="36" width="20" height="16" rx="3" fill="#fffaf0"/><path d="M56 38 Q63 44 56 50 Q49 44 56 38Z" fill="#2f6a22"/></g><g><rect x="74" y="30" width="28" height="42" rx="9" fill="#f2b705"/><rect x="77" y="21" width="22" height="10" rx="3" fill="#e8c36a"/><rect x="78" y="42" width="20" height="16" rx="3" fill="#fffaf0"/><path d="M88 45 L94 55 L82 55Z" fill="#a07400"/></g></svg></div>
+  <h1>Spice<span>Shelf</span></h1>
+  <div class="sub" data-t="sub"></div>
+  <button class="big pri" id="bPlay"></button>
+  <button class="big" id="bDaily"></button>
+  <button class="big" id="bLevels"></button>
+  <div class="row"><button id="bStyles" class="ico" aria-label="Jars">🏺</button><button id="bSettings" class="ico" aria-label="Settings">⚙️</button><button id="bLang" class="ico" aria-label="Language">EN</button></div>
+  <div id="menuInfo"></div>
+  <div id="news"></div>
+</div>
+
+<div class="screen" id="levels"><div class="top"><button class="ico" data-back aria-label="Back">←</button><h2 data-t="levels"></h2><span id="lvStars" style="min-width:48px;text-align:right;color:var(--acc);font-weight:800"></span></div><div id="worlds" style="padding-bottom:30px"></div></div>
+<div class="screen" id="styles"><div class="top"><button class="ico" data-back aria-label="Back">←</button><h2 data-t="styles"></h2><span id="stStars" style="min-width:48px;text-align:right;color:var(--acc);font-weight:800"></span></div><div class="sts" id="stList"></div></div>
+<div class="screen" id="settings"><div class="top"><button class="ico" data-back aria-label="Back">←</button><h2 data-t="settings"></h2><span style="min-width:48px"></span></div>
+  <div class="panel">
+    <div class="set"><span data-t="music"></span><button id="sMusic"></button></div>
+    <div class="set"><span data-t="sound"></span><button id="sSound"></button></div>
+    <div class="set"><span data-t="vibe"></span><button id="sVibe"></button></div>
+    <div class="set"><span data-t="big"></span><button id="sBig"></button></div>
+    <div class="set"><span data-t="tut"></span><button id="sTut"></button></div>
+    <div class="set"><span data-t="fs"></span><button id="sFs"></button></div>
+    <div class="set"><span data-t="lang"></span><button id="sLang"></button></div>
+    <div class="set"><span data-t="keys"></span><small style="color:var(--dim);text-align:right">1–9 0 · ← ↑ → ↓ + Enter · Z ↶ · E ➕ · R ↺ · Esc</small></div>
+    <div class="set"><span data-t="reset"></span><button id="sReset" style="color:#ffa08a"></button></div>
+  </div></div>
+<div class="screen" id="pause"><div class="panel"><h2 data-t="paused"></h2><button class="big pri" id="pResume"></button><button class="big" id="pRestart"></button><button class="big" id="pSettings"></button><button class="big" id="pMenu"></button></div></div>
+<div class="screen" id="win"><div class="panel"><h2 id="wTitle"></h2><div class="stars" id="wStars"></div><p id="wInfo"></p><div class="row"><button class="ico" id="wMenu" aria-label="Levels">▦</button><button class="ico" id="wAgain" aria-label="Replay">↺</button><button class="big pri" id="wNext" style="width:auto;padding:12px 26px;margin:0"></button></div></div></div>
+
+<script>
+'use strict';
+const VERSION = '1.0';
+// ---------- texte ----------
+const TX = {
+  ro: { sub: 'Cămara bunicii s-a amestecat de tot. Atinge un raft ca să ridici borcanul din față, apoi alt raft ca să-l așezi — pe același condiment sau pe un loc gol. Fiecare condiment pe raftul lui.', play: 'Joacă', daily: 'Cămara zilei', levels: 'Bucătării', styles: 'Borcane', settings: 'Setări', music: 'Muzică', sound: 'Sunete', vibe: 'Vibrații', big: 'Simboluri mari', tut: 'Tutorial', fs: 'Ecran complet', lang: 'Limba', keys: 'Tastatură', reset: 'Șterge progresul', on: 'Pornit', off: 'Oprit', erase: 'Șterge', sure: 'Apasă din nou', undo: 'Înapoi', extra: 'Raft', level: 'Nivelul', moves: 'Mutări', w: ['Bucătăria bunicii', 'Cămara din pivniță', 'Bucătăria de vară', 'Bucătăria de iarnă'], wsub: ['fiecare condiment pe raftul lui', 'capacele de pânză ascund borcanele din spate', 'o poliță mică ține un singur borcan', 'sertarul se deschide când termini un raft'], done: 'Totul e la locul lui!', next: 'Următorul', noHints: 'Nu mai ai rafturi de rezervă — termină un nivel nou ca să primești unul.', usedExtra: 'Ai scos deja raftul de rezervă la nivelul ăsta.', gotHint: '+1 raft de rezervă', dailyDone: 'Cămara zilei e gata! Serie: ', unlock: 'Se deblochează la', use: 'Folosește', used: 'Folosit', newStyle: 'Borcane noi: ', locked: 'Termină nivelul anterior', gift: 'Cadou zilnic: +1 raft de rezervă', noWay: 'Un borcan merge doar pe același condiment sau pe un loc gol.', fullMsg: 'Raftul ăsta e plin.', lockMsg: 'Încuiat — termină orice raft ca să se deschidă sertarul.', opened: 'Sertarul s-a deschis!', stuck: 'Nu mai sunt mutări — dă înapoi ↶ sau ia un raft de rezervă ➕.', added: 'Raft de rezervă adăugat (maxim 2 stele)', best: 'record', paused: 'Pauză', resume: 'Continuă', restart: 'De la capăt', menu: 'Meniul principal', news: '',
+    steps: ['<b>1/3</b> Atinge raftul care strălucește ca să ridici borcanul din față.', '<b>2/3</b> Acum atinge unde îl pui: pe același condiment sau pe un loc gol.', '<b>3/3</b> Adună fiecare condiment pe raftul lui. ↶ anulează o mutare.'],
+    tips: { extra: 'Te-ai încurcat? ➕ adaugă un raft de rezervă la nivelul ăsta (maxim 2 stele). Primești altele când termini niveluri.', lids: 'Capacele de pânză ascund ce e în spate. Mută borcanul din față ca să vezi ce e sub el.', tiny: 'Polița mică ține un singur borcan — numai bună pentru o mutare rapidă.', drawer: 'Sertarul e încuiat. Termină orice raft și se deschide.' },
+    sp: ['Boia', 'Turmeric', 'Busuioc', 'Lavandă', 'Scorțișoară', 'Sare', 'Piper', 'Curry', 'Mac', 'Trandafir'],
+    stn: ['Borcan de sticlă', 'Cutie emailată', 'Oală de lut', 'Borcan cu batic', 'Sticluță de farmacie', 'Ceramică populară'] },
+  en: { sub: 'Grandma\'s pantry got all mixed up. Tap a shelf to lift its front jar, then tap another to set it down — on the same spice or an empty spot. Give every spice a shelf of its own.', play: 'Play', daily: 'Daily Pantry', levels: 'Kitchens', styles: 'Jars', settings: 'Settings', music: 'Music', sound: 'Sounds', vibe: 'Vibration', big: 'Large symbols', tut: 'Tutorial', fs: 'Full screen', lang: 'Language', keys: 'Keyboard', reset: 'Reset progress', on: 'On', off: 'Off', erase: 'Reset', sure: 'Tap again', undo: 'Undo', extra: 'Shelf', level: 'Level', moves: 'Moves', w: ['Grandma\'s Kitchen', 'The Cellar Pantry', 'Summer Kitchen', 'Winter Kitchen'], wsub: ['one spice per shelf', 'cloth lids hide the jars behind', 'a tiny ledge holds a single jar', 'the drawer opens when you finish a shelf'], done: 'Neatly sorted!', next: 'Next', noHints: 'No spare shelves left — clear a new level to earn one.', usedExtra: 'The spare shelf is already out for this level.', gotHint: '+1 spare shelf', dailyDone: 'Daily Pantry done! Streak: ', unlock: 'Unlocks at', use: 'Use', used: 'In use', newStyle: 'New jars: ', locked: 'Finish the previous level', gift: 'Daily gift: +1 spare shelf', noWay: 'A jar goes only onto the same spice or an empty spot.', fullMsg: 'That shelf is full.', lockMsg: 'Locked — finish any shelf to open the drawer.', opened: 'The drawer is open!', stuck: 'No moves left — undo ↶ or take a spare shelf ➕.', added: 'Spare shelf added (max 2 stars)', best: 'best', paused: 'Paused', resume: 'Resume', restart: 'Restart', menu: 'Main menu', news: '',
+    steps: ['<b>1/3</b> Tap the glowing shelf to lift its front jar.', '<b>2/3</b> Now tap where it goes: the same spice or an empty spot.', '<b>3/3</b> Give each spice its own shelf. ↶ takes a move back.'],
+    tips: { extra: 'In a muddle? ➕ adds a spare shelf for this level (max 2 stars). You earn more by clearing levels.', lids: 'Cloth lids hide what is behind. Move the front jar to see what is under it.', tiny: 'The little ledge holds just one jar — handy for a quick swap.', drawer: 'The drawer is locked. Finish any shelf and it opens.' },
+    sp: ['Paprika', 'Turmeric', 'Basil', 'Lavender', 'Cinnamon', 'Sea salt', 'Pepper', 'Curry', 'Poppy seed', 'Rose'],
+    stn: ['Glass jar', 'Enamel tin', 'Clay pot', 'Gingham jar', 'Apothecary', 'Folk ceramic'] },
+  ru: { sub: 'В бабушкиной кладовой всё перепуталось. Нажмите на полку, чтобы взять переднюю банку, затем на другую, чтобы поставить её — на ту же специю или на пустое место. У каждой специи — своя полка.', play: 'Играть', daily: 'Кладовая дня', levels: 'Кухни', styles: 'Банки', settings: 'Настройки', music: 'Музыка', sound: 'Звуки', vibe: 'Вибрация', big: 'Крупные символы', tut: 'Обучение', fs: 'Полный экран', lang: 'Язык', keys: 'Клавиатура', reset: 'Сбросить прогресс', on: 'Вкл', off: 'Выкл', erase: 'Сбросить', sure: 'Ещё раз', undo: 'Назад', extra: 'Полка', level: 'Уровень', moves: 'Ходы', w: ['Бабушкина кухня', 'Погреб', 'Летняя кухня', 'Зимняя кухня'], wsub: ['одна специя на полку', 'тканевые крышки прячут задние банки', 'маленькая полочка вмещает одну банку', 'ящик откроется, когда соберёте полку'], done: 'Всё по местам!', next: 'Дальше', noHints: 'Запасные полки закончились — пройдите новый уровень.', usedExtra: 'Запасная полка уже стоит на этом уровне.', gotHint: '+1 запасная полка', dailyDone: 'Кладовая дня готова! Серия: ', unlock: 'Откроется при', use: 'Выбрать', used: 'Выбрано', newStyle: 'Новые банки: ', locked: 'Пройдите предыдущий уровень', gift: 'Подарок дня: +1 запасная полка', noWay: 'Банку можно ставить только на ту же специю или на пустое место.', fullMsg: 'Эта полка заполнена.', lockMsg: 'Заперто — соберите любую полку, чтобы открыть ящик.', opened: 'Ящик открыт!', stuck: 'Ходов нет — отмените ↶ или возьмите запасную полку ➕.', added: 'Запасная полка добавлена (максимум 2 звезды)', best: 'рекорд', paused: 'Пауза', resume: 'Продолжить', restart: 'Заново', menu: 'Главное меню', news: '',
+    steps: ['<b>1/3</b> Нажмите на светящуюся полку, чтобы взять переднюю банку.', '<b>2/3</b> Теперь нажмите, куда её поставить: на ту же специю или на пустое место.', '<b>3/3</b> Соберите каждую специю на своей полке. ↶ отменяет ход.'],
+    tips: { extra: 'Запутались? ➕ добавляет запасную полку на этот уровень (максимум 2 звезды). Новые даются за пройденные уровни.', lids: 'Тканевые крышки прячут то, что позади. Переставьте переднюю банку, чтобы увидеть, что под ней.', tiny: 'Маленькая полочка вмещает одну банку — удобно для быстрой перестановки.', drawer: 'Ящик заперт. Соберите любую полку — и он откроется.' },
+    sp: ['Паприка', 'Куркума', 'Базилик', 'Лаванда', 'Корица', 'Соль', 'Перец', 'Карри', 'Мак', 'Роза'],
+    stn: ['Стеклянная банка', 'Эмалированная банка', 'Глиняный горшочек', 'Банка с платочком', 'Аптечный флакон', 'Народная керамика'] }
+};
+const LANGS = ['ro', 'en', 'ru'];
+// condimente: culoare + simbol (nu doar culoare: fiecare are formă proprie)
+const SPICES = [
+  { c: '#d8432f', d: '#8f2316' }, { c: '#f2b705', d: '#8a6200' }, { c: '#4f9a3a', d: '#245218' }, { c: '#9a6fd0', d: '#553089' }, { c: '#8a5230', d: '#4a2812' },
+  { c: '#eef1f4', d: '#5d6b7c' }, { c: '#3a3a42', d: '#22222a' }, { c: '#ee7d22', d: '#8d4205' }, { c: '#3f6fb5', d: '#1d3e72' }, { c: '#e36a9c', d: '#93264f' }
+];
+const STYLES = [0, 15, 40, 75, 115, 160];
+const THEMES = [
+  { w1: '#f6e3c6', w2: '#e3bf92', pat: 'rgba(196,92,60,.16)', wood: '#b9783f', woodL: '#d8995c', woodD: '#7d4a22', back: '#7a4a2a', chip: '#e9b47a', motes: 'rgba(255,240,200,' },
+  { w1: '#7d6553', w2: '#47372b', pat: 'rgba(0,0,0,.16)', wood: '#94603a', woodL: '#b37a4c', woodD: '#5c3518', back: '#3b2617', chip: '#8a6a52', motes: 'rgba(255,214,150,' },
+  { w1: '#dcf1e2', w2: '#a8d6bb', pat: 'rgba(60,130,150,.15)', wood: '#cf9f66', woodL: '#e8bf88', woodD: '#94683a', back: '#8d6440', chip: '#9fd8b6', motes: 'rgba(255,255,230,' },
+  { w1: '#8a3a3f', w2: '#4c1b21', pat: 'rgba(255,205,120,.1)', wood: '#7a4a2a', woodL: '#9c6438', woodD: '#47260f', back: '#2e170c', chip: '#b04a50', motes: 'rgba(255,255,255,' }
+];
+// ---------- logica ----------
+const CAP = 4;
+function rnd(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// rafturi: sh[i] = condimente de la spate spre față; caps = capacitate; kinds: 0 raft, 1 poliță mică, 2 sertar încuiat, 3 raft de rezervă
+const topRun = s => { const c = s[s.length - 1]; let r = 0; for (let k = s.length - 1; k >= 0 && s[k] === c; k--) r++; return r; };
+const uniform = s => s.every(x => x === s[0]);
+const full = (s, cap) => s.length === cap && cap === CAP && uniform(s);
+const anyFull = (sh, caps) => sh.some((s, i) => full(s, caps[i]));
+// câte borcane se mută din a în b (0 = mutare imposibilă)
+function canMove(sh, caps, kinds, open, a, b) {
+  if (a === b || a < 0 || b < 0 || a >= sh.length || b >= sh.length) return 0;
+  const A = sh[a], B = sh[b]; if (!A.length) return 0;
+  if (!open && (kinds[a] === 2 || kinds[b] === 2)) return 0;
+  const space = caps[b] - B.length; if (space <= 0) return 0;
+  const c = A[A.length - 1]; if (B.length && B[B.length - 1] !== c) return 0;
+  return Math.min(topRun(A), space);
+}
+const solved = (sh, counts) => sh.every(s => !s.length || (uniform(s) && s.length === counts[s[0]]));
+function runsH(sh) { let r = 0; for (const s of sh) for (let k = 0; k < s.length; k++) if (!k || s[k] !== s[k - 1]) r++; return r; }
+function keyOf(sh, kinds, open) {
+  const n = [], sp = [];
+  for (let i = 0; i < sh.length; i++) { let t = ''; for (const x of sh[i]) t += String.fromCharCode(97 + x); if (kinds[i] === 1 || kinds[i] === 2) sp.push(i + t); else n.push(t); }
+  n.sort(); return (open ? 'o' : 'c') + sp.join(',') + '|' + n.join(',');
+}
+// rezolvitor: A* ponderat (h = secvențe în plus, nicio mutare nu scade mai mult de 1), stări vizitate; întoarce mutările [a,b]
+function solve(L0, cap = 250000, wgt = 2) {
+  const caps = L0.caps, kinds = L0.kinds, counts = L0.counts, nc = counts.filter(x => x).length;
+  const heap = [];
+  const push = n => { heap.push(n); let i = heap.length - 1; while (i) { const p = (i - 1) >> 1; if (heap[p].f <= n.f) break; heap[i] = heap[p]; i = p; } heap[i] = n; };
+  const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { let i = 0; for (;;) { const l = 2 * i + 1, r = l + 1; let m = i, mf = last.f; if (l < heap.length && heap[l].f < mf) { m = l; mf = heap[l].f; } if (r < heap.length && heap[r].f < mf) m = r; if (m === i) break; heap[i] = heap[m]; i = m; } heap[i] = last; } return top; };
+  const start = { sh: L0.sh.map(s => s.slice()), open: L0.open, g: 0, prev: null, mv: null };
+  start.f = wgt * (runsH(start.sh) - nc); push(start);
+  const seen = new Set([keyOf(start.sh, kinds, start.open)]); let nodes = 0;
+  while (heap.length) {
+    const n = pop();
+    if (solved(n.sh, counts)) { const out = []; for (let x = n; x.prev; x = x.prev) out.push(x.mv); return out.reverse(); }
+    if (++nodes > cap) return null;
+    const sh = n.sh, N = sh.length;
+    for (let a = 0; a < N; a++) {
+      const A = sh[a]; if (!A.length || full(A, caps[a])) continue;
+      const uniA = uniform(A), emptyDone = {};
+      for (let b = 0; b < N; b++) {
+        const k = canMove(sh, caps, kinds, n.open, a, b); if (!k) continue;
+        const B = sh[b];
+        if (!B.length) { if (uniA && (caps[b] <= A.length || caps[a] >= caps[b])) continue; const ek = caps[b] + '/' + (kinds[b] === 2); if (emptyDone[ek]) continue; emptyDone[ek] = 1; }
+        const ns = sh.slice(); ns[a] = A.slice(0, A.length - k); ns[b] = B.concat(A.slice(A.length - k));
+        const open = n.open || anyFull(ns, caps), key = keyOf(ns, kinds, open);
+        if (seen.has(key)) continue; seen.add(key);
+        const g = n.g + 1; push({ sh: ns, open, g, f: g + wgt * (runsH(ns) - nc), prev: n, mv: [a, b] });
+      }
+    }
+  }
+  return null;
+}
+// verifică o listă de mutări pe nivel: true dacă toate sunt legale și se termină sortat
+function check(L, moves) {
+  const sh = L.sh.map(s => s.slice()); let open = L.open;
+  for (const [a, b] of moves) { const k = canMove(sh, L.caps, L.kinds, open, a, b); if (!k) return false; sh[b].push(...sh[a].splice(sh[a].length - k)); if (anyFull(sh, L.caps)) open = true; }
+  return solved(sh, L.counts);
+}
+// generare din sămânță: P = { n condimente, e rafturi goale, tiny, drawer, lids }
+function gen(seed, P) {
+  const r = rnd(seed);
+  for (let a = 0; a < 200; a++) {
+    const jars = []; for (let c = 0; c < P.n; c++) for (let k = 0; k < CAP; k++) jars.push(c);
+    for (let i = jars.length - 1; i > 0; i--) { const j = (r() * (i + 1)) | 0; [jars[i], jars[j]] = [jars[j], jars[i]]; }
+    const sh = [], caps = [], kinds = [];
+    for (let i = 0; i < P.n; i++) { sh.push(jars.slice(i * CAP, i * CAP + CAP)); caps.push(CAP); kinds.push(0); }
+    if (sh.some(s => uniform(s))) continue;
+    let easy = 0; for (const s of sh) if (s[3] === s[2]) easy++; if (easy > 1 + (P.n > 6)) continue; // nu prea ușor
+    if (P.drawer) kinds[P.n - 1] = 2;
+    for (let i = 0; i < P.e; i++) { sh.push([]); caps.push(CAP); kinds.push(0); }
+    if (P.tiny) { sh.push([]); caps.push(1); kinds.push(1); }
+    const L = { sh, caps, kinds, counts: Array(P.n).fill(CAP), open: !P.drawer, n: P.n, lids: !!P.lids, drawer: !!P.drawer, tiny: !!P.tiny };
+    let sol = solve(L, 60000); if (!sol) continue;
+    const opt = solve(L, 40000, 1.2); if (opt && opt.length < sol.length) sol = opt;
+    L.sol = sol; L.par = sol.length; return L;
+  }
+  return null;
+}
+function params(world, j) {
+  if (world === 0) return { n: [3, 3, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6, 7, 7][j], e: 2 };
+  if (world === 1) return { n: [4, 4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8][j], e: 2, lids: 1 };
+  if (world === 2) return { n: [4, 5, 5, 5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9][j], e: j < 7 ? 1 : 2, tiny: 1 };
+  return { n: [5, 6, 6, 6, 7, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10][j], e: 2, drawer: 1, lids: j >= 8 };
+}
+const LEVELS = [];
+for (let i = 0; i < 60; i++) { const w = (i / 15) | 0, L = gen(7717 + i * 104729, params(w, i % 15)); L.world = w; L.idx = i; L.tip = i === 4 ? 'extra' : i === 15 ? 'lids' : i === 30 ? 'tiny' : i === 45 ? 'drawer' : null; LEVELS.push(L); }
+function dayKey(d = new Date()) { return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
+function dailyLevel(dk) { const w = dk % 4; let L = null; for (let k = 0; !L; k++) L = gen(dk * 31 + 17 + k * 7, params(w, 7)); L.world = w; L.idx = -1; L.daily = dk; L.tip = null; return L; }
+function starsFor(par, moves, extra) { let s = moves <= par ? 3 : moves <= Math.ceil(par * 1.5) ? 2 : 1; if (extra) s = Math.min(s, 2); return s; }
+// ---------- salvare ----------
+const SK = 'spice-shelf-v1';
+const FRESH = () => ({ lang: null, done: [], stars: [], best: [], hints: 3, style: 0, music: 1, sound: 1, vibe: 1, big: 0, tut: 1, daily: 0, streak: 0, gift: 0, tips: {}, seen: '' });
+let S = FRESH();
+try { Object.assign(S, JSON.parse(localStorage.getItem(SK) || '{}')); } catch (e) {}
+if (!S.lang) { const n = (navigator.language || 'en').slice(0, 2); S.lang = LANGS.includes(n) ? n : n === 'uk' || n === 'be' ? 'ru' : 'en'; }
+function save() { try { localStorage.setItem(SK, JSON.stringify(S)); } catch (e) {} }
+const T = k => TX[S.lang][k];
+const totalStars = () => S.stars.reduce((a, b) => a + (b || 0), 0);
+// ---------- sunet (WebAudio procedural, două magistrale) ----------
+let AC = null;
+function ac() { try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); } catch (e) {} return AC; }
+function tone(f, d = 0.12, type = 'sine', v = 0.12, delay = 0, f2, bus = 'sound') {
+  if (!S[bus]) return; const A = ac(); if (!A) return;
+  try { const t = A.currentTime + delay, o = A.createOscillator(), g = A.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(v, t + 0.008); g.gain.exponentialRampToValueAtTime(0.001, t + d); o.connect(g).connect(A.destination); o.start(t); o.stop(t + d + 0.02); } catch (e) {}
+}
+const SFX = {
+  lift: () => { tone(420, 0.06, 'triangle', 0.06, 0, 620); tone(1500, 0.04, 'sine', 0.02, 0.02); },
+  clink: n => { const f = [1568, 1760, 1976, 2093][n % 4]; tone(f, 0.16, 'sine', 0.06); tone(f * 2.01, 0.08, 'sine', 0.025, 0.005); tone(180, 0.05, 'triangle', 0.05); },
+  drop: () => tone(520, 0.06, 'triangle', 0.04, 0, 380),
+  no: () => { tone(170, 0.14, 'sawtooth', 0.035, 0, 120); tone(150, 0.1, 'triangle', 0.04, 0.05) },
+  shelf: () => [784, 988, 1175, 1568].forEach((f, i) => tone(f, 0.28, 'sine', 0.06, i * 0.06)),
+  peek: () => tone(880, 0.1, 'sine', 0.04, 0, 1320),
+  unlock: () => { tone(300, 0.05, 'square', 0.04); tone(600, 0.05, 'square', 0.03, 0.06); [523, 659, 784].forEach(f => tone(f, 0.5, 'sine', 0.05, 0.12)); },
+  extra: () => { tone(330, 0.08, 'triangle', 0.06); tone(440, 0.12, 'triangle', 0.06, 0.07); },
+  win: () => [523, 659, 784, 1047, 1319, 1568, 2093].forEach((f, i) => tone(f, 0.35, 'sine', 0.08, i * 0.08))
+};
+const buzz = ms => { if (S.vibe && navigator.vibrate) try { navigator.vibrate(ms); } catch (e) {} };
+// muzică: o cutie muzicală în trei timpi, pornește după prima atingere
+const MEL = [523, 659, 784, 659, 587, 523, 440, 523, 587, 659, 587, 440, 392, 440, 523, 587, 523, 440]; let mStep = 0, mNext = 0;
+function musicTick(now) { if (!S.music || !AC || AC.state !== 'running' || now < mNext) return; mNext = now + 430; const f = MEL[mStep % MEL.length]; tone(f, 0.8, 'sine', 0.022, 0, 0, 'music'); tone(f * 2, 0.3, 'sine', 0.006, 0, 0, 'music'); if (mStep % 3 === 0) tone([131, 175, 196, 165][((mStep / 9) | 0) % 4], 1.3, 'triangle', 0.024, 0, 0, 'music'); mStep++; }
+// ---------- stare joc ----------
+const cv = document.getElementById('c'), cx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, R = [], JW = 40, mode = 'menu', LI = 0, G = null, FAST = false, demo = null, parts = [], motes = [], BOX = null;
+function newGame(L, isDemo) {
+  const g = { L, sh: L.sh.map(s => s.slice()), caps: L.caps.slice(), kinds: L.kinds.slice(), open: L.open, sel: -1, moves: 0, undos: 0, hist: [], extra: 0, done: false, demo: !!isDemo, fly: [], shake: { i: -1, t: 0 }, glow: {}, openT: 0, step: 0, kc: 0, bad: 0, into: 0 };
+  g.hid = g.sh.map(s => s.map((x, k) => L.lids && k < s.length - 1));
+  return g;
+}
+const JH = () => JW * 1.3;
+// așezarea rafturilor: alege numărul de coloane care dă cele mai mari borcane
+function layout() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); W = innerWidth; H = innerHeight; cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  if (!G) return; const sm = H < 700, N = G.sh.length, top = (sm ? 64 : 74) + (hasTip() ? 50 : 0), bot = sm ? 76 : 84, aw = W - 40, ah = H - top - bot - 16;
+  let best = null;
+  for (let cols = 1; cols <= 5; cols++) {
+    const rows = Math.ceil(N / cols), cw = aw / cols, ch = ah / rows;
+    const jw = Math.min((cw - 26) / (CAP * 1.1 + 0.2), (ch - 24) / 1.52, 74);
+    if (!best || jw > best.jw + 0.5) best = { cols, rows, jw, cw: 0, ch: 0 };
+  }
+  JW = Math.max(14, Math.floor(best.jw)); const cw = Math.min(aw / best.cols, JW * (CAP * 1.1 + 0.2) + 40), ch = Math.min(ah / best.rows, JW * 1.52 + 44);
+  const x0 = (W - cw * best.cols) / 2, y0 = top + 8 + (ah - ch * best.rows) / 2;
+  R = [];
+  for (let i = 0; i < N; i++) {
+    const r = (i / best.cols) | 0, c = i % best.cols, inRow = Math.min(best.cols, N - r * best.cols), off = (best.cols - inRow) * cw / 2;
+    const cap = G.caps[i], sw = JW * (cap * 1.1 + 0.2), cx0 = x0 + off + c * cw + cw / 2;
+    R.push({ x: cx0 - sw / 2, w: sw, py: y0 + r * ch + ch - 22, cell: { x: x0 + off + c * cw, y: y0 + r * ch, w: cw, h: ch } });
+  }
+  BOX = { x: x0 - 8, y: y0 - 6, w: cw * best.cols + 16, h: ch * best.rows + 10 };
+  pointer();
+}
+addEventListener('resize', layout);
+const slotX = (i, k) => R[i].x + JW * (0.15 + k * 1.1);
+function shelfCenter(i) { const c = R[i].cell; return { x: c.x + c.w / 2, y: c.y + c.h / 2 }; }
+function shelfAt(x, y) { for (let i = 0; i < R.length; i++) { const c = R[i].cell; if (x >= c.x && x < c.x + c.w && y >= c.y && y < c.y + c.h) return i; } return -1; }
+function tutOn() { return G && !G.demo && LI === 0 && !G.L.daily && S.tut && !S.tips.t3; }
+function hasTip() { return G && !G.demo && (tutOn() || (G.L.tip && !S.tips[G.L.tip] && S.tut)); }
+function startLevel(i) {
+  LI = i; const L = i < 0 ? dailyLevel(dayKey()) : LEVELS[i];
+  G = newGame(L); mode = 'game'; layout(); show(null); hud(); tip();
+}
+function tip() {
+  const el = $('tip');
+  if (tutOn()) { el.innerHTML = T('steps')[G.step]; el.classList.add('on'); pointer(); return; }
+  const k = G.L.tip; if (k && !S.tips[k] && S.tut) { el.textContent = T('tips')[k]; el.classList.add('on'); } else el.classList.remove('on');
+  pointer();
+}
+function hideTip() { const k = G && G.L.tip; if (k && !S.tips[k]) { S.tips[k] = 1; save(); } if (!tutOn()) $('tip').classList.remove('on'); }
+// tutorial: mâna arată următoarea mutare bună (rezolvitorul pornește din starea curentă)
+let tutMv = null;
+function pointer() {
+  const h = $('hand');
+  if (!tutOn() || G.done || G.step > 1 || cur) { h.style.display = 'none'; return; }
+  if (!tutMv) { const s = solve({ sh: G.sh, caps: G.caps, kinds: G.kinds, counts: G.L.counts, open: G.open }, 20000); tutMv = s && s[0]; }
+  if (!tutMv || !R.length) { h.style.display = 'none'; return; }
+  const t = G.sel < 0 ? tutMv[0] : tutMv[1]; const r = R[t]; h.style.display = 'block';
+  h.style.left = (r.x + r.w / 2) + 'px'; h.style.top = (r.py - JH() * 0.2) + 'px';
+}
+function tutAdvance() {
+  if (!tutOn()) return; const s0 = G.step;
+  if (G.step === 0 && G.sel >= 0) G.step = 1; else if (G.step === 1 && G.sel < 0) G.step = G.moves >= 2 ? 2 : 0;
+  if (s0 !== G.step) tip(); else pointer();
+}
+function hud() {
+  if (!G) return; const L = G.L;
+  $('hTitle').textContent = L.daily ? '🌿 ' + T('daily') : T('level') + ' ' + (LI + 1);
+  const b = L.daily ? 0 : S.best[LI];
+  $('hSub').textContent = T('moves') + ' ' + G.moves + ' · ★★★ ≤ ' + L.par + (b ? ' · ' + T('best') + ' ' + b : '');
+  $('hintN').textContent = S.hints;
+  $('bUndo').disabled = !G.hist.length;
+  $('bExtra').disabled = !!G.extra;
+}
+const fullIdx = () => G.sh.map((s, i) => full(s, G.caps[i]) ? i : -1).filter(i => i >= 0);
+function legalAny() { for (let a = 0; a < G.sh.length; a++) for (let b = 0; b < G.sh.length; b++) if (canMove(G.sh, G.caps, G.kinds, G.open, a, b)) return true; return false; }
+// atingerea unui raft: ridică borcanul din față sau îl așază
+function tapShelf(i) {
+  if (!G || G.done || i < 0 || i >= G.sh.length) return false; ac();
+  const locked = G.kinds[i] === 2 && !G.open;
+  if (G.sel < 0) {
+    if (locked) { shake(i); toast(T('lockMsg')); return false; }
+    if (!G.sh[i].length) { if (!G.demo) SFX.drop(); return false; }
+    G.sel = i; if (!G.demo) { SFX.lift(); buzz(6); tutAdvance(); } return true;
+  }
+  const a = G.sel;
+  if (a === i) { G.sel = -1; if (!G.demo) { SFX.drop(); tutAdvance(); } return false; }
+  if (locked) { shake(i); toast(T('lockMsg')); G.sel = -1; tutAdvance(); return false; }
+  const k = canMove(G.sh, G.caps, G.kinds, G.open, a, i);
+  if (!k) {
+    shake(i); G.sel = -1;
+    if (!G.demo) { G.bad++; if (G.bad <= 3 || G.bad % 4 === 0) toast(G.sh[i].length >= G.caps[i] ? T('fullMsg') : T('noWay')); tutAdvance(); }
+    return false;
+  }
+  doMove(a, i, k); return true;
+}
+function shake(i) { G.shake = { i, t: performance.now() }; if (!G.demo) { SFX.no(); buzz(20); } }
+function doMove(a, b, k) {
+  const before = fullIdx(); G.hist.push({ sh: G.sh.map(s => s.slice()), open: G.open });
+  const A = G.sh[a], B = G.sh[b], from = A.length, to = B.length, moved = A.splice(A.length - k);
+  const now = performance.now();
+  moved.forEach((sp, m) => { B.push(sp); G.hid[b][to + m] = false; if (!FAST) G.fly.push({ b, slot: to + m, sp, x0: slotX(a, from - k + m), y0: R[a].py - JH() * 0.25, t0: now + m * 55, dur: 300 }); });
+  G.sel = -1; G.moves++; tutMv = null;
+  if (!G.demo) { hideTip(); SFX.clink(G.moves); buzz(8); }
+  reveal();
+  const after = fullIdx(), fresh = after.filter(i => !before.includes(i));
+  for (const i of fresh) { G.glow[i] = now + (FAST ? 0 : 320); if (!G.demo) setTimeout(SFX.shelf, FAST ? 0 : 300); setTimeout(() => sparkle(i, 18), FAST ? 0 : 320); }
+  if (!G.open && after.length) { G.open = true; G.openT = now + 400; if (!G.demo) { setTimeout(SFX.unlock, 450); setTimeout(() => toast(T('opened')), 500); } }
+  if (!G.demo) tutAdvance();
+  hud(); pointer();
+  if (solved(G.sh, G.L.counts)) win();
+  else if (!G.demo && !legalAny()) setTimeout(() => toast(T('stuck')), 400);
+}
+function reveal() {
+  G.sh.forEach((s, i) => { const k = s.length - 1; if (k >= 0 && G.hid[i][k]) { G.hid[i][k] = false; if (!G.demo) { setTimeout(SFX.peek, FAST ? 0 : 200); puff(slotX(i, k) + JW / 2, R[i].py - JH() * 0.6, '#f4e3c3', 8); } } });
+}
+function undo() {
+  if (!G || G.done || G.demo || !G.hist.length) return false;
+  const h = G.hist.pop(); while (h.sh.length < G.sh.length) h.sh.push([]);
+  G.sh = h.sh; G.open = h.open; G.sel = -1; G.undos++; G.fly = []; tutMv = null;
+  SFX.drop(); hud(); pointer(); return true;
+}
+// raftul de rezervă: un raft gol în plus pentru nivelul curent (limitat, primești altele terminând niveluri)
+function extraShelf() {
+  if (!G || G.done || G.demo) return false; hideTip();
+  if (G.extra) { toast(T('usedExtra')); return false; }
+  if (S.hints <= 0) { toast(T('noHints')); SFX.no(); return false; }
+  S.hints--; save(); addShelf(); SFX.extra(); toast(T('added')); return true;
+}
+function addShelf() { G.extra = 1; G.sh.push([]); G.caps.push(CAP); G.kinds.push(3); G.hid.push([]); G.sel = -1; layout(); hud(); }
+function restart() { if (!G || G.demo) return; const ex = G.extra; G = newGame(G.L); if (ex) addShelf(); tutMv = null; layout(); hud(); tip(); show(null); }
+function win() {
+  const L = G.L; G.done = true; G.into = performance.now(); pointer();
+  if (G.demo) { setTimeout(() => { if (mode === 'menu') startDemo(); }, 2200); return; }
+  if (LI === 0 && !S.tips.t3) { S.tips.t3 = 1; $('tip').classList.remove('on'); }
+  SFX.win(); buzz([20, 40, 30]);
+  G.sh.forEach((s, i) => s.length && setTimeout(() => sparkle(i, 14), FAST ? 0 : 400 + i * 70));
+  const st = starsFor(L.par, G.moves, G.extra); let info = T('moves') + ': ' + G.moves + ' / ★★★ ≤ ' + L.par + (G.extra ? ' · ➕' : '');
+  if (L.daily) {
+    if (S.daily !== L.daily) { const y = new Date(); y.setDate(y.getDate() - 1); S.streak = S.daily === dayKey(y) ? S.streak + 1 : 1; S.daily = L.daily; }
+    info += ' · 🔥 ' + S.streak;
+  } else {
+    const before = totalStars(), first = !S.done[LI];
+    S.done[LI] = 1; S.stars[LI] = Math.max(S.stars[LI] || 0, st); S.best[LI] = Math.min(S.best[LI] || 999, G.moves);
+    if (first) { S.hints++; info += ' · ' + T('gotHint'); }
+    const ns = STYLES.findIndex(n => n > before && n <= totalStars()); if (ns >= 0) setTimeout(() => toast(T('newStyle') + T('stn')[ns]), 1500);
+  }
+  save();
+  setTimeout(() => {
+    $('wTitle').textContent = L.daily ? T('dailyDone') + S.streak : T('done');
+    $('wStars').innerHTML = [0, 1, 2].map(i => i < st ? `<span class="s" style="animation-delay:${i * 0.15}s">★</span>` : '★').join('');
+    $('wInfo').textContent = info;
+    $('wNext').style.display = L.daily || LI >= 59 ? 'none' : '';
+    show('win');
+  }, FAST ? 0 : 1400);
+}
+// ---------- particule ----------
+function puff(x, y, col, n, sp = 1.4) { if (FAST) return; for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, v = (0.4 + Math.random()) * sp; parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.9, life: 1, col, r: 1.5 + Math.random() * 2.5, star: Math.random() < 0.3 }); } }
+function sparkle(i, n) { if (!G || !R[i]) return; const s = G.sh[i], r = R[i]; for (let k = 0; k < n; k++) { const sp = s[(k % Math.max(1, s.length))]; puff(r.x + Math.random() * r.w, r.py - Math.random() * JH(), k % 3 ? '#ffe39a' : (sp !== undefined ? SPICES[sp].c : '#fff'), 1, 2); } }
+for (let i = 0; i < 34; i++) motes.push({ x: Math.random(), y: Math.random(), s: 0.3 + Math.random() * 0.7, p: Math.random() * 6.28 });
+// ---------- desen ----------
+function rr(c, x, y, w, h, r) { r = Math.max(0, Math.min(r, w / 2, h / 2)); c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+// simbolurile condimentelor (pentru daltonism: formă diferită pentru fiecare)
+function sym(c, k, x, y, r, col, bg) {
+  c.fillStyle = col; c.beginPath();
+  switch (k) {
+    case 0: c.arc(x, y, r * .82, 0, 6.28); break;
+    case 1: c.moveTo(x, y - r * .95); c.lineTo(x + r * .95, y + r * .72); c.lineTo(x - r * .95, y + r * .72); c.closePath(); break;
+    case 2: c.moveTo(x, y - r); c.quadraticCurveTo(x + r * 1.05, y, x, y + r); c.quadraticCurveTo(x - r * 1.05, y, x, y - r); c.fill(); c.strokeStyle = bg; c.lineWidth = Math.max(1, r * .16); c.beginPath(); c.moveTo(x, y - r * .6); c.lineTo(x, y + r * .7); c.stroke(); return;
+    case 3: for (let a = 0; a < 5; a++) { const t = a * 1.2566 - 1.57; c.moveTo(x + Math.cos(t) * r * .55 + r * .4, y + Math.sin(t) * r * .55); c.arc(x + Math.cos(t) * r * .55, y + Math.sin(t) * r * .55, r * .4, 0, 6.28); } c.fill(); c.fillStyle = bg; c.beginPath(); c.arc(x, y, r * .26, 0, 6.28); break;
+    case 4: rr(c, x - r * .78, y - r * .78, r * 1.56, r * 1.56, r * .2); break;
+    case 5: c.moveTo(x, y - r); c.lineTo(x + r * .8, y); c.lineTo(x, y + r); c.lineTo(x - r * .8, y); c.closePath(); break;
+    case 6: for (let a = 0; a < 10; a++) { const t = a * 0.6283 - 1.5708, q = a % 2 ? r * .45 : r; c.lineTo(x + Math.cos(t) * q, y + Math.sin(t) * q * 1.02 + r * .06); } c.closePath(); break;
+    case 7: c.arc(x, y, r * .9, 0, 6.28); c.fill(); c.fillStyle = bg; c.beginPath(); c.arc(x + r * .42, y - r * .28, r * .72, 0, 6.28); break;
+    case 8: rr(c, x - r * .3, y - r * .9, r * .6, r * 1.8, r * .12); c.fill(); c.beginPath(); rr(c, x - r * .9, y - r * .3, r * 1.8, r * .6, r * .12); break;
+    case 9: c.moveTo(x, y + r * .9); c.bezierCurveTo(x - r * 1.5, y - r * .1, x - r * .6, y - r * 1.2, x, y - r * .45); c.bezierCurveTo(x + r * .6, y - r * 1.2, x + r * 1.5, y - r * .1, x, y + r * .9); break;
+  }
+  c.fill();
+}
+function speckle(c, x, y, w, h, sp, seed) { const S0 = SPICES[sp]; c.fillStyle = sp === 5 ? 'rgba(170,185,200,.55)' : 'rgba(255,255,255,.2)'; for (let k = 0; k < 7; k++) { const a = (seed * 37 + k * 53) % 97 / 97, b = (seed * 71 + k * 29) % 89 / 89; c.fillRect(x + a * w, y + b * h, Math.max(1, w * .06), Math.max(1, w * .06)); } c.fillStyle = 'rgba(0,0,0,.12)'; for (let k = 0; k < 5; k++) { const a = (seed * 13 + k * 41) % 83 / 83, b = (seed * 19 + k * 61) % 79 / 79; c.fillRect(x + a * w, y + b * h, Math.max(1, w * .05), Math.max(1, w * .05)); } void S0; }
+function label(c, x, y, w, h, sp, big) { rr(c, x, y, w, h, Math.min(4, w * .12)); c.fillStyle = '#fffaf0'; c.fill(); c.strokeStyle = 'rgba(90,60,30,.35)'; c.lineWidth = 1; c.stroke(); sym(c, sp, x + w / 2, y + h / 2, Math.min(w, h) * (big ? .46 : .38), SPICES[sp].d, '#fffaf0'); }
+function gingham(c, x, y, w, h, col) { c.save(); c.clip(); c.fillStyle = '#fff6ea'; c.fillRect(x, y, w, h); const q = Math.max(3, w / 6); c.fillStyle = col; c.globalAlpha = .55; for (let i = 0; i * q < w; i += 2) c.fillRect(x + i * q, y, q, h); for (let j = 0; j * q < h; j += 2) c.fillRect(x, y + j * q, w, q); c.globalAlpha = 1; c.restore(); }
+// un borcan: x = stânga, yb = baza, w = lățime
+function drawJar(c, x, yb, w, sp, style, hid, big) {
+  const h = w * 1.3, S0 = SPICES[sp];
+  c.fillStyle = 'rgba(40,20,5,.25)'; c.beginPath(); c.ellipse(x + w / 2, yb, w * .5, w * .09, 0, 0, 6.28); c.fill();
+  if (hid) { // borcan acoperit cu pânză: nu se vede ce e
+    rr(c, x, yb - h * .84, w, h * .84, w * .22); c.fillStyle = '#d9c09a'; c.fill(); c.strokeStyle = 'rgba(90,60,30,.4)'; c.lineWidth = 1.2; c.stroke();
+    c.fillStyle = 'rgba(120,80,40,.18)'; for (let k = 0; k < 4; k++) c.fillRect(x + w * .1, yb - h * (.75 - k * .17), w * .8, 1);
+    c.beginPath(); c.moveTo(x - w * .06, yb - h * .66); c.quadraticCurveTo(x + w / 2, yb - h * 1.12, x + w * 1.06, yb - h * .66); c.quadraticCurveTo(x + w * .8, yb - h * .58, x + w / 2, yb - h * .62); c.quadraticCurveTo(x + w * .2, yb - h * .58, x - w * .06, yb - h * .66); c.closePath(); gingham(c, x - w * .1, yb - h * 1.05, w * 1.2, h * .5, '#c0453a');
+    c.strokeStyle = '#8a5a2b'; c.lineWidth = Math.max(1.5, w * .05); c.beginPath(); c.moveTo(x + w * .02, yb - h * .66); c.lineTo(x + w * .98, yb - h * .66); c.stroke();
+    c.fillStyle = '#6b4320'; c.font = `900 ${Math.round(w * .5)}px Trebuchet MS,sans-serif`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('?', x + w / 2, yb - h * .32);
+    return;
+  }
+  const lw = w * .76, lh = h * .38;
+  if (style === 1) { // cutie emailată
+    rr(c, x + w * .02, yb - h * .9, w * .96, h * .9, w * .1); c.fillStyle = '#f5ecda'; c.fill(); c.strokeStyle = 'rgba(80,50,20,.35)'; c.lineWidth = 1; c.stroke();
+    c.fillStyle = S0.c; c.fillRect(x + w * .02, yb - h * .2, w * .96, h * .12); c.fillRect(x + w * .02, yb - h * .82, w * .96, h * .1);
+    rr(c, x - w * .02, yb - h, w * 1.04, h * .14, w * .06); c.fillStyle = '#5a4636'; c.fill();
+    c.fillStyle = S0.c; c.beginPath(); c.arc(x + w / 2, yb - h * .46, w * (big ? .3 : .26), 0, 6.28); c.fill(); c.strokeStyle = 'rgba(0,0,0,.2)'; c.stroke();
+    sym(c, sp, x + w / 2, yb - h * .46, w * (big ? .2 : .16), sp === 5 ? '#5d6b7c' : '#fffaf0', S0.c);
+  } else if (style === 2) { // oală de lut
+    c.beginPath(); c.moveTo(x + w * .12, yb - h * .74); c.quadraticCurveTo(x - w * .06, yb - h * .3, x + w * .16, yb); c.lineTo(x + w * .84, yb); c.quadraticCurveTo(x + w * 1.06, yb - h * .3, x + w * .88, yb - h * .74); c.closePath(); c.fillStyle = '#c4673c'; c.fill();
+    c.fillStyle = 'rgba(255,255,255,.14)'; c.fillRect(x + w * .14, yb - h * .62, w * .08, h * .5);
+    c.beginPath(); c.moveTo(x + w * .02, yb - h * .74); c.quadraticCurveTo(x + w / 2, yb - h * 1.08, x + w * .98, yb - h * .74); c.quadraticCurveTo(x + w / 2, yb - h * .66, x + w * .02, yb - h * .74); c.fillStyle = S0.c; c.fill(); c.strokeStyle = 'rgba(0,0,0,.2)'; c.lineWidth = 1; c.stroke();
+    c.strokeStyle = '#e8d2a0'; c.lineWidth = Math.max(1.5, w * .05); c.beginPath(); c.moveTo(x + w * .1, yb - h * .73); c.lineTo(x + w * .9, yb - h * .73); c.stroke();
+    label(c, x + w * .2, yb - h * .58, w * .6, h * .34, sp, big);
+  } else if (style === 4) { // sticluță de farmacie
+    c.beginPath(); c.moveTo(x + w * .34, yb - h * .86); c.lineTo(x + w * .34, yb - h * .74); c.quadraticCurveTo(x, yb - h * .7, x, yb - h * .46); c.lineTo(x, yb - h * .08); c.quadraticCurveTo(x, yb, x + w * .1, yb); c.lineTo(x + w * .9, yb); c.quadraticCurveTo(x + w, yb, x + w, yb - h * .08); c.lineTo(x + w, yb - h * .46); c.quadraticCurveTo(x + w, yb - h * .7, x + w * .66, yb - h * .74); c.lineTo(x + w * .66, yb - h * .86); c.closePath();
+    c.fillStyle = S0.c; c.fill(); c.strokeStyle = 'rgba(40,20,10,.4)'; c.lineWidth = 1.2; c.stroke();
+    rr(c, x + w * .3, yb - h, w * .4, h * .16, w * .06); c.fillStyle = '#b98a58'; c.fill();
+    c.fillStyle = 'rgba(255,255,255,.3)'; c.fillRect(x + w * .1, yb - h * .5, w * .08, h * .36);
+    c.beginPath(); c.ellipse(x + w / 2, yb - h * .3, w * .36, h * .17, 0, 0, 6.28); c.fillStyle = '#fffaf0'; c.fill(); c.strokeStyle = 'rgba(90,60,30,.35)'; c.lineWidth = 1; c.stroke();
+    sym(c, sp, x + w / 2, yb - h * .3, w * (big ? .2 : .16), S0.d, '#fffaf0');
+  } else if (style === 5) { // ceramică populară cu motiv de ie
+    rr(c, x + w * .04, yb - h * .86, w * .92, h * .86, w * .26); c.fillStyle = '#fbf7ee'; c.fill(); c.strokeStyle = 'rgba(80,50,20,.3)'; c.lineWidth = 1; c.stroke();
+    c.fillStyle = S0.c; const bz = yb - h * .74; for (let k = 0; k < 4; k++) { const mx = x + w * (.17 + k * .22); c.beginPath(); c.moveTo(mx, bz - h * .06); c.lineTo(mx + w * .09, bz); c.lineTo(mx, bz + h * .06); c.lineTo(mx - w * .09, bz); c.fill(); }
+    c.fillRect(x + w * .1, yb - h * .14, w * .8, h * .05);
+    rr(c, x + w * .1, yb - h * .98, w * .8, h * .14, w * .1); c.fillStyle = S0.c; c.fill(); c.beginPath(); c.arc(x + w / 2, yb - h * 1.0, w * .08, 0, 6.28); c.fillStyle = S0.d; c.fill();
+    sym(c, sp, x + w / 2, yb - h * .4, w * (big ? .26 : .21), S0.d, '#fbf7ee');
+  } else { // 0 sticlă, 3 sticlă cu batic
+    rr(c, x, yb - h * .86, w, h * .86, w * .22); c.fillStyle = 'rgba(235,245,250,.42)'; c.fill(); c.strokeStyle = 'rgba(70,50,30,.38)'; c.lineWidth = 1.2; c.stroke();
+    rr(c, x + w * .07, yb - h * .74, w * .86, h * .7, w * .17); c.fillStyle = S0.c; c.fill(); speckle(c, x + w * .1, yb - h * .72, w * .8, h * .64, sp, sp * 7 + 3);
+    if (style === 3) { c.beginPath(); c.moveTo(x - w * .05, yb - h * .82); c.quadraticCurveTo(x + w / 2, yb - h * 1.14, x + w * 1.05, yb - h * .82); c.lineTo(x + w * .92, yb - h * .74); c.quadraticCurveTo(x + w / 2, yb - h * .82, x + w * .08, yb - h * .74); c.closePath(); gingham(c, x - w * .08, yb - h * 1.1, w * 1.16, h * .4, S0.c === '#eef1f4' ? '#8aa0b8' : S0.c); c.strokeStyle = '#fffaf0'; c.lineWidth = Math.max(1.5, w * .05); c.beginPath(); c.moveTo(x + w * .06, yb - h * .79); c.lineTo(x + w * .94, yb - h * .79); c.stroke(); }
+    else { rr(c, x + w * .1, yb - h, w * .8, h * .16, w * .06); const g = c.createLinearGradient(0, yb - h, 0, yb - h * .84); g.addColorStop(0, '#f3d888'); g.addColorStop(1, '#b8892f'); c.fillStyle = g; c.fill(); c.fillStyle = 'rgba(80,50,10,.25)'; for (let k = 1; k < 6; k++) c.fillRect(x + w * (.1 + k * .133), yb - h * .99, 1, h * .14); }
+    label(c, x + (w - lw) / 2, yb - h * .62, lw, lh, sp, big);
+    c.fillStyle = 'rgba(255,255,255,.45)'; rr(c, x + w * .1, yb - h * .78, w * .08, h * .62, w * .04); c.fill();
+  }
+}
+let wallPat = null, wallFor = -1;
+function wallPattern(t) {
+  const th = THEMES[t], p = document.createElement('canvas'), s = 48; p.width = p.height = s; const c = p.getContext('2d');
+  c.fillStyle = th.pat; c.strokeStyle = th.pat; c.lineWidth = 2;
+  if (t === 0) { for (const [x, y] of [[12, 12], [36, 36]]) { for (let a = 0; a < 4; a++) { c.beginPath(); c.arc(x + Math.cos(a * 1.57) * 4, y + Math.sin(a * 1.57) * 4, 3, 0, 6.28); c.fill(); } } }
+  else if (t === 1) { c.strokeRect(1, 1, 46, 22); c.strokeRect(-23, 25, 46, 22); c.strokeRect(25, 25, 46, 22); }
+  else if (t === 2) { c.strokeRect(1, 1, 46, 46); c.beginPath(); c.moveTo(24, 8); c.lineTo(40, 24); c.lineTo(24, 40); c.lineTo(8, 24); c.closePath(); c.stroke(); }
+  else { for (const [x, y] of [[12, 12], [36, 36]]) { c.beginPath(); for (let a = 0; a < 6; a++) { c.moveTo(x, y); c.lineTo(x + Math.cos(a * 1.047) * 6, y + Math.sin(a * 1.047) * 6); } c.stroke(); } }
+  wallPat = cx.createPattern(p, 'repeat'); wallFor = t;
+}
+function plank(x, y, w, th, kind) {
+  const d = Math.max(8, JW * .2);
+  if (kind === 1) { cx.fillStyle = th.woodD; for (const bx of [x + w * .2, x + w * .8]) { cx.beginPath(); cx.moveTo(bx - 3, y + d); cx.lineTo(bx + 3, y + d); cx.lineTo(bx, y + d + 10); cx.fill(); } }
+  rr(cx, x - 6, y, w + 12, d, 4); const g = cx.createLinearGradient(0, y, 0, y + d); g.addColorStop(0, th.woodL); g.addColorStop(.45, th.wood); g.addColorStop(1, th.woodD); cx.fillStyle = g; cx.fill();
+  cx.fillStyle = 'rgba(255,255,255,.18)'; cx.fillRect(x - 4, y + 1, w + 8, 2);
+  cx.fillStyle = 'rgba(0,0,0,.22)'; cx.fillRect(x - 4, y + d, w + 8, 3);
+}
+function draw(now) {
+  const th = THEMES[G ? G.L.world : 0];
+  const g = cx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, th.w1); g.addColorStop(1, th.w2); cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+  if (wallFor !== (G ? G.L.world : 0)) wallPattern(G ? G.L.world : 0); cx.fillStyle = wallPat; cx.fillRect(0, 0, W, H);
+  // lumină caldă de la fereastră
+  const lg = cx.createRadialGradient(W * .8, -H * .05, 10, W * .8, -H * .05, H * .9); lg.addColorStop(0, 'rgba(255,236,190,.35)'); lg.addColorStop(1, 'rgba(255,236,190,0)'); cx.fillStyle = lg; cx.fillRect(0, 0, W, H);
+  if (!G || !R.length) return;
+  // dulapul
+  if (BOX) { rr(cx, BOX.x - 10, BOX.y - 10, BOX.w + 20, BOX.h + 20, 20); cx.fillStyle = th.woodD; cx.fill(); rr(cx, BOX.x, BOX.y, BOX.w, BOX.h, 14); const bg = cx.createLinearGradient(0, BOX.y, 0, BOX.y + BOX.h); bg.addColorStop(0, th.back); bg.addColorStop(1, 'rgba(0,0,0,.5)'); cx.fillStyle = th.back; cx.fill(); cx.fillStyle = bg; cx.fill(); cx.fillStyle = 'rgba(255,255,255,.04)'; for (let x = BOX.x + 18; x < BOX.x + BOX.w; x += 36) cx.fillRect(x, BOX.y, 1.5, BOX.h); }
+  const jh = JH(), lift = jh * .26, sel = G.sel, big = !!S.big;
+  for (let i = 0; i < G.sh.length; i++) {
+    const r = R[i], s = G.sh[i], cap = G.caps[i], kind = G.kinds[i];
+    let ox = 0; if (G.shake.i === i) { const k = (now - G.shake.t) / 320; if (k < 1) ox = Math.sin(k * 30) * 6 * (1 - k); }
+    const x = r.x + ox, py = r.py;
+    // ținta posibilă strălucește când ai un borcan ridicat
+    if (sel >= 0 && sel !== i && canMove(G.sh, G.caps, G.kinds, G.open, sel, i)) { rr(cx, x - 6, py - jh - 8, r.w + 12, jh + 12, 10); cx.fillStyle = 'rgba(255,224,140,' + (0.16 + 0.08 * Math.sin(now / 180)) + ')'; cx.fill(); }
+    if (sel === i) { rr(cx, x - 6, py - jh - lift - 8, r.w + 12, jh + lift + 12, 10); cx.strokeStyle = 'rgba(255,224,140,.85)'; cx.lineWidth = 2.5; cx.stroke(); }
+    if (KB.on && KB.i === i && mode === 'game') { cx.setLineDash([6, 5]); rr(cx, x - 9, py - jh - lift - 10, r.w + 18, jh + lift + 22, 12); cx.strokeStyle = '#fff6e6'; cx.lineWidth = 2; cx.stroke(); cx.setLineDash([]); }
+    // locuri goale
+    for (let k = s.length; k < cap; k++) { rr(cx, slotX(i, k) + 2, py - jh * .84, JW - 4, jh * .82, JW * .2); cx.strokeStyle = 'rgba(255,240,210,.16)'; cx.lineWidth = 1.5; cx.setLineDash([4, 4]); cx.stroke(); cx.setLineDash([]); }
+    plank(x, py, r.w, th, kind);
+    const run = sel === i ? topRun(s) : 0;
+    for (let k = 0; k < s.length; k++) {
+      if (G.fly.some(f => f.b === i && f.slot === k)) continue;
+      const up = k >= s.length - run ? lift + Math.sin(now / 160) * 2 : 0;
+      drawJar(cx, slotX(i, k) + ox, py - up, JW, s[k], S.style, G.hid[i][k], big);
+    }
+    // sertarul încuiat: șipci de lemn și lacăt
+    if (kind === 2) {
+      const k2 = G.open ? Math.min(1, Math.max(0, (now - G.openT) / 600)) : 0;
+      if (k2 < 1) {
+        cx.save(); cx.globalAlpha = 1 - k2; const yy = py - jh * 1.05 - k2 * jh * .6;
+        rr(cx, x - 4, yy, r.w + 8, jh * 1.05, 8); cx.fillStyle = 'rgba(60,32,12,.35)'; cx.fill();
+        for (let k = 0; k <= 8; k++) { cx.fillStyle = k % 2 ? th.woodD : th.wood; rr(cx, x - 4 + k * (r.w + 8) / 8.6, yy, Math.max(4, JW * .17), jh * 1.05, 3); cx.fill(); }
+        rr(cx, x - 4, yy + jh * .44, r.w + 8, jh * .18, 4); cx.fillStyle = th.woodL; cx.fill();
+        const lx = x + r.w / 2, ly = yy + jh * .54, ls = Math.max(10, JW * .32);
+        cx.strokeStyle = '#7c6a52'; cx.lineWidth = Math.max(2.5, ls * .22); cx.beginPath(); cx.arc(lx, ly - ls * .25, ls * .5, Math.PI, 0); cx.stroke();
+        rr(cx, lx - ls * .75, ly - ls * .25, ls * 1.5, ls * 1.15, ls * .2); cx.fillStyle = '#e6b84a'; cx.fill(); cx.strokeStyle = '#8a6418'; cx.lineWidth = 1.5; cx.stroke();
+        cx.fillStyle = '#5a3e0c'; cx.beginPath(); cx.arc(lx, ly + ls * .2, ls * .16, 0, 6.28); cx.fill(); cx.fillRect(lx - ls * .06, ly + ls * .2, ls * .12, ls * .4);
+        cx.restore();
+      }
+    }
+    if (kind === 3) { cx.fillStyle = 'rgba(255,224,140,.8)'; cx.font = `700 ${Math.max(11, JW * .3)}px Trebuchet MS,sans-serif`; cx.textAlign = 'center'; cx.textBaseline = 'top'; cx.fillText('➕', x + r.w / 2, py + JW * .24); }
+    // raft terminat: o etichetă cu numele condimentului
+    if (full(s, cap)) {
+      const gk = G.glow[i] ? Math.min(1, Math.max(0, (now - G.glow[i]) / 400)) : 1, tw = Math.min(r.w, JW * 3.2), tx = x + r.w / 2, ty = py + JW * .2 + 2;
+      cx.globalAlpha = gk; rr(cx, tx - tw / 2, ty, tw, Math.max(15, JW * .38), 6); cx.fillStyle = '#fff3d4'; cx.fill(); cx.strokeStyle = SPICES[s[0]].d; cx.lineWidth = 1.5; cx.stroke();
+      cx.fillStyle = '#5a3414'; cx.font = `800 ${Math.max(10, Math.min(15, JW * .27))}px Trebuchet MS,sans-serif`; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText('✓ ' + T('sp')[s[0]], tx, ty + Math.max(15, JW * .38) / 2 + 1); cx.globalAlpha = 1;
+      if (!FAST && Math.random() < 0.012) puff(x + Math.random() * r.w, py - Math.random() * jh, '#ffe39a', 1, 0.6);
+    }
+  }
+  // borcane în zbor
+  G.fly = G.fly.filter(f => {
+    const k = Math.max(0, (now - f.t0) / f.dur); const x1 = slotX(f.b, f.slot), y1 = R[f.b].py;
+    if (k >= 1) { puff(x1 + JW / 2, y1 - 2, 'rgba(255,240,210,.9)', 3, 0.7); return false; }
+    const e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, x = f.x0 + (x1 - f.x0) * e, y = f.y0 + (y1 - f.y0) * e - Math.sin(k * Math.PI) * (40 + Math.abs(x1 - f.x0) * .15);
+    drawJar(cx, x, y, JW, f.sp, S.style, false, big); return true;
+  });
+}
+function frame(now) {
+  draw(now); musicTick(now);
+  const th = THEMES[G ? G.L.world : 0], snow = G && G.L.world === 3;
+  for (const m of motes) { m.y += (snow ? 0.0012 : -0.00018) * m.s; m.x += Math.sin(now / 2200 + m.p) * 0.0003; if (m.y > 1) m.y = 0; if (m.y < 0) m.y = 1; cx.fillStyle = th.motes + (snow ? 0.7 : 0.35 + 0.25 * Math.sin(now / 900 + m.p)) + ')'; cx.beginPath(); cx.arc(m.x * W, m.y * H, (snow ? 1.6 : 1.1) + m.s * 1.6, 0, 6.28); cx.fill(); }
+  for (const p of parts) { p.x += p.vx; p.y += p.vy; p.vy += 0.035; p.life -= 0.02; cx.globalAlpha = Math.max(0, p.life); cx.fillStyle = p.col; cx.beginPath(); if (p.star) { for (let a = 0; a < 8; a++) { const t = a * .785, q = a % 2 ? p.r * .4 : p.r * 1.6; cx.lineTo(p.x + Math.cos(t) * q, p.y + Math.sin(t) * q); } } else cx.arc(p.x, p.y, p.r, 0, 6.28); cx.fill(); }
+  cx.globalAlpha = 1; parts = parts.filter(p => p.life > 0);
+  if (mode === 'menu' && demo && G && G.demo && !G.done && now > demo.next) { const mv = G.L.sol[demo.k]; if (mv) { if (demo.half) { tapShelf(mv[1]); demo.k++; demo.half = 0; demo.next = now + 650; } else { tapShelf(mv[0]); demo.half = 1; demo.next = now + 420; } } }
+  requestAnimationFrame(frame);
+}
+function startDemo() { G = newGame(LEVELS[17], true); demo = { next: performance.now() + 1000, k: 0, half: 0 }; layout(); }
+// ---------- intrare ----------
+const KB = { on: false, i: 0 };
+cv.addEventListener('pointerdown', e => { ac(); if (mode !== 'game' || !G || G.done || cur) return; KB.on = false; const i = shelfAt(e.clientX, e.clientY); if (i < 0) { if (G.sel >= 0) { G.sel = -1; tutAdvance(); } return; } tapShelf(i); });
+function gridCols() { if (R.length < 2) return 1; let c = 1; while (c < R.length && Math.abs(R[c].py - R[0].py) < 2) c++; return c; }
+addEventListener('keydown', e => {
+  ac(); const k = e.key.toLowerCase();
+  if (k === 'escape') { e.preventDefault(); if (mode === 'game' && !cur) pause(); else if (cur === 'pause') resume(); else if (cur === 'settings' && ret === 'pause') show('pause'); else if (cur && cur !== 'menu' && cur !== 'win') { show('menu'); texts(); } return; }
+  if (mode !== 'game' || !G || cur) return;
+  if (/^[0-9]$/.test(k)) { const i = k === '0' ? 9 : +k - 1; KB.on = true; KB.i = Math.min(i, G.sh.length - 1); tapShelf(i); return; }
+  const cols = gridCols(), mv = { arrowleft: -1, a: -1, arrowright: 1, d: 1, arrowup: -cols, w: -cols, arrowdown: cols, s: cols }[k];
+  if (mv !== undefined) { e.preventDefault(); KB.i = KB.on ? Math.max(0, Math.min(G.sh.length - 1, KB.i + mv)) : (G.sel >= 0 ? G.sel : 0); KB.on = true; return; }
+  if (k === 'enter' || k === ' ') { e.preventDefault(); if (!KB.on) { KB.on = true; KB.i = 0; return; } tapShelf(KB.i); return; }
+  if (k === 'z' || k === 'backspace' || k === 'u') undo(); else if (k === 'e' || k === 'h') extraShelf(); else if (k === 'r') restart();
+});
+// ---------- ecrane ----------
+let cur = 'menu', ret = 'menu';
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.toggle('on', s.id === id)); cur = id;
+  const g = mode === 'game' && !id; $('hud').classList.toggle('on', g); $('tools').classList.toggle('on', g);
+  if (!g) $('tip').classList.remove('on');
+  pointer();
+}
+function pause() { if (mode !== 'game' || G.done) return; ret = 'pause'; texts(); show('pause'); }
+function resume() { show(null); tip(); }
+function toMenu() { mode = 'menu'; ret = 'menu'; startDemo(); show('menu'); texts(); }
+let toastT = 0;
+function toast(m) { const el = $('toast'); el.textContent = m; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => el.classList.remove('on'), 2500); }
+function nextLevel() { for (let i = 0; i < 60; i++) if (!S.done[i]) return i; return 59; }
+function texts() {
+  document.documentElement.lang = S.lang;
+  document.querySelectorAll('[data-t]').forEach(e => e.textContent = T(e.dataset.t));
+  $('bPlay').textContent = T('play');
+  $('bDaily').textContent = '🌿 ' + T('daily') + (S.daily === dayKey() ? ' ✓' : '');
+  $('bLevels').textContent = T('levels');
+  $('bLang').textContent = S.lang.toUpperCase();
+  $('wNext').textContent = T('next');
+  for (const k of ['music', 'sound', 'vibe', 'big', 'tut']) $('s' + k[0].toUpperCase() + k.slice(1)).textContent = S[k] ? T('on') : T('off');
+  $('sFs').textContent = document.fullscreenElement ? T('on') : T('off');
+  $('sLang').textContent = S.lang.toUpperCase();
+  $('sReset').textContent = T('erase');
+  $('pResume').textContent = T('resume'); $('pRestart').textContent = T('restart'); $('pSettings').textContent = T('settings'); $('pMenu').textContent = T('menu');
+  menuInfo(); hud();
+}
+function menuInfo() { $('menuInfo').textContent = '★ ' + totalStars() + '/180 · ➕ ' + S.hints + (S.streak ? ' · 🔥 ' + S.streak : ''); $('news').textContent = S.seen !== VERSION ? T('news') : ''; }
+function renderLevels() {
+  const el = $('worlds'); let h = ''; const nx = nextLevel();
+  for (let w = 0; w < 4; w++) {
+    let st = 0; for (let i = w * 15; i < w * 15 + 15; i++) st += S.stars[i] || 0;
+    h += `<div class="world"><h3><span><i style="background:${THEMES[w].chip}"></i>${T('w')[w]}</span><small>★ ${st}/45</small></h3><p>${T('wsub')[w]}</p><div class="grid">`;
+    for (let i = w * 15; i < w * 15 + 15; i++) { const lock = i > 0 && !S.done[i - 1] && !S.done[i]; h += `<button class="lv${lock ? ' lock' : ''}${i === nx && !S.done[i] ? ' cur' : ''}" data-lv="${i}">${i + 1}<small>${'★'.repeat(S.stars[i] || 0)}</small></button>`; }
+    h += '</div></div>';
+  }
+  el.innerHTML = h; $('lvStars').textContent = '★ ' + totalStars();
+}
+function renderStyles() {
+  const t = totalStars(); $('stStars').textContent = '★ ' + t;
+  $('stList').innerHTML = STYLES.map((n, i) => `<button class="st${S.style === i ? ' on' : ''}${t < n ? ' lock' : ''}" data-st="${i}"><canvas width="264" height="132"></canvas><b>${T('stn')[i]}</b><small>${t >= n ? (S.style === i ? T('used') : T('use')) : '🔒 ' + T('unlock') + ' ★ ' + n}</small></button>`).join('');
+  document.querySelectorAll('#stList canvas').forEach((c, i) => { const g = c.getContext('2d'); g.scale(2, 2); g.fillStyle = '#b9783f'; rr(g, 4, 56, 124, 7, 3); g.fill(); [0, 2, 1].forEach((sp, k) => drawJar(g, 14 + k * 38, 56, 30, sp + (i % 2) * 3, i, false, !!S.big)); });
+}
+const $ = id => document.getElementById(id);
+$('worlds').addEventListener('click', e => { const b = e.target.closest('.lv'); if (!b) return; const i = +b.dataset.lv; if (b.classList.contains('lock')) { toast(T('locked')); return; } startLevel(i); });
+$('stList').addEventListener('click', e => { const b = e.target.closest('.st'); if (!b) return; const i = +b.dataset.st; if (totalStars() < STYLES[i]) { toast(T('unlock') + ' ★ ' + STYLES[i]); return; } S.style = i; save(); renderStyles(); });
+document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => { if (b.closest('#settings') && ret === 'pause') { show('pause'); return; } show('menu'); texts(); });
+$('bPlay').onclick = () => { S.seen = VERSION; save(); startLevel(nextLevel()); };
+$('bDaily').onclick = () => startLevel(-1);
+$('bLevels').onclick = () => { renderLevels(); show('levels'); };
+$('bStyles').onclick = () => { renderStyles(); show('styles'); };
+$('bSettings').onclick = () => { ret = 'menu'; texts(); show('settings'); };
+const cycleLang = () => { S.lang = LANGS[(LANGS.indexOf(S.lang) + 1) % 3]; save(); texts(); };
+$('bLang').onclick = cycleLang; $('sLang').onclick = cycleLang;
+for (const k of ['music', 'sound', 'vibe', 'big']) $('s' + k[0].toUpperCase() + k.slice(1)).onclick = () => { S[k] ^= 1; save(); texts(); };
+$('sTut').onclick = () => { S.tut ^= 1; if (S.tut) S.tips = {}; save(); texts(); };
+$('sFs').onclick = () => { try { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen(); } catch (e) {} setTimeout(texts, 300); };
+let sure = 0; $('sReset').onclick = () => { if (!sure) { sure = 1; $('sReset').textContent = T('sure'); setTimeout(() => { sure = 0; texts(); }, 2500); return; } const l = S.lang; S = Object.assign(FRESH(), { lang: l, gift: dayKey(), seen: VERSION }); save(); sure = 0; texts(); };
+$('bPause').onclick = pause; $('bReset').onclick = restart; $('bUndo').onclick = undo; $('bExtra').onclick = extraShelf;
+$('pResume').onclick = resume; $('pRestart').onclick = restart; $('pSettings').onclick = () => { texts(); show('settings'); }; $('pMenu').onclick = toMenu;
+$('wNext').onclick = () => startLevel(Math.min(59, LI + 1));
+$('wAgain').onclick = () => startLevel(LI);
+$('wMenu').onclick = () => { mode = 'menu'; ret = 'menu'; startDemo(); renderLevels(); show('levels'); };
+// ---------- pornire ----------
+layout(); startDemo(); texts();
+if (S.gift !== dayKey()) { const first = !S.gift; S.gift = dayKey(); if (!first) { S.hints += 1; setTimeout(() => toast(T('gift')), 600); } save(); }
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
