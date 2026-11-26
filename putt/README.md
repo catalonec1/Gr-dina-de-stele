@@ -11,3 +11,16 @@ Minigolf-puzzle original, văzut de sus. Tragi înapoi de oriunde pe ecran, ții
 Teste: `CHROME_PATH=/opt/pw-browsers/chromium node putt/tests/run.js` (51 de teste, inclusiv un bot care termină fiecare traseu în par și unul cu imprecizie umană).
 Capturi și coperți: `node putt/tools/shots.js` → `putt/launch/` (zip pentru itch: `pebble-putt-web.zip`).
 Unelte de echilibrare: `node putt/tools/noisy.js`, `node putt/tools/peek.js 1,2,3`.
+
+## Note de versiune v1.3 (decembrie 2026)
+
+Teste noi: `node putt/tests/v13.js` (17: pietricele noi, migrare salvare v1.2, Noutăți o singură dată, RO/EN/RU, fără erori JS).
+
+**EN (Amazon „What's new” / itch devlog / GamePix):**
+v1.3 — Two winter pebbles! Snowball (25★) and Icicle (60★) leave a sparkly snowflake trail as they roll. Your holes, stars and pebbles are kept.
+
+**RO:**
+v1.3 — Două pietricele de iarnă! Bulgăre (25★) și Țurțure (60★) lasă în urmă fulgi sclipitori când se rostogolesc. Traseele, stelele și pietricelele se păstrează.
+
+**RU:**
+v1.3 — Два зимних камешка! «Снежок» (25★) и «Сосулька» (60★) оставляют сверкающий снежный след. Лунки, звёзды и камешки сохраняются.
