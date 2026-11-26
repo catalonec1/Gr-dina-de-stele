@@ -20,6 +20,7 @@ const LATE = { leaves: 3.4e9, run: 9e9, life: 2.1e10, own: [120, 96, 80, 64, 40,
   await shot('game-spring-en.png', M, 'en-US', base(MID), "play();S.time=10;for(let i=0;i<6;i++)tapTree(150+i*20,140);", 300);
   await shot('game-autumn-butterfly-ro.png', M, 'ro-RO', base(Object.assign({}, MID, { time: 100 })), "play();spawnFly();fly.t=5;tab='up';renderList();", 500);
   await shot('game-winter-ru.png', M, 'ru-RU', base(Object.assign({}, LATE, { time: 140 })), "play();S.rushT=20;", 900);
+  await shot('trophies-en.png', M, 'en-US', base(Object.assign({}, LATE, { time: 60, flies: 51, migs: 5 })), "play();tab='ach';renderList();const L=document.getElementById('list');L.scrollTop=L.scrollHeight;", 500); // v1.1
   await shot('migration-en.png', M, 'en-US', base(Object.assign({}, LATE, { time: 50 })), "play();tab='mig';renderList();", 500);
   await shot('game-desktop-en.png', { width: 1280, height: 720 }, 'en-US', base(Object.assign({}, LATE, { time: 20 })), "play();spawnFly();fly.t=4;for(let i=0;i<5;i++)tapTree(400+i*30,300);", 400);
   const scene = (await shot('_s', { width: 1300, height: 700 }, 'en-US', base(Object.assign({}, LATE, { time: 100 })), "play();spawnFly();fly.dir=-1;fly.y0=0.3;fly.t=2;document.getElementById('hud').style.display='none';", 600, { x: 0, y: 0, width: 900, height: 700 })).toString('base64');

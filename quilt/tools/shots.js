@@ -20,12 +20,12 @@ const partial = (lv, fab, frac, dragIt = true) => ALL + `S.fab=${fab};patCache={
   };
   const M = { width: 405, height: 720 };
   await shot('menu-mobile-en.png', M, 'en-US', ALL + 'save();menuInfo();', 1500);
-  await shot('game-patches-en.png', M, 'en-US', partial(12, 0, 0.5));
+  await shot('game-patches-en.png', M, 'en-US', partial(12, 10, 0.5));
   await shot('game-heart-en.png', M, 'en-US', partial(16 + 14, 1, 0.55));
   await shot('game-mirror-ru.png', M, 'ru-RU', partial(55, 4, 0.45));
   await shot('win-mobile-ro.png', M, 'ro-RO', ALL + 'S.fab=2;patCache={};startLevel(22);G.t0-=83000;S.best[22]=71.4;solveAll();', 2200);
   await shot('levels-mobile-en.png', M, 'en-US', ALL + "save();renderLevels();show('levels');");
-  await shot('fabrics-mobile-en.png', M, 'en-US', ALL + "S.fab=1;save();renderFabrics();show('fabrics');");
+  await shot('fabrics-mobile-en.png', M, 'en-US', ALL + "S.fab=10;save();renderFabrics();show('fabrics');");
   await shot('game-desktop-en.png', { width: 1280, height: 720 }, 'en-US', partial(47, 5, 0.5));
   // coperți: 3 pilote terminate, înclinate + titlu
   const quilt = async (lv, fab) => {
