@@ -96,6 +96,14 @@ jobs:
         run: node hive/tests/v14.js
       - name: Teste Pebble Putt v1.3
         run: node putt/tests/v13.js
+      - name: Teste Cozy Quilt v1.3
+        run: node quilt/tests/v13.js
+      - name: Teste Cocoon Garden v1.1
+        run: node cocoon/tests/v11.js
+      - name: Teste Nibble Trail v1.1
+        run: node trail/tests/v11.js
+      - name: Teste Otter Glide v1.2
+        run: node glide/tests/v12.js
       - name: Teste site erori ORA
         run: node ora/tests/run.js
 
