@@ -11,8 +11,9 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   const page = async (locale, save, vp = { width: 390, height: 844 }) => {
     const p = await (await b.newContext({ viewport: vp, locale })).newPage();
     p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
-    if (save) await p.addInitScript(([k, v]) => { if (!sessionStorage.getItem('init')) { sessionStorage.setItem('init', 1); localStorage.setItem(k, v); } }, [KEY, JSON.stringify(save)]);
-    await p.goto(URL); await p.waitForTimeout(300); return p;
+    // salvarea veche se scrie o singură dată, apoi reîncărcare (un init script s-ar putea re-rula la reload)
+    await p.goto(URL);
+    if (save) { await p.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(save)]); await p.reload(); } await p.waitForTimeout(300); return p;
   };
   // 1. salvare veche v2.3: 60 de niveluri cu 3 stele = 180 ★, paleta Miez de noapte nu e deținută
   const stars = {}; for (let n = 1; n <= 60; n++) stars[n] = 3;

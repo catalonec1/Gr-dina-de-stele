@@ -11,8 +11,9 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   const page = async (locale, save) => {
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, locale })).newPage();
     p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
-    if (save) await p.addInitScript(([k, v]) => { if (!sessionStorage.getItem('init')) { sessionStorage.setItem('init', 1); localStorage.setItem(k, v); } }, [KEY, JSON.stringify(save)]);
-    await p.goto(URL); await p.waitForTimeout(1300); return p;
+    // salvarea veche se scrie o singură dată, apoi reîncărcare (un init script s-ar putea re-rula la reload și ar rescrie salvarea migrată)
+    await p.goto(URL);
+    if (save) { await p.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(save)]); await p.reload(); } await p.waitForTimeout(1300); return p;
   };
   const toast = p => p.evaluate(() => document.getElementById('toast').textContent);
   // 1. salvare v1.2: 10 trasee cu 3 stele = 30 ★, pietricica Mentă

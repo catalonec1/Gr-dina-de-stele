@@ -11,8 +11,9 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   const page = async (locale, save) => {
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, locale })).newPage();
     p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
-    if (save) await p.addInitScript(([k, v]) => { if (!sessionStorage.getItem('init')) { sessionStorage.setItem('init', 1); localStorage.setItem(k, v); } }, [KEY, JSON.stringify(save)]);
-    await p.goto(URL); await p.waitForTimeout(250); return p;
+    // salvarea veche se scrie o singură dată, apoi reîncărcare (un init script s-ar putea re-rula la reload și ar rescrie salvarea migrată)
+    await p.goto(URL);
+    if (save) { await p.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(save)]); await p.reload(); } await p.waitForTimeout(250); return p;
   };
   // 1. salvare veche v1.1 (fără câmpul scene), 20 de poieni cu 3 stele = 60 ★
   const old = { lang: 'ro', done: Array(20).fill(1), stars: Array(20).fill(3), best: Array(20).fill(9), hints: 7, skin: 8, sound: 1, vibe: 0, daily: 20261120, streak: 4, gift: 20261120, tips: { tap: 1, hint: 1, stone: 1 }, seen: '1.1' };

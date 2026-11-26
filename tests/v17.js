@@ -11,7 +11,9 @@ const ok = (c, m) => { console.log((c ? 'PASS ' : 'FAIL ') + m); if (!c) fails++
   const page = async (locale, save) => {
     const p = await (await b.newContext({ viewport: { width: 390, height: 844 }, locale })).newPage();
     p.on('pageerror', e => errs.push(e.message)); p.on('console', m => m.type() === 'error' && errs.push(m.text()));
-    if (save) await p.addInitScript(([k, v]) => { if (!sessionStorage.getItem('init')) { sessionStorage.setItem('init', 1); localStorage.setItem(k, v); } }, [KEY, JSON.stringify(save)]);
+    // salvarea veche se scrie o singură dată dintr-o pagină separată (același origin file://), înainte de joc;
+    // un init script s-ar re-rula la reload, iar jocul salvează la pagehide, deci nu scriem din pagina jocului
+    if (save) { const h = await p.context().newPage(); await h.goto('file://' + path.resolve(__dirname, '..', 'package.json')); await h.evaluate(([k, v]) => localStorage.setItem(k, v), [KEY, JSON.stringify(save)]); await h.close(); }
     await p.goto(URL); await p.waitForTimeout(300); return p;
   };
   const toastAfterNews = async p => { await p.waitForTimeout(3300); return p.evaluate(() => document.getElementById('toast').textContent); };
