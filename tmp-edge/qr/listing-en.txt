@@ -1,0 +1,24 @@
+QR Pocket makes QR codes right in your browser. It works offline and collects no data: nothing you type is sent anywhere.
+
+WHAT YOU CAN ENCODE
+- Links and any text, with a live byte count
+- Wi-Fi networks (WPA/WPA2/WPA3, WEP, open, hidden): guests scan and join without typing the password
+- Contact cards (vCard 3.0): name, organization, job title, phones, e-mail, website, city, country
+- E-mail with subject and message, SMS with a pre-filled text, phone calls
+
+OPTIONS
+- Error correction level L, M, Q or H
+- PNG size 256 to 2048 px, quiet zone of 1, 2 or 4 modules
+- Foreground and background colors, with a warning when contrast is too low or the code is inverted
+- Shows the QR version and module count, and warns when a code gets too dense for printing
+
+EXPORT
+- Download PNG or SVG (vector, sharp at any print size)
+- Copy the image to the clipboard
+- Recent codes you downloaded or copied are kept in this browser only and can be cleared at any time; Wi-Fi passwords are not saved in the form
+
+MORE
+- Right-click selected text → "Make QR code for '…'"
+- Shortcut Alt+Shift+Q, full-tab mode, light and dark theme
+
+Free, no ads, no tracking.

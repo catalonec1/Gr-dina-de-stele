@@ -1,0 +1,24 @@
+QR Pocket creează coduri QR direct în browser. Funcționează offline și nu colectează date: nimic din ce scrii nu este trimis nicăieri.
+
+CE POȚI CODIFICA
+- Linkuri și orice text, cu numărarea octeților
+- Rețele Wi-Fi (WPA/WPA2/WPA3, WEP, deschise, ascunse): musafirii scanează și se conectează fără să tasteze parola
+- Cărți de vizită (vCard 3.0): nume, organizație, funcție, telefoane, e-mail, site, oraș, țară
+- E-mail cu subiect și mesaj, SMS cu text precompletat, apeluri telefonice
+
+OPȚIUNI
+- Nivel de corecție a erorilor L, M, Q sau H
+- Dimensiune PNG între 256 și 2048 px, margine liberă de 1, 2 sau 4 module
+- Culori pentru cod și fundal, cu avertisment la contrast prea mic
+- Afișează versiunea QR și numărul de module și avertizează când e prea dens pentru tipar
+
+EXPORT
+- Descarcă PNG sau SVG (vectorial, clar la orice dimensiune de tipar)
+- Copiază imaginea în clipboard
+- Codurile recente descărcate sau copiate rămân doar în acest browser; parolele Wi-Fi nu se salvează
+
+ÎN PLUS
+- Clic dreapta pe textul selectat → „Make QR code for '…'”
+- Scurtătura Alt+Shift+Q, mod filă completă, temă luminoasă și întunecată
+
+Gratuit, fără reclame, fără urmărire.
